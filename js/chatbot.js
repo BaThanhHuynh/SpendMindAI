@@ -17,6 +17,22 @@ function initChatbot() {
 
     if (!triggerBtn) return;
 
+    let activeTypingTimer = null;
+    let activeTypingDiv = null;
+    let activeTypingFullText = "";
+
+    function clearActiveTyping() {
+        if (activeTypingTimer) {
+            clearInterval(activeTypingTimer);
+            activeTypingTimer = null;
+        }
+        if (activeTypingDiv && activeTypingFullText) {
+            activeTypingDiv.innerHTML = formatMarkdown(activeTypingFullText);
+            activeTypingDiv = null;
+            activeTypingFullText = "";
+        }
+    }
+
     // Toggle open/close
     triggerBtn.addEventListener("click", () => {
         const isHidden = container.classList.contains("hidden");
@@ -156,6 +172,7 @@ function initChatbot() {
     let cachedGeminiKey = null;
 
     function handleUserMessage(text) {
+        clearActiveTyping();
         const welcomeIntro = messagesContainer.querySelector(".chatbot-welcome-intro");
         if (welcomeIntro) {
             messagesContainer.innerHTML = "";
@@ -253,8 +270,40 @@ function initChatbot() {
                     indicator.remove();
                     const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (replyText) {
-                        const formattedReply = formatMarkdown(replyText);
-                        addMessage("bot", formattedReply, true);
+                        clearActiveTyping();
+                        
+                        activeTypingFullText = replyText;
+                        const msgDiv = document.createElement("div");
+                        msgDiv.className = "chat-message bot";
+                        messagesContainer.appendChild(msgDiv);
+                        activeTypingDiv = msgDiv;
+                        
+                        let currentText = "";
+                        let index = 0;
+                        const totalLen = replyText.length;
+                        const charsPerTick = Math.max(1, Math.ceil(totalLen / 150));
+                        
+                        activeTypingTimer = setInterval(() => {
+                            if (index >= totalLen) {
+                                clearInterval(activeTypingTimer);
+                                activeTypingTimer = null;
+                                activeTypingDiv = null;
+                                activeTypingFullText = "";
+                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                                return;
+                            }
+                            
+                            currentText += replyText.substring(index, index + charsPerTick);
+                            index += charsPerTick;
+                            
+                            msgDiv.innerHTML = formatMarkdown(currentText);
+                            
+                            const threshold = 60;
+                            const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < threshold;
+                            if (isNearBottom) {
+                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            }
+                        }, 12);
                     } else {
                         throw new Error("Không có phản hồi từ Gemini.");
                     }
