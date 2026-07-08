@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Bảng Điều Khiển - SpendMindAI</title>
+    <meta name="description" content="Trang bảng điều khiển quản lý chi tiêu cá nhân trên SpendMindAI.">
+    <link rel="icon" type="image/png" href="images/logoapp.png">
+
+    <!-- Preload critical CSS -->
+    <link rel="preload" href="css/styles.css" as="style">
+
+    <!-- Google Fonts: Montserrat (with font-display swap for faster text paint) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons CDN (pinned version for consistent + faster loading) -->
+    <script src="https://unpkg.com/lucide@0.460.0" defer></script>
+
+    <!-- Chart.js CDN (deferred to not block initial paint) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+    <!-- Background elements for ambient glow -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- SECURED APPLICATION DASHBOARD (Hidden by default to prevent flash of content) -->
+    <div class="app-container hidden" id="app-dashboard">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon has-image">
+                    <img src="images/logoapp.png" alt="SpendMindAI Logo" width="38" height="38" loading="lazy">
+                </div>
+                <div>
+                    <h1>Xin chào, <strong id="user-display-name">...</strong>!</h1>
+                    <p class="tagline">Quản lý tài chính thông minh</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <!-- Data Backup Buttons -->
+                <div class="backup-actions">
+                    <button id="btn-export" class="btn-icon-label" title="Xuất dữ liệu JSON">
+                        <i data-lucide="download"></i>
+                        <span>Xuất</span>
+                    </button>
+                    <button id="btn-import-trigger" class="btn-icon-label" title="Nhập dữ liệu JSON">
+                        <i data-lucide="upload"></i>
+                        <span>Nhập</span>
+                    </button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                </div>
+
+
+                <!-- Settings Container (Dropdown Popup) -->
+                <div class="settings-menu-container">
+                    <button id="btn-settings" class="theme-toggle-btn" title="Cấu hình hệ thống">
+                        <i data-lucide="settings" style="width: 20px; height: 20px; color: var(--text-primary);"></i>
+                    </button>
+                    
+                    <!-- Small Dropdown Layout for Settings -->
+                    <div id="settings-dropdown" class="settings-dropdown-menu hidden animate-scale-up">
+                        <!-- PANEL 1: MAIN SETTINGS MENU -->
+                        <div class="settings-panel" id="settings-main-panel">
+                            <div class="dropdown-header">
+                                <h3>Cài đặt hệ thống</h3>
+                                <button type="button" class="btn-close-dropdown" id="btn-close-settings-dropdown" title="Đóng">
+                                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            </div>
+                            <div class="dropdown-body" style="display: flex; flex-direction: column; gap: 4px;">
+
+
+                                <!-- Gmail reminder row -->
+                                <div class="settings-list-item" id="menu-item-reminder" role="button" tabindex="0">
+                                    <div class="item-left">
+                                        <i data-lucide="bell"></i>
+                                        <span>Nhắc nhở qua Gmail</span>
+                                    </div>
+                                    <div class="item-right" style="display: flex; align-items: center; gap: 8px;">
+                                        <span id="badge-reminder-status">Tắt</span>
+                                        <label class="switch">
+                                            <input type="checkbox" id="settings-reminder-toggle">
+                                            <span class="slider round"></span>
+                                        </label>
+                                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Theme settings row -->
+                                <button type="button" class="settings-list-item" id="menu-item-theme">
+                                    <div class="item-left">
+                                        <i data-lucide="palette"></i>
+                                        <span>Giao diện</span>
+                                    </div>
+                                    <div class="item-right">
+                                        <span id="badge-theme-status">Tối</span>
+                                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
+                                    </div>
+                                </button>
+
+                                <hr class="settings-divider">
+
+                                <!-- Danger operations -->
+                                <button type="button" id="btn-clear-all-data" class="settings-list-item danger-item">
+                                    <div class="item-left">
+                                        <i data-lucide="alert-triangle"></i>
+                                        <span>Xóa toàn bộ dữ liệu</span>
+                                    </div>
+                                </button>
+
+                                <button type="button" id="btn-logout" class="settings-list-item logout-item">
+                                    <div class="item-left">
+                                        <i data-lucide="log-out"></i>
+                                        <span>Đăng xuất tài khoản</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+
+
+                        <!-- PANEL 3: EMAIL REMINDER SUB-PANEL -->
+                        <div class="settings-panel sub-panel hidden" id="settings-reminder-panel">
+                            <div class="dropdown-header">
+                                <div style="display: flex; align-items: center;">
+                                    <button type="button" class="btn-back-settings" data-target="reminder" title="Quay lại">
+                                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                                    </button>
+                                    <h3>Nhắc nhở qua Gmail</h3>
+                                </div>
+                                <button type="button" class="btn-close-dropdown" id="btn-close-reminder-sub" title="Đóng">
+                                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            </div>
+                            <div class="dropdown-body">
+                                <form id="settings-notification-form" style="display: flex; flex-direction: column; gap: 10px;">
+                                    <div class="form-group">
+                                        <label for="settings-email" style="font-size: 0.75rem; font-weight: 500; display: block; margin-bottom: 2px;">Địa chỉ Email nhận nhắc nhở</label>
+                                        <input type="email" id="settings-email" readonly
+                                            style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--border-color); color: var(--text-secondary); border: 1px solid var(--input-border); cursor: not-allowed;"
+                                            title="Địa chỉ email đã đăng ký của bạn.">
+                                        <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 4px;">Email nhận nhắc nhở mặc định là email tài khoản của bạn.</span>
+                                    </div>
+                                    <div class="form-row" style="display: flex; gap: 8px;">
+                                        <div class="form-group" style="flex: 1;">
+                                            <label for="settings-reminder-time" style="font-size: 0.75rem; font-weight: 500; display: block; margin-bottom: 2px;">Giờ nhắc hàng ngày</label>
+                                            <input type="time" id="settings-reminder-time"
+                                                style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);">
+                                        </div>
+                                    </div>
+                                    <div class="form-checkbox-group" style="display: flex; align-items: center; gap: 6px;">
+                                        <input type="checkbox" id="settings-email-notifications" value="1" style="accent-color: var(--accent-color); cursor: pointer;">
+                                        <label for="settings-email-notifications" style="font-size: 0.75rem; color: var(--text-secondary); user-select: none; cursor: pointer;">Kích hoạt nhắc nhở</label>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-primary w-full" style="padding: 8px 12px; font-size: 0.8rem; margin-top: 4px;">
+                                        <i data-lucide="save" style="width: 14px; height: 14px;"></i> Lưu cài đặt
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- PANEL 4: THEME SELECTION SUB-PANEL -->
+                        <div class="settings-panel sub-panel hidden" id="settings-theme-panel">
+                            <div class="dropdown-header">
+                                <div style="display: flex; align-items: center;">
+                                    <button type="button" class="btn-back-settings" data-target="theme" title="Quay lại">
+                                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                                    </button>
+                                    <h3>Giao diện</h3>
+                                </div>
+                                <button type="button" class="btn-close-dropdown" id="btn-close-theme-sub" title="Đóng">
+                                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            </div>
+                            <div class="dropdown-body">
+                                <div class="theme-option-list" style="display: flex; flex-direction: column; gap: 4px;">
+                                    <div class="theme-option-item" id="opt-theme-light">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <i data-lucide="sun"></i>
+                                            <span style="font-size: 0.8rem; font-weight: 500;">Giao diện Sáng</span>
+                                        </div>
+                                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
+                                    </div>
+                                    <div class="theme-option-item" id="opt-theme-dark">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <i data-lucide="moon"></i>
+                                            <span style="font-size: 0.8rem; font-weight: 500;">Giao diện Tối</span>
+                                        </div>
+                                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
+                                    </div>
+                                    <div class="theme-option-item" id="opt-theme-system">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <i data-lucide="monitor"></i>
+                                            <span style="font-size: 0.8rem; font-weight: 500;">Tự động (Hệ thống)</span>
+                                        </div>
+                                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="app-main-grid">
+
+            <!-- LEFT COLUMN: STATS & VISUALIZATIONS -->
+            <section class="dashboard-section">
+                <!-- Summary Balance Card -->
+                <div class="balance-card-wrapper">
+                    <div class="balance-card">
+                        <div class="balance-label">Tổng số dư khả dụng</div>
+                        <div class="balance-amount" id="total-balance">0đ</div>
+                        <div class="balance-indicators">
+                            <div class="indicator income">
+                                <i data-lucide="arrow-down-left"></i>
+                                <div>
+                                    <span>Thu nhập</span>
+                                    <strong id="summary-income">0đ</strong>
+                                </div>
+                            </div>
+                            <div class="indicator expense">
+                                <i data-lucide="arrow-up-right"></i>
+                                <div>
+                                    <span>Chi tiêu</span>
+                                    <strong id="summary-expense">0đ</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Layout Grid -->
+                <div class="charts-grid">
+                    <!-- Chart 1: Category Distribution -->
+                    <div class="card glass-card chart-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Phân bổ chi tiêu</h3>
+                            <i data-lucide="pie-chart" class="text-muted"></i>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="categoryChart"></canvas>
+                            <div class="no-data-msg" id="chart-no-data">Chưa có giao dịch chi tiêu nào để hiển thị biểu đồ.</div>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Monthly Trends -->
+                    <div class="card glass-card chart-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Xu hướng thu chi</h3>
+                            <i data-lucide="trending-up" class="text-muted"></i>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trendChart"></canvas>
+                            <div class="no-data-msg" id="trend-no-data">Chưa đủ dữ liệu để tạo biểu đồ xu hướng.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Budget Limits Card -->
+                <div class="card glass-card budget-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Ngân sách chi tiêu tháng</h3>
+                        <i data-lucide="sliders" class="text-muted"></i>
+                    </div>
+                    <div class="budget-settings-trigger">
+                        <button id="btn-toggle-budget-settings" class="btn-text">
+                            <i data-lucide="settings"></i> Thiết lập hạn mức chi tiêu
+                        </button>
+                    </div>
+
+                    <!-- Budget Settings Panel (Collapsible) -->
+                    <div id="budget-settings-panel" class="budget-settings-panel collapsed">
+                        <form id="budget-form">
+                            <div class="budget-input-grid" id="budget-inputs-container">
+                                <!-- Dynamic inputs -->
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary w-full mt-2">
+                                Lưu hạn mức
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Budget Progress List -->
+                    <div class="budget-progress-list" id="budget-progress-container">
+                        <!-- Dynamic budget items -->
+                    </div>
+                </div>
+            </section>
+        <section class="card glass-card calendar-section">
+            <div class="card-header flex-wrap gap-4" style="border-bottom: none !important;">
+                <div class="flex-grow">
+                    <h3 class="card-title">Lịch</h3>
+                    <p class="card-subtitle">Theo dõi thu chi theo từng ngày</p>
+                </div>
+
+                <!-- Calendar Search Toggle -->
+                <div class="calendar-header-actions">
+                    <button id="btn-toggle-search" class="theme-toggle-btn" title="Tìm kiếm giao dịch">
+                        <i data-lucide="search" style="width: 20px; height: 20px; color: var(--text-primary);"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Expandable Search & Filter Controls -->
+            <div id="calendar-filter-panel" class="filter-controls collapsed" style="transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); overflow: hidden; max-height: 0; opacity: 0; margin-bottom: 0;">
+                <div class="search-box">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Tìm theo ghi chú...">
+                </div>
+
+                <select id="filter-type" class="filter-select">
+                    <option value="all">Tất cả thu/chi</option>
+                    <option value="expense">Chỉ chi tiêu</option>
+                    <option value="income">Chỉ thu nhập</option>
+                </select>
+
+                <select id="filter-category" class="filter-select">
+                    <option value="all">Tất cả danh mục</option>
+                    <!-- Dynamic categories -->
+                </select>
+            </div>
+
+            <!-- Calendar Layout Wrapper (2 Columns on Desktop) -->
+            <div class="calendar-layout-wrapper">
+                <!-- Left Column: Calendar Grid -->
+                <div class="calendar-left-col">
+                    <!-- Calendar Container -->
+                    <div class="calendar-container">
+                        <!-- Month Selection Bar -->
+                        <div class="month-selector-bar">
+                            <button id="btn-prev-month" class="btn-month-nav" type="button"><i data-lucide="chevron-left"></i></button>
+                            <div class="month-display" id="month-year-display">06/2026 (01/06-30/06)</div>
+                            <button id="btn-next-month" class="btn-month-nav" type="button"><i data-lucide="chevron-right"></i></button>
+                        </div>
+
+                        <!-- Day Headers (T2 -> CN) -->
+                        <div class="calendar-days-header">
+                            <div>T2</div>
+                            <div>T3</div>
+                            <div>T4</div>
+                            <div>T5</div>
+                            <div>T6</div>
+                            <div class="sat-header">T7</div>
+                            <div class="sun-header">CN</div>
+                        </div>
+
+                        <!-- Calendar Grid Cells -->
+                        <div class="calendar-grid" id="calendar-grid-cells">
+                            <!-- Dynamic calendar cells -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Daily Summary & Transactions List -->
+                <div class="calendar-right-col">
+                    <!-- Daily Summary Cards -->
+                    <div class="daily-summary-bar">
+                        <div class="summary-col">
+                            <span class="lbl">Thu nhập</span>
+                            <strong id="daily-income-val" class="val-income">0đ</strong>
+                        </div>
+                        <div class="summary-col">
+                            <span class="lbl">Chi tiêu</span>
+                            <strong id="daily-expense-val" class="val-expense">0đ</strong>
+                        </div>
+                        <div class="summary-col">
+                            <span class="lbl">Tổng</span>
+                            <strong id="daily-net-val">0đ</strong>
+                        </div>
+                    </div>
+
+                    <!-- Daily Transactions Title & List -->
+                    <div class="daily-transactions-section">
+                        <div class="daily-header">
+                            <span id="selected-date-label">16/06/2026 (Thứ 3)</span>
+                            <strong id="selected-date-total">-5,000,000đ</strong>
+                        </div>
+                        <div class="daily-list" id="daily-transactions-list">
+                            <!-- Dynamic daily transactions -->
+                        </div>
+                        <div class="empty-state" id="daily-transactions-empty" style="display: none;">
+                            <div class="empty-icon"><i data-lucide="receipt"></i></div>
+                            <p>Không có giao dịch nào trong ngày này.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        </main>
+        <footer class="app-footer">
+            <p>&copy; 2026 SpendMindAI. Thuộc quyền sở hữu của Huỳnh Bá Thành.</p>
+        </footer>
+    </div>
+
+    <!-- TRANSACTION MODAL OVERLAY -->
+    <div id="transaction-modal" class="modal-overlay hidden">
+        <div class="modal-content card glass-card form-card">
+            <div class="card-header">
+                <h3 class="card-title" id="form-title">Giao dịch mới</h3>
+                <button type="button" class="btn-close-modal" id="btn-close-transaction-modal" title="Đóng">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="transaction-form" class="transaction-form">
+                <input type="hidden" id="transaction-id">
+
+                <div class="form-group-toggle">
+                    <input type="radio" id="type-expense" name="type" value="expense" checked>
+                    <label for="type-expense" class="toggle-label expense">
+                        <i data-lucide="minus-circle"></i> Chi tiêu
+                    </label>
+
+                    <input type="radio" id="type-income" name="type" value="income">
+                    <label for="type-income" class="toggle-label income">
+                        <i data-lucide="plus-circle"></i> Thu nhập
+                    </label>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="amount">Số tiền (đ)</label>
+                        <input type="text" id="amount" required placeholder="Ví dụ: 50,000">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="category">Danh mục</label>
+                        <select id="category" required>
+                            <option value="" disabled selected>Chọn danh mục...</option>
+                            <!-- Options dynamically loaded -->
+                        </select>
+                        <input type="text" id="custom-category" placeholder="Nhập danh mục tùy chỉnh..." class="hidden" style="margin-top: 12px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="date">Ngày giao dịch</label>
+                        <input type="date" id="date" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Ghi chú / Mô tả</label>
+                    <input type="text" id="description" placeholder="Nhập chi tiết ví dụ: Mua sắm siêu thị">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="btn-submit">
+                        <i data-lucide="save"></i> <span>Lưu giao dịch</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-edit" style="display: none;">
+                        Hủy sửa
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btn-delete-edit" style="display: none;">
+                        Xóa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>    <!-- Notification Toast -->
+    <div id="toast" class="toast">
+        <i id="toast-icon" data-lucide="info"></i>
+        <span id="toast-message">Thông báo</span>
+    </div>
+
+    <!-- Chatbot Floating Widget -->
+    <div id="chatbot-widget" class="chatbot-widget">
+        <!-- Floating trigger button -->
+        <button id="chatbot-trigger-btn" class="chatbot-trigger-btn" title="Trợ lý ảo tài chính">
+            <i data-lucide="message-square" class="chat-icon"></i>
+            <i data-lucide="x" class="close-icon hidden"></i>
+        </button>
+
+        <!-- Chat window container -->
+        <div id="chatbot-container" class="card glass-card chatbot-container hidden">
+            <!-- Header -->
+            <div class="chatbot-header">
+                <div class="chatbot-bot-info">
+                    <div class="chatbot-avatar">
+                        <i data-lucide="bot"></i>
+                    </div>
+                    <div>
+                        <h4>Trợ Lý Tài Chính</h4>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span class="status-indicator-dot online"></span>
+                            <span class="status-text">Đang trực tuyến</span>
+                        </div>
+                    </div>
+                </div>
+                <button id="chatbot-close-btn" class="chatbot-close-btn" title="Đóng">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <!-- Messages area -->
+            <div id="chatbot-messages" class="chatbot-messages">
+                <!-- Initial bot welcome message will be generated by JS -->
+            </div>
+
+            <!-- Suggestion Chips -->
+            <div id="chatbot-suggestions" class="chatbot-suggestions">
+                <button type="button" class="suggestion-chip" data-query="số dư">Số dư</button>
+                <button type="button" class="suggestion-chip" data-query="hôm nay">Hôm nay chi gì?</button>
+                <button type="button" class="suggestion-chip" data-query="lớn nhất">Giao dịch lớn nhất</button>
+                <button type="button" class="suggestion-chip" data-query="hạn mức">Hạn mức</button>
+            </div>
+
+            <!-- Input area -->
+            <form id="chatbot-input-form" class="chatbot-input-form">
+                <input type="text" id="chatbot-input" placeholder="Hỏi tôi về số dư, chi tiêu..." required
+                    autocomplete="off">
+                <button type="submit" id="chatbot-send-btn" title="Gửi câu hỏi">
+                    <i data-lucide="send"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard script -->
+    <script src="js/chatbot.js?v=20260618_2125"></script>
+    <script src="js/dashboard.js?v=20260618_2125"></script>
+</body>
+
+</html>

@@ -1,0 +1,7 @@
+cloudflared.exe
+styles.backup_*
+.git
+.gemini
+vps_deployment/
+email_outbox.log
+*.md

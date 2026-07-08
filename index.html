@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="vi" data-theme="dark">
+
+<head>
+    <meta charset="utf-8">
+    <title>SpendMindAI - Quản Lý Tài Chính Cá Nhân Thông Minh</title>
+    <meta name="description"
+        content="Ứng dụng quản lý chi tiêu thông minh, trực quan hóa tài chính cá nhân với biểu đồ tương tác, thiết lập ngân sách và chế độ giao diện cao cấp.">
+    <base href="/">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SpendMindAI">
+    <meta property="og:url" content="https://huynhbathanh.site">
+    <meta property="og:title" content="SpendMindAI - Quản Lý Tài Chính Cá Nhân Thông Minh">
+    <meta property="og:description"
+        content="Ứng dụng quản lý chi tiêu thông minh, trực quan hóa tài chính cá nhân với biểu đồ tương tác, thiết lập ngân sách và chế độ giao diện cao cấp.">
+    <meta property="og:image" content="https://huynhbathanh.site/images/cashflow_mockup.png">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@sochitieu">
+    <meta name="twitter:title" content="SpendMindAI - Quản Lý Tài Chính Cá Nhân Thông Minh">
+    <meta name="twitter:description"
+        content="Ứng dụng quản lý chi tiêu thông minh, trực quan hóa tài chính cá nhân với biểu đồ tương tác, thiết lập ngân sách và chế độ giao diện cao cấp.">
+    <meta name="twitter:image" content="https://huynhbathanh.site/images/cashflow_mockup.png">
+
+    <!-- Cookie bar CSS -->
+    <link href="https://www.gstatic.com/glue/cookienotificationbar/cookienotificationbar.min.css" rel="stylesheet">
+    <!--end of cookie-->
+
+    <link rel="icon" type="image/png" href="images/logoapp.png">
+
+    <!-- Preconnect / Preload -->
+    <script>
+        (function () {
+            try {
+                var storedTheme = localStorage.getItem('quan_ly_chi_tieu_theme') || 'system';
+                if (storedTheme === 'system') {
+                    var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', storedTheme);
+                }
+            } catch (e) { }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,slnt,wdth,wght,ROND@8..144,-10..0,25..150,400..500,0..100&amp;display=swap">
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Google+Symbols:opsz,wght,FILL,GRAD,ROND@40..48,300,0..1,0,50&amp;display=block">
+
+    <!-- Google Sans Flex Font Faces -->
+    <style>
+        @font-face {
+            font-family: 'Google Sans Flex';
+            font-style: oblique 0deg 10deg;
+            font-weight: 400 500;
+            font-stretch: 25% 150%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesansflex/v21/t5t2IQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8LGW72qutw.woff2) format('woff2');
+            unicode-range: U+02C7, U+02D8-02D9, U+02DB, U+0307, U+1400-167F, U+18B0-18F5, U+25CC, U+11AB0-11ABF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Flex';
+            font-style: oblique 0deg 10deg;
+            font-weight: 400 500;
+            font-stretch: 25% 150%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesansflex/v21/t5t2IQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8LGq72qutw.woff2) format('woff2');
+            unicode-range: U+0300-0302, U+0304, U+030B-030C, U+0323-0324, U+0330-0331, U+13A0-13FF, U+AB70-ABBF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Flex';
+            font-style: oblique 0deg 10deg;
+            font-weight: 400 500;
+            font-stretch: 25% 150%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesansflex/v21/t5t2IQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8LHF72qutw.woff2) format('woff2');
+            unicode-range: U+0302-0303, U+0305, U+0307-0308, U+0310, U+0312, U+0315, U+031A, U+0326-0327, U+032C, U+032F-0330, U+0332-0333, U+0338, U+033A, U+0346, U+034D, U+0391-03A1, U+03A3-03A9, U+03B1-03C9, U+03D1, U+03D5-03D6, U+03F0-03F1, U+03F4-03F5, U+2016-2017, U+2034-2038, U+203C, U+2040, U+2043, U+2047, U+2050, U+2057, U+205F, U+2070-2071, U+2074-208E, U+2090-209C, U+20D0-20DC, U+20E1, U+20E5-20EF, U+2100-2112, U+2114-2115, U+2117-2121, U+2123-214F, U+2190, U+2192, U+2194-21AE, U+21B0-21E5, U+21F1-21F2, U+21F4-2211, U+2213-2214, U+2216-22FF, U+2308-230B, U+2310, U+2319, U+231C-2321, U+2336-237A, U+237C, U+2395, U+239B-23B7, U+23D0, U+23DC-23E1, U+2474-2475, U+25AF, U+25B3, U+25B7, U+25BD, U+25C1, U+25CA, U+25CC, U+25FB, U+266D-266F, U+27C0-27FF, U+2900-2AFF, U+2B0E-2B11, U+2B30-2B4C, U+2BFE, U+3030, U+FF5B, U+FF5D, U+1D400-1D7FF, U+1EE00-1EEFF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Flex';
+            font-style: oblique 0deg 10deg;
+            font-weight: 400 500;
+            font-stretch: 25% 150%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesansflex/v21/t5t2IQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8LHG72qutw.woff2) format('woff2');
+            unicode-range: U+2003, U+3000, U+3002, U+4E00, U+FE12, U+16FE1, U+1B170-1B2FB;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Flex';
+            font-style: oblique 0deg 10deg;
+            font-weight: 400 500;
+            font-stretch: 25% 150%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesansflex/v21/t5t2IQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8LHX72qutw.woff2) format('woff2');
+            unicode-range: U+0001-000C, U+000E-001F, U+007F-009F, U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AD, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691, U+1F694, U+1F698, U+1F6AD, U+1F6B2, U+1F6B9-1F6BA, U+1F6BC, U+1F6C6-1F6CF, U+1F6D3-1F6D7, U+1F6E0-1F6EA, U+1F6F0-1F6F3, U+1F6F7-1F6FC, U+1F700-1F7FF, U+1F800-1F80B, U+1F810-1F847, U+1F850-1F859, U+1F860-1F887, U+1F890-1F8AD, U+1F8B0-1F8BB, U+1F8C0-1F8C1, U+1F900-1F90B, U+1F93B, U+1F946, U+1F984, U+1F996, U+1F9E9, U+1FA00-1FA6F, U+1FA70-1FA7C, U+1FA80-1FA89, U+1FA8F-1FAC6, U+1FACE-1FADC, U+1FADF-1FAE9, U+1FAF0-1FAF8, U+1FB00-1FBFF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Flex';
+            font-style: oblique 0deg 10deg;
+            font-weight: 400 500;
+            font-stretch: 25% 150%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesansflex/v21/t5t2IQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8LHK72qutw.woff2) format('woff2');
+            unicode-range: U+0303-0304, U+0307-0308, U+030A, U+0320, U+0323-0325, U+032D-032E, U+0330-0331, U+060C, U+061B-061C, U+061F, U+0621, U+0640, U+064B-0655, U+0660-066C, U+0670, U+0700-074F, U+0860-086A, U+1DF8, U+1DFA, U+200C-200F, U+25CC, U+2670-2671;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Flex';
+            font-style: oblique 0deg 10deg;
+            font-weight: 400 500;
+            font-stretch: 25% 150%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesansflex/v21/t5t2IQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8LGZ72qutw.woff2) format('woff2');
+            unicode-range: U+02C7, U+0301-0302, U+0304, U+0306-0307, U+0309, U+0323, U+0331, U+200C-200D, U+202E, U+25CC, U+2D30-2D7F;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Flex';
+            font-style: oblique 0deg 10deg;
+            font-weight: 400 500;
+            font-stretch: 25% 150%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesansflex/v21/t5t2IQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8LG272qutw.woff2) format('woff2');
+            unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Flex';
+            font-style: oblique 0deg 10deg;
+            font-weight: 400 500;
+            font-stretch: 25% 150%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesansflex/v21/t5t2IQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8LG372qutw.woff2) format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Flex';
+            font-style: oblique 0deg 10deg;
+            font-weight: 400 500;
+            font-stretch: 25% 150%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesansflex/v21/t5t2IQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8LG572o.woff2) format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+    </style>
+
+    <!-- Google Sans Code Font Faces -->
+    <style>
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: italic;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxijyogzv91QhV44Z_GQBHsGf5PuWEt-oWZnOk-ljWSpwaFB6rqcd6jvHiMYuic98DlC_uPhSg.woff2) format('woff2');
+            unicode-range: U+061F, U+0640, U+2015, U+201B, U+2020-2021, U+2030, U+204F, U+25CC, U+2E28-2E29, U+2E41, U+1E900-1E95F;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: italic;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxijyogzv91QhV44Z_GQBHsGf5PuWEt-oWZnOk-ljWSpwaFB6rqcd6jvHiMYuic98DkP_uPhSg.woff2) format('woff2');
+            unicode-range: U+02C7, U+02D8-02D9, U+02DB, U+0307, U+1400-167F, U+18B0-18F5, U+25CC, U+11AB0-11ABF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: italic;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxijyogzv91QhV44Z_GQBHsGf5PuWEt-oWZnOk-ljWSpwaFB6rqcd6jvHiMYuic98Dkz_uPhSg.woff2) format('woff2');
+            unicode-range: U+0300-0302, U+0304, U+030B-030C, U+0323-0324, U+0330-0331, U+13A0-13FF, U+AB70-ABBF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: italic;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxijyogzv91QhV44Z_GQBHsGf5PuWEt-oWZnOk-ljWSpwaFB6rqcd6jvHiMYuic98Dlc_uPhSg.woff2) format('woff2');
+            unicode-range: U+0302-0303, U+0305, U+0307-0308, U+0310, U+0312, U+0315, U+031A, U+0326-0327, U+032C, U+032F-0330, U+0332-0333, U+0338, U+033A, U+0346, U+034D, U+0391-03A1, U+03A3-03A9, U+03B1-03C9, U+03D1, U+03D5-03D6, U+03F0-03F1, U+03F4-03F5, U+2016-2017, U+2034-2038, U+203C, U+2040, U+2043, U+2047, U+2050, U+2057, U+205F, U+2070-2071, U+2074-208E, U+2090-209C, U+20D0-20DC, U+20E1, U+20E5-20EF, U+2100-2112, U+2114-2115, U+2117-2121, U+2123-214F, U+2190, U+2192, U+2194-21AE, U+21B0-21E5, U+21F1-21F2, U+21F4-2211, U+2213-2214, U+2216-22FF, U+2308-230B, U+2310, U+2319, U+231C-2321, U+2336-237A, U+237C, U+2395, U+239B-23B7, U+23D0, U+23DC-23E1, U+2474-2475, U+25AF, U+25B3, U+25B7, U+25BD, U+25C1, U+25CA, U+25CC, U+25FB, U+266D-266F, U+27C0-27FF, U+2900-2AFF, U+2B0E-2B11, U+2B30-2B4C, U+2BFE, U+3030, U+FF5B, U+FF5D, U+1D400-1D7FF, U+1EE00-1EEFF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: italic;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxijyogzv91QhV44Z_GQBHsGf5PuWEt-oWZnOk-ljWSpwaFB6rqcd6jvHiMYuic98DlM_uPhSg.woff2) format('woff2');
+            unicode-range: U+0300, U+0306-0308, U+0313, U+0483, U+20DB, U+25CC, U+10350-1037A;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: italic;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxijyogzv91QhV44Z_GQBHsGf5PuWEt-oWZnOk-ljWSpwaFB6rqcd6jvHiMYuic98DlO_uPhSg.woff2) format('woff2');
+            unicode-range: U+0001-000C, U+000E-001F, U+007F-009F, U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AD, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691, U+1F694, U+1F698, U+1F6AD, U+1F6B2, U+1F6B9-1F6BA, U+1F6BC, U+1F6C6-1F6CF, U+1F6D3-1F6D7, U+1F6E0-1F6EA, U+1F6F0-1F6F3;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: italic;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxijyogzv91QhV44Z_GQBHsGf5PuWEt-oWZnOk-ljWSpwaFB6rqcd6jvHiMYuic98Dma38bccwU.woff2) format('woff2');
+            unicode-range: U+2000-2001, U+2004-2008, U+200A, U+23B8-23BD, U+2500-259F;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: italic;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxijyogzv91QhV44Z_GQBHsGf5PuWEt-oWZnOk-ljWSpwaFB6rqcd6jvHiMYuic98DlT_uPhSg.woff2) format('woff2');
+            unicode-range: U+0303-0304, U+0307-0308, U+030A, U+0320, U+0323-0325, U+032D-032E, U+0330-0331, U+060C, U+061B-061C, U+061F, U+0621, U+0640, U+064B-0655, U+0660-066C, U+0670, U+0700-074F, U+0860-086A, U+1DF8, U+1DFA, U+200C-200F, U+25CC, U+2670-2671;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: italic;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxijyogzv91QhV44Z_GQBHsGf5PuWEt-oWZnOk-ljWSpwaFB6rqcd6jvHiMYuic98Dkv_uPhSg.woff2) format('woff2');
+            unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: italic;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxijyogzv91QhV44Z_GQBHsGf5PuWEt-oWZnOk-ljWSpwaFB6rqcd6jvHiMYuic98Dku_uPhSg.woff2) format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: italic;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxijyogzv91QhV44Z_GQBHsGf5PuWEt-oWZnOk-ljWSpwaFB6rqcd6jvHiMYuic98Dkg_uM.woff2) format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxihyogzv91QhV44Z_GQBHsGf5PuckJMZfIVTPZaiXEp_ht12EVEHsN1sCQNcmTl1gki5uc.woff2) format('woff2');
+            unicode-range: U+061F, U+0640, U+2015, U+201B, U+2020-2021, U+2030, U+204F, U+25CC, U+2E28-2E29, U+2E41, U+1E900-1E95F;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxihyogzv91QhV44Z_GQBHsGf5PuckJMZfIVTPZaiXEp_ht12EVEHsN1sCQNcmTlmwki5uc.woff2) format('woff2');
+            unicode-range: U+02C7, U+02D8-02D9, U+02DB, U+0307, U+1400-167F, U+18B0-18F5, U+25CC, U+11AB0-11ABF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxihyogzv91QhV44Z_GQBHsGf5PuckJMZfIVTPZaiXEp_ht12EVEHsN1sCQNcmTlpwki5uc.woff2) format('woff2');
+            unicode-range: U+0300-0302, U+0304, U+030B-030C, U+0323-0324, U+0330-0331, U+13A0-13FF, U+AB70-ABBF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxihyogzv91QhV44Z_GQBHsGf5PuckJMZfIVTPZaiXEp_ht12EVEHsN1sCQNcmTlyAki5uc.woff2) format('woff2');
+            unicode-range: U+0302-0303, U+0305, U+0307-0308, U+0310, U+0312, U+0315, U+031A, U+0326-0327, U+032C, U+032F-0330, U+0332-0333, U+0338, U+033A, U+0346, U+034D, U+0391-03A1, U+03A3-03A9, U+03B1-03C9, U+03D1, U+03D5-03D6, U+03F0-03F1, U+03F4-03F5, U+2016-2017, U+2034-2038, U+203C, U+2040, U+2043, U+2047, U+2050, U+2057, U+205F, U+2070-2071, U+2074-208E, U+2090-209C, U+20D0-20DC, U+20E1, U+20E5-20EF, U+2100-2112, U+2114-2115, U+2117-2121, U+2123-214F, U+2190, U+2192, U+2194-21AE, U+21B0-21E5, U+21F1-21F2, U+21F4-2211, U+2213-2214, U+2216-22FF, U+2308-230B, U+2310, U+2319, U+231C-2321, U+2336-237A, U+237C, U+2395, U+239B-23B7, U+23D0, U+23DC-23E1, U+2474-2475, U+25AF, U+25B3, U+25B7, U+25BD, U+25C1, U+25CA, U+25CC, U+25FB, U+266D-266F, U+27C0-27FF, U+2900-2AFF, U+2B0E-2B11, U+2B30-2B4C, U+2BFE, U+3030, U+FF5B, U+FF5D, U+1D400-1D7FF, U+1EE00-1EEFF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxihyogzv91QhV44Z_GQBHsGf5PuckJMZfIVTPZaiXEp_ht12EVEHsN1sCQNcmTl2Aki5uc.woff2) format('woff2');
+            unicode-range: U+0300, U+0306-0308, U+0313, U+0483, U+20DB, U+25CC, U+10350-1037A;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxihyogzv91QhV44Z_GQBHsGf5PuckJMZfIVTPZaiXEp_ht12EVEHsN1sCQNcmTl2gki5uc.woff2) format('woff2');
+            unicode-range: U+0001-000C, U+000E-001F, U+007F-009F, U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AD, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxihyogzv91QhV44Z_GQBHsGf5PuckJMZfIVTPZaiXEp_ht12EVEHsN1sCQNcmTlDigH297Y.woff2) format('woff2');
+            unicode-range: U+2000-2001, U+2004-2008, U+200A, U+23B8-23BD, U+2500-259F;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxihyogzv91QhV44Z_GQBHsGf5PuckJMZfIVTPZaiXEp_ht12EVEHsN1sCQNcmTlxwki5uc.woff2) format('woff2');
+            unicode-range: U+0303-0304, U+0307-0308, U+030A, U+0320, U+0323-0325, U+032D-032E, U+0330-0331, U+060C, U+061B-061C, U+061F, U+0621, U+0640, U+064B-0655, U+0660-066C, U+0670, U+0700-074F, U+0860-086A, U+1DF8, U+1DFA, U+200C-200F, U+25CC, U+2670-2671;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxihyogzv91QhV44Z_GQBHsGf5PuckJMZfIVTPZaiXEp_ht12EVEHsN1sCQNcmTluwki5uc.woff2) format('woff2');
+            unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxihyogzv91QhV44Z_GQBHsGf5PuckJMZfIVTPZaiXEp_ht12EVEHsN1sCQNcmTlugki5uc.woff2) format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+
+        @font-face {
+            font-family: 'Google Sans Code';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/googlesanscode/v17/pxihyogzv91QhV44Z_GQBHsGf5PuckJMZfIVTPZaiXEp_ht12EVEHsN1sCQNcmTltAki.woff2) format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+    </style>
+
+    <!-- Google Symbols Font Face -->
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Google+Symbols:opsz,wght,FILL,GRAD,ROND@40..48,300,0..1,0,50&amp;display=block">
+    <style>
+        @font-face {
+            font-family: 'Google Symbols';
+            font-style: normal;
+            font-weight: 300;
+            font-display: block;
+            src: url(https://fonts.gstatic.com/s/googlesymbols/v438/HhyqU5Ak9u-oMExPeInvcuEmPosC9zS3FYkFU68cPrjdKM1XMoDZlWmzc3IiWvF1R4oJxQmdBnupCeyl.woff2) format('woff2');
+        }
+
+        .google-symbols {
+            font-family: 'Google Symbols';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+
+    <!-- Lucide Icons CDN (pinned version for consistent + faster loading) -->
+    <script src="https://unpkg.com/lucide@0.460.0" defer></script>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="landing-page-body">
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function glueCookieNotificationBarLoaded() {
+            // GTM BOOTSTRAP CODE
+            (function (w, d, s, l, i) {
+                w[l] = w[l] || [];
+                w[l].push({
+                    'gtm.start': new Date().getTime(),
+                    event: 'gtm.js'
+                });
+                var f = d.getElementsByTagName(s)[0]
+                    , j = d.createElement(s)
+                    , dl = l != 'dataLayer' ? '&l=' + l : '';
+                j.async = true;
+                j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+                f.parentNode.insertBefore(j, f);
+            }
+            )(window, document, 'script', 'dataLayer', 'GTM-M4N2ZKXQ');
+        }
+    </script>
+    <!-- Apple iPhone Inspired Cursive Welcome Splash Screen -->
+    <div id="iphone-splash-screen">
+        <div class="splash-content">
+            <svg class="hello-svg" viewBox="-109.06069946289062 -9 2504.0606994628906 746.156005859375">
+                <defs>
+                    <linearGradient id="hello-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#6ee7b7" />
+                        <stop offset="35%" stop-color="#34d399" />
+                        <stop offset="70%" stop-color="#10b981" />
+                        <stop offset="100%" stop-color="#047857" />
+                    </linearGradient>
+                </defs>
+                <g transform="scale(1, -1) translate(0, -728.156005859375)">
+                    <path class="hello-path path-1"
+                        d="M-109.06069946289062,95.92639923095703 C1.9544999599456787,157.6403045654297 103.11389923095703,236.9969940185547 217.881103515625,372.07550048828125 C296,464.2846984863281 337.9999084472656,569.5725708007812 340,642.1939697265625 C341,696.1920166015625 314.6702880859375,737.156005859375 266,737.156005859375 C212,737.156005859375 178,696.1920166015625 157,602.1610107421875 C134,498.82000732421875 117,380.239990234375 74,0"
+                        fill="none" stroke="url(#hello-grad)" stroke-width="50" stroke-linecap="round" />
+                    <path class="hello-path path-2"
+                        d="M78.21453094482422,37.160953521728516 C100.22924041748047,230.68260192871094 184,372 291,372 C355,372 395.6745910644531,321 384.1253967285156,248 C377.6238098144531,205 370.0873107910156,161 361.3063049316406,110 C351.0714111328125,46 380.3254089355469,-4 468.96173095703125,-4 C598.2246704101562,-4 739.2435302734375,67.83381652832031 811.4124145507812,179.0941619873047 C836,217 846,251 847,284 C848,344 814,389 754,389 C678,389 620,303 620,193 C620,75 684,-8 819.9180908203125,-8 C1004.7244873046875,-8 1209.4246826171875,213.84754943847656 1303.4808349609375,461.42327880859375 C1330.037353515625,531.3258056640625 1340,596.2349243164062 1340,641.593994140625 C1340,695.3764038085938 1275,736.673583984375 1275,736.673583984375 C1228,736.673583984375 1197,700.1784057617188 1169,642.5543823242188 C1136.1939697265625,575.7216186523438 1111.927734375,479.32598876953125 1102,370.3599853515625 C1077,96.94000244140625 1133,-4 1266.152099609375,-4 C1427.6083984375,-4 1607.1151123046875,220.92921447753906 1698.771728515625,462.18878173828125 C1725.037353515625,531.3258056640625 1735,596.2349243164062 1735,641.593994140625 C1735,695.3764038085938 1718,736.673583984375 1670,736.673583984375 C1623,736.673583984375 1592,700.1784057617188 1564,642.5543823242188 C1531.1939697265625,575.7216186523438 1506.927734375,479.32598876953125 1497,370.3599853515625 C1472,96.94000244140625 1528,-4 1646.906005859375,-4 C1765.623779296875,-4 1830.114990234375,99.48485565185547 1868.77880859375,209.3712158203125 C1907,318 1954,385 2052,385 C2133,385 2197,325 2197,212 C2197,87 2115.90087890625,-7 2013.41845703125,-8 C1923.234130859375,-9 1864,64 1870,174 C1877,296 1951,385 2048,385 C2104,385 2151.03564453125,360.1071472167969 2188,333 C2288.21435546875,259.8928527832031 2365.4287109375,305.0714416503906 2395,377.3571472167969"
+                        fill="none" stroke="url(#hello-grad)" stroke-width="50" stroke-linecap="round" />
+                </g>
+            </svg>
+            <div class="splash-subtitle">Xin chào</div>
+        </div>
+    </div>
+    <!-- Background elements for ambient glow -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- MAIN LANDING WRAPPER -->
+    <div class="landing-wrapper container">
+
+        <!-- TOP NAVIGATION HEADER -->
+        <header class="landing-header">
+            <div class="landing-logo">
+                <div class="logo-icon-sm has-image">
+                    <img src="images/logoapp.png" alt="SpendMindAI Logo">
+                </div>
+                <span>SpendMindAI</span>
+            </div>
+
+            <!-- Desktop Nav Links -->
+            <nav class="landing-nav">
+                <a href="#" class="nav-link">Tính năng <i data-lucide="chevron-down"></i></a>
+                <a href="#" class="nav-link">Giải pháp <i data-lucide="chevron-down"></i></a>
+                <a href="#" class="nav-link">Bảng giá</a>
+                <a href="#" class="nav-link">Blog</a>
+                <a href="#" class="nav-link">Tài nguyên <i data-lucide="chevron-down"></i></a>
+            </nav>
+
+            <!-- Desktop Nav Actions removed per request -->
+            <!-- Hamburger Button for Mobile -->
+            <button id="hamburger-btn" class="hamburger-btn" aria-label="Toggle Menu">
+                <i data-lucide="menu" id="hamburger-icon"></i>
+            </button>
+
+            <!-- Mobile Navigation Overlay Dropdown -->
+            <div id="mobile-nav-dropdown" class="mobile-nav-dropdown">
+                <a href="#" class="mobile-menu-link">
+                    <i data-lucide="sparkles"></i> Tính năng
+                </a>
+                <a href="#" class="mobile-menu-link">
+                    <i data-lucide="lightbulb"></i> Giải pháp
+                </a>
+                <a href="#" class="mobile-menu-link">
+                    <i data-lucide="tag"></i> Bảng giá
+                </a>
+                <a href="#" class="mobile-menu-link">
+                    <i data-lucide="book-open"></i> Blog
+                </a>
+                <a href="#" class="mobile-menu-link">
+                    <i data-lucide="folder-open"></i> Tài nguyên
+                </a>
+                <hr class="mobile-menu-divider">
+                <a href="login.html" class="mobile-menu-link highlight">
+                    <i data-lucide="log-in"></i> Đăng nhập
+                </a>
+                <a href="register.html" class="btn btn-primary btn-mobile-nav">
+                    <i data-lucide="user-plus"></i> Bắt đầu ngay
+                </a>
+            </div>
+        </header>
+
+        <!-- CENTERED HERO AREA -->
+        <main class="landing-hero">
+
+            <!-- Huge Typewriter Title -->
+            <h1 class="hero-title">
+                <span id="typewriter-target"></span>
+            </h1>
+
+            <!-- Centered Action Buttons -->
+            <div class="hero-actions">
+                <a href="login.html" class="btn btn-primary btn-hero" style="border-radius: 50px;">
+                    <i data-lucide="log-in"></i> Đăng nhập ngay
+                </a>
+                <a href="register.html" class="btn btn-secondary btn-hero" style="border-radius: 50px;">
+                    <i data-lucide="user-plus"></i> Đăng ký tài khoản
+                </a>
+            </div>
+
+        </main>
+
+        <!-- SCROLL SECTIONS WITH ILLUSTRATIONS -->
+        <div class="landing-scroll-container">
+            <!-- Section 1: Cashflow -->
+            <section class="landing-scroll-section" id="section-cashflow">
+                <div class="section-container">
+                    <div class="section-content">
+                        <h2 class="section-heading">Tại đây bạn có thể kiểm soát dòng tiền của mình mỗi ngày</h2>
+                        <p class="section-desc scroll-typewriter-target"
+                            data-text="Ghi chép giao dịch nhanh chóng, phân loại chi phí thông minh và xem báo cáo tổng quan dòng tiền thu chi tức thời.">
+                        </p>
+                    </div>
+                    <div class="section-image scroll-fade-in">
+                        <div class="mockup-container">
+                            <img src="images/cashflow_mockup.webp" alt="Kiểm soát dòng tiền" class="mockup-img">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Budget -->
+            <section class="landing-scroll-section" id="section-budget">
+                <div class="section-container">
+                    <div class="section-content">
+                        <h2 class="section-heading">Thiết lập ngân sách và cảnh báo vượt hạn mức chi tiêu</h2>
+                        <p class="section-desc scroll-typewriter-target"
+                            data-text="Lên kế hoạch ngân sách chi tiết cho từng hạng mục chi tiêu và nhận cảnh báo tự động khi gần chạm ngưỡng để tránh chi tiêu quá đà.">
+                        </p>
+                    </div>
+                    <div class="section-image scroll-fade-in">
+                        <div class="mockup-container">
+                            <img src="images/budget_mockup.webp" alt="Thiết lập ngân sách" class="mockup-img">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: Charts -->
+            <section class="landing-scroll-section" id="section-charts">
+                <div class="section-container">
+                    <div class="section-content">
+                        <h2 class="section-heading">Trực quan hóa tài chính cá nhân bằng biểu đồ</h2>
+                        <p class="section-desc scroll-typewriter-target"
+                            data-text="Theo dõi xu hướng chi tiêu, so sánh tỷ lệ các khoản chi qua các biểu đồ tròn, biểu đồ cột tương tác màu sắc hài hòa.">
+                        </p>
+                    </div>
+                    <div class="section-image scroll-fade-in">
+                        <div class="mockup-container">
+                            <img src="images/charts_mockup.webp" alt="Trực quan hóa biểu đồ" class="mockup-img">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 4: Chatbot -->
+            <section class="landing-scroll-section" id="section-chatbot">
+                <div class="section-container">
+                    <div class="section-content">
+                        <h2 class="section-heading">Cùng với trợ lý ảo thông minh cá nhân hóa theo thói quen chi tiêu
+                            của bạn</h2>
+                        <p class="section-desc scroll-typewriter-target"
+                            data-text="Trò chuyện trực tiếp với trợ lý ảo AI để phân tích ví tiền, so sánh chi tiêu giữa các ngày tháng, năm trước năm sau nhanh chóng.">
+                        </p>
+                    </div>
+                    <div class="section-image scroll-fade-in">
+                        <div class="mockup-container">
+                            <img src="images/chatbot_mockup.webp" alt="Trợ lý ảo AI" class="mockup-img">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 5: Contact Information -->
+            <section class="landing-scroll-section final-cta-section" id="section-cta">
+                <div class="section-container final-cta-container">
+                    <div class="section-content text-center">
+                        <h2 class="section-heading centered cta-heading-split">
+                            <span class="cta-heading-line1">Hãy bắt đầu hành trình quản lý tài chính thông minh
+                                cùng</span>
+                            <span class="cta-heading-brand">SpendMindAI</span>
+                        </h2>
+                        <div class="contact-info-container scroll-fade-in">
+                            <div class="contact-minimal-links">
+                                <a href="mailto:huynhbathanh21102005@gmail.com" class="contact-link-item">
+                                    <i data-lucide="mail"></i>
+                                    <span>huynhbathanh21102005@gmail.com</span>
+                                </a>
+                                <span class="contact-link-divider"></span>
+                                <a href="https://huynhbathanh.site" target="_blank" rel="noopener"
+                                    class="contact-link-item">
+                                    <i data-lucide="globe"></i>
+                                    <span>huynhbathanh.site</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="landing-footer">
+            <p class="footer-copyright-text">&copy; 2026 SpendMindAI. Thuộc quyền sở hữu của Huỳnh Bá Thành.</p>
+        </footer>
+
+    </div>
+
+    <!-- Script index -->
+    <script src="js/index.js"></script>
+    <!-- Cookie Notification Bar -->
+    <script src="https://www.gstatic.com/glue/cookienotificationbar/cookienotificationbar.min.js"
+        data-glue-cookie-notification-bar-category="2A" data-glue-cookie-notification-bar-language=""
+        data-glue-cookie-notification-bar-site-id=""></script>
+</body>
+
+</html>

@@ -1,0 +1,50 @@
+# Configurations and Secrets
+.env
+.env.local
+.env.*.local
+
+# Cloudflare Tunnel temporary link and executable
+cloudflare_link.txt
+cloudflared
+cloudflared.exe
+
+# Database files
+database.sql
+*.sql
+*.sqlite
+*.db
+
+# Logs and Debug
+*.log
+email_outbox.log
+
+# CSS and File Backups
+styles.backup_*
+*.bak
+*.tmp
+*.temp
+~$*.docx
+~$*.xlsx
+
+# Dependency and System Files
+node_modules/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
+# Output and Archives
+*.zip
+*.tar.gz
+*.rar

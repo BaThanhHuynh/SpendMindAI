@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb:10.6
+    container_name: quanlychitieu-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: quan_ly_chi_tieu
+    ports:
+      - "3307:3306" # Tránh trùng cổng 3306 của XAMPP local
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database.sql:/docker-entrypoint-initdb.d/database.sql # Tự động tạo cấu trúc bảng nếu db trống
+
+  web:
+    build: .
+    container_name: quanlychitieu-web
+    restart: always
+    ports:
+      - "8081:80" # Đồng bộ cổng 8081 với cấu hình XAMPP local
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASS: secret
+      DB_NAME: quan_ly_chi_tieu
+    depends_on:
+      - db
+    volumes:
+      - .:/var/www/html # Live reload code khi thay đổi ở máy local
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: quanlychitieu-tunnel
+    restart: always
+    command: tunnel --no-autoupdate --url http://web
+    depends_on:
+      - web
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: quanlychitieu-pma
+    restart: always
+    ports:
+      - "8082:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: secret
+    depends_on:
+      - db
+
+volumes:
+  db_data:
+
