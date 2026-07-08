@@ -48,3 +48,8 @@ ENV/
 *.zip
 *.tar.gz
 *.rar
+
+# Project Reports
+BaoCaoDoAn.docx
+BaoCaoDoAn.md
+BaoCaoDoAn_HoanThien.docx
