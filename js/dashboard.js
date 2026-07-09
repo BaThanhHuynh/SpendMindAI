@@ -74,7 +74,26 @@ function checkAuthSession() {
             if (data.authenticated) {
                 // Remove hidden class and display dashboard
                 document.getElementById("app-dashboard").classList.remove("hidden");
-                document.getElementById("user-display-name").textContent = data.username;
+                let friendlyName = (data.username || 'bạn').trim();
+                if (friendlyName.includes("@")) {
+                    friendlyName = friendlyName.split("@")[0];
+                }
+                
+                const isRawUsername = /^[a-z0-9._-]+$/i.test(friendlyName);
+                if (isRawUsername) {
+                    friendlyName = friendlyName.replace(/\d+$/, '');
+                    friendlyName = friendlyName.replace(/[._-]/g, ' ');
+                    friendlyName = friendlyName.split(' ')
+                        .filter(w => w.length > 0)
+                        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                        .join(' ');
+                }
+                
+                if (friendlyName.toLowerCase() === "huynhbathanh" || friendlyName.toLowerCase() === "huynh bathanh") {
+                    friendlyName = "Bá Thành";
+                }
+                
+                document.getElementById("user-display-name").textContent = friendlyName;
                 
                 // Update avatar image if available
                 updateAvatarUI(data.avatar_url);

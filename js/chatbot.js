@@ -95,19 +95,40 @@ function initChatbot() {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
+    function getFriendlyName(raw) {
+        let name = (raw || 'bạn').trim();
+        if (name.includes("@")) {
+            name = name.split("@")[0];
+        }
+        
+        // If it's a raw username (contains only lowercase alpha, numbers, dots, underscores, dashes)
+        const isRawUsername = /^[a-z0-9._-]+$/i.test(name);
+        if (isRawUsername) {
+            // Strip trailing digits
+            name = name.replace(/\d+$/, '');
+            // Replace separators with spaces
+            name = name.replace(/[._-]/g, ' ');
+            // Capitalize words
+            name = name.split(' ')
+                .filter(w => w.length > 0)
+                .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(' ');
+        }
+        
+        // Fallback translation for main user
+        if (name.toLowerCase() === "huynhbathanh" || name.toLowerCase() === "huynh bathanh") {
+            return "Bá Thành";
+        }
+        return name;
+    }
+
     function sendWelcomeMessage() {
-        const displayName = (document.getElementById("user-display-name").textContent || 'bạn').trim();
-        let firstName = displayName;
-        if (displayName.includes("@")) {
-            firstName = displayName.split("@")[0];
-        }
-        if (firstName.toLowerCase() === "huynhbathanh21102005" || firstName.toLowerCase() === "huynhbathanh") {
-            firstName = "Bá Thành";
-        }
+        const displayName = document.getElementById("user-display-name").textContent;
+        const cleanName = getFriendlyName(displayName);
 
         const welcomeHtml = `
             <div class="chatbot-welcome-intro">
-                <h2>Xin chào, ${firstName}</h2>
+                <h2>Xin chào, ${cleanName}</h2>
                 <p>Hỏi tôi về số dư, chi tiêu hoặc phân tích tài chính cá nhân của bạn.</p>
             </div>
         `;
@@ -144,29 +165,109 @@ function initChatbot() {
 
         const lines = html.split('\n');
         let inList = false;
+        let inTable = false;
         let resultLines = [];
 
-        lines.forEach(line => {
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
             const trimmed = line.trim();
+
+            // Handle lists
             if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+                if (inTable) {
+                    resultLines.push('</tbody></table></div>');
+                    inTable = false;
+                }
                 if (!inList) {
                     resultLines.push('<ul style="margin: 4px 0 4px 20px; padding-left: 0; list-style-type: disc;">');
                     inList = true;
                 }
                 resultLines.push(`<li style="margin-bottom: 2px;">${trimmed.substring(2)}</li>`);
+                continue;
             } else {
                 if (inList) {
                     resultLines.push('</ul>');
                     inList = false;
                 }
-                resultLines.push(line);
             }
-        });
+
+            // Handle markdown tables
+            if (trimmed.startsWith('|')) {
+                if (trimmed.replace(/[\s|:\-]/g, '') === '') {
+                    // Skip separator row
+                    continue;
+                }
+
+                const cells = trimmed.split('|').map(c => c.trim()).filter((c, idx, arr) => {
+                    if (idx === 0 && c === '') return false;
+                    if (idx === arr.length - 1 && c === '') return false;
+                    return true;
+                });
+
+                if (!inTable) {
+                    // Verify if it's a real table by checking if the next line is a separator
+                    let isRealTable = false;
+                    if (i + 1 < lines.length) {
+                        const nextTrimmed = lines[i+1].trim();
+                        if (nextTrimmed.startsWith('|') && nextTrimmed.replace(/[\s|:\-]/g, '') === '') {
+                            isRealTable = true;
+                        }
+                    }
+
+                    if (isRealTable) {
+                        resultLines.push('<div style="overflow-x:auto; margin: 8px 0;"><table style="width:100%; border-collapse:collapse; font-size:0.75rem; text-align:left; background:var(--surface-raised, rgba(255,255,255,0.02)); border-radius:6px; overflow:hidden;"><thead><tr style="border-bottom:1px solid var(--calendar-border, rgba(255,255,255,0.08)); background:rgba(255,255,255,0.03);">');
+                        cells.forEach(cell => {
+                            resultLines.push(`<th style="padding: 6px 8px; font-weight: 600; color: var(--text-primary);">${cell}</th>`);
+                        });
+                        resultLines.push('</tr></thead><tbody>');
+                        inTable = true;
+                        continue;
+                    }
+                }
+
+                if (inTable) {
+                    resultLines.push('<tr style="border-bottom:1px solid var(--calendar-border, rgba(255,255,255,0.04));">');
+                    cells.forEach(cell => {
+                        resultLines.push(`<td style="padding: 6px 8px; color: var(--text-secondary);">${cell}</td>`);
+                    });
+                    resultLines.push('</tr>');
+                    continue;
+                }
+            } else {
+                if (inTable) {
+                    resultLines.push('</tbody></table></div>');
+                    inTable = false;
+                }
+            }
+
+            resultLines.push(line);
+        }
+
         if (inList) {
             resultLines.push('</ul>');
         }
+        if (inTable) {
+            resultLines.push('</tbody></table></div>');
+        }
 
-        return resultLines.join('\n').replace(/\n/g, '<br>');
+        // Output lines: append <br> selectively to non-block elements to prevent double blank spaces
+        let processedLines = [];
+        resultLines.forEach(line => {
+            const trimmed = line.trim();
+            const isHtmlBlock = trimmed.startsWith('<div') || trimmed.startsWith('<table') || 
+                                trimmed.startsWith('<thead') || trimmed.startsWith('<tbody') || 
+                                trimmed.startsWith('<tr') || trimmed.startsWith('<th') || 
+                                trimmed.startsWith('<td') || trimmed.startsWith('<ul') || 
+                                trimmed.startsWith('<li') || trimmed.startsWith('</') || 
+                                trimmed === '';
+            if (isHtmlBlock) {
+                processedLines.push(line);
+            } else {
+                processedLines.push(line + '<br>');
+            }
+        });
+
+        return processedLines.join('\n');
     }
 
     let cachedGeminiKey = null;
@@ -225,11 +326,12 @@ function initChatbot() {
                 });
             }
 
-            const username = document.getElementById("user-display-name").textContent || 'bạn';
+            const rawUsername = document.getElementById("user-display-name").textContent;
+            const friendlyName = getFriendlyName(rawUsername);
             const now = new Date();
             const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
-            let systemPrompt = `Bạn là trợ lý tài chính ảo SpendMindAI thông thái, thân thiện và nhiệt tình của người dùng tên là '${username}'.\n\n`;
+            let systemPrompt = `Bạn là trợ lý tài chính ảo SpendMindAI thông thái, thân thiện và nhiệt tình của người dùng tên là '${friendlyName}'.\n\n`;
             systemPrompt += "Dưới đây là thông tin tài chính hiện tại của họ lấy từ cơ sở dữ liệu hệ thống:\n\n";
             systemPrompt += "### [DANH SÁCH NGÂN SÁCH/HẠN MỨC CHI TIÊU HÀNG THÁNG]\n" + budgetsText + "\n";
             systemPrompt += "### [LỊCH SỬ 60 GIAO DỊCH GẦN NHẤT]\n" + transactionsText + "\n";
