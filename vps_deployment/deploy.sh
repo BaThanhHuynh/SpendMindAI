@@ -43,6 +43,23 @@ sudo apt install -y php${PHP_VERSION}-fpm php${PHP_VERSION}-mysql php${PHP_VERSI
 sudo systemctl enable php${PHP_VERSION}-fpm
 sudo systemctl start php${PHP_VERSION}-fpm
 
+# Tối ưu hóa PHP-FPM pool để tối đa hiệu năng chịu tải trên cấu hình VPS thấp (1GB RAM)
+PHP_FPM_CONF="/etc/php/${PHP_VERSION}/fpm/pool.d/www.conf"
+if [ -f "$PHP_FPM_CONF" ]; then
+    echo -e "${YELLOW}Tối ưu hóa cấu hình PHP-FPM pool tại ${PHP_FPM_CONF}...${NC}"
+    sudo sed -i 's/^pm =.*/pm = dynamic/' $PHP_FPM_CONF
+    sudo sed -i 's/^pm.max_children =.*/pm.max_children = 30/' $PHP_FPM_CONF
+    sudo sed -i 's/^pm.start_servers =.*/pm.start_servers = 6/' $PHP_FPM_CONF
+    sudo sed -i 's/^pm.min_spare_servers =.*/pm.min_spare_servers = 4/' $PHP_FPM_CONF
+    sudo sed -i 's/^pm.max_spare_servers =.*/pm.max_spare_servers = 12/' $PHP_FPM_CONF
+    if grep -q "^;pm.max_requests" $PHP_FPM_CONF; then
+        sudo sed -i 's/^;pm.max_requests =.*/pm.max_requests = 1000/' $PHP_FPM_CONF
+    elif ! grep -q "^pm.max_requests" $PHP_FPM_CONF; then
+        sudo bash -c "echo 'pm.max_requests = 1000' >> $PHP_FPM_CONF"
+    fi
+    sudo systemctl restart php${PHP_VERSION}-fpm
+fi
+
 # 5. Cài đặt MySQL Server
 echo -e "${YELLOW}5. Cài đặt MySQL Database Server...${NC}"
 sudo apt install -y mysql-server
@@ -56,6 +73,18 @@ sudo mysql -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY 
 sudo mysql -e "ALTER USER '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASS}';"
 sudo mysql -e "GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';"
 sudo mysql -e "FLUSH PRIVILEGES;"
+
+# Tạo chỉ mục tối ưu hiệu năng truy vấn cho bảng giao dịch nếu bảng đã tồn tại và chưa có chỉ mục này
+TABLE_EXISTS=$(sudo mysql -N -B -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '${DB_NAME}' AND table_name = 'transactions';")
+if [ "$TABLE_EXISTS" -eq 1 ]; then
+    INDEX_EXISTS=$(sudo mysql -N -B -e "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = '${DB_NAME}' AND table_name = 'transactions' AND index_name = 'idx_user_date_id';")
+    if [ "$INDEX_EXISTS" -eq 0 ]; then
+        echo -e "${YELLOW}Đang thêm chỉ mục tối ưu truy vấn idx_user_date_id...${NC}"
+        sudo mysql -e "USE \`${DB_NAME}\`; ALTER TABLE transactions ADD INDEX idx_user_date_id (user_id, date, id);"
+    else
+        echo -e "${GREEN}Chỉ mục idx_user_date_id đã tồn tại, bỏ qua.${NC}"
+    fi
+fi
 
 # 7. Thiết lập thư mục Web và sao chép mã nguồn
 echo -e "${YELLOW}7. Tạo thư mục chứa mã nguồn tại /var/www/QuanLyChiTieu...${NC}"
@@ -78,6 +107,14 @@ server {
     index index.html index.php;
 
     charset utf-8;
+
+    # Bật Gzip nén dữ liệu truyền tải (Tối ưu băng thông & tốc độ load)
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 5;
+    gzip_min_length 256;
+    gzip_types text/plain text/css text/xml application/json application/javascript application/xml+rss application/atom+xml image/svg+xml;
 
     # Bảo mật: Không cho phép truy cập file ẩn .env, .git...
     location ~ /\.(?!well-known).* {
@@ -103,14 +140,13 @@ server {
         add_header Cache-Control "public, no-transform";
     }
 
-    # Không cache CSS và JS để luôn tải phiên bản mới nhất
+    # Cấu hình cache ngắn hạn cho CSS và JS (Xác thực qua ETag)
     location ~* \.(js|css)$ {
-        add_header Cache-Control "no-cache, no-store, must-revalidate";
-        add_header Pragma "no-cache";
-        expires 0;
+        expires 7d;
+        add_header Cache-Control "public, must-revalidate";
     }
 
-    # Không cache các file HTML để tránh hiển thị nội dung cũ
+    # Không cache các file HTML để luôn tải nội dung mới nhất
     location ~* \.html$ {
         add_header Cache-Control "no-cache, no-store, must-revalidate";
         add_header Pragma "no-cache";
