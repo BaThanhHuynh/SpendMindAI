@@ -116,11 +116,18 @@ function sendSystemEmail($to, $subject, $body)
         fwrite($socket, "DATA\r\n");
         readSmtpResponse($socket);
 
+        $messageId = "<" . bin2hex(random_bytes(16)) . "@" . (getenv('SMTP_HOST') ?: 'smtp.gmail.com') . ">";
         $headers = "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
         $headers .= "From: =?UTF-8?B?" . base64_encode($fromName) . "?= <$from>\r\n";
         $headers .= "To: <$to>\r\n";
         $headers .= "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=\r\n";
+        $headers .= "Date: " . date('r') . "\r\n";
+        $headers .= "Message-ID: " . $messageId . "\r\n";
+        $headers .= "X-Priority: 1\r\n";
+        $headers .= "Priority: Urgent\r\n";
+        $headers .= "Importance: High\r\n";
+        $headers .= "Precedence: personal\r\n";
 
         fwrite($socket, $headers . "\r\n" . $body . "\r\n.\r\n");
         $dataResponse = readSmtpResponse($socket);

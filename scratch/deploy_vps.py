@@ -224,11 +224,11 @@ GEMINI_API_KEY={local_gemini_key}
         execute_sudo_cmd(ssh, "touch /var/log/quan_ly_chi_tieu_cron.log", VM_PASS)
         execute_sudo_cmd(ssh, "chown www-data:www-data /var/log/quan_ly_chi_tieu_cron.log", VM_PASS)
         
-        # Create cron definition file in /etc/cron.d/ running as www-data
-        cron_def = "*/5 * * * * www-data php /var/www/QuanLyChiTieu/cron.php > /var/log/quan_ly_chi_tieu_cron.log 2>&1\\n"
+        # Create cron definition file in /etc/cron.d/ running as www-data (running every minute)
+        cron_def = "* * * * * www-data php /var/www/QuanLyChiTieu/cron.php > /var/log/quan_ly_chi_tieu_cron.log 2>&1\\n"
         execute_sudo_cmd(ssh, f'bash -c "echo -e \'{cron_def}\' > /etc/cron.d/quan_ly_chi_tieu"', VM_PASS)
         execute_sudo_cmd(ssh, "systemctl restart cron", VM_PASS)
-        print("Cron job configured successfully (running every 5 minutes).")
+        print("Cron job configured successfully (running every 1 minute).")
         
         # Step 9: Install Certbot & Attempt SSL config
         print_banner("CONFIGURING LET'S ENCRYPT SSL")

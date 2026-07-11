@@ -50,7 +50,7 @@ if ($action === 'save_notification_settings' && $method === 'POST') {
             exit();
         }
 
-        $stmt = $pdo->prepare("UPDATE users SET email = :email, reminder_time = :rtime, email_notifications = :enotif WHERE id = :id");
+        $stmt = $pdo->prepare("UPDATE users SET email = :email, reminder_time = :rtime, email_notifications = :enotif, last_reminder_sent = NULL WHERE id = :id");
         $stmt->execute([
             ':email' => $email,
             ':rtime' => $reminderTime,
