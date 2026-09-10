@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+local_dev_data.json
 
 # Cloudflare Tunnel temporary link and executable
 cloudflare_link.txt
