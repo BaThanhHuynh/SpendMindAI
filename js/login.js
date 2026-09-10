@@ -49,6 +49,15 @@ function setupGoogleTokenClient(clientId) {
                     } else {
                         showToast("Không nhận được Access Token từ Google.", "error");
                     }
+                },
+                error_callback: (error) => {
+                    console.warn("Google OAuth Error Callback:", error);
+                    if (error && error.type === 'popup_failed_to_open') {
+                        showToast("Trình duyệt đang chặn cửa sổ bật lên (Pop-up). Vui lòng bấm vào biểu tượng 🚫 ở thanh địa chỉ URL để Cho phép pop-up.", "warning");
+                        if (typeof triggerGoogleSimulatedModalDirectly === 'function') {
+                            triggerGoogleSimulatedModalDirectly();
+                        }
+                    }
                 }
             });
         } catch (e) {
@@ -154,25 +163,31 @@ function triggerGoogleAuthSimulated() {
             console.warn("Lỗi khởi tạo nhanh Google Token Client:", e);
         }
     }
+    triggerGoogleSimulatedModalDirectly();
+}
+
+function triggerGoogleSimulatedModalDirectly() {
+    const rememberChecked = document.getElementById("login-remember") ? document.getElementById("login-remember").checked : false;
     const modal = document.getElementById("google-sim-modal");
+    if (!modal) return;
     const emailInput = document.getElementById("google-sim-email");
     const emailStep = document.getElementById("google-email-step");
     const chooserStep = document.getElementById("google-chooser-step");
     const loadingStep = document.getElementById("google-loading-step");
     
     // Reset state
-    emailInput.value = "";
-    emailStep.classList.add("hidden");
-    chooserStep.classList.add("hidden");
-    loadingStep.classList.add("hidden");
+    if (emailInput) emailInput.value = "";
+    if (emailStep) emailStep.classList.add("hidden");
+    if (chooserStep) chooserStep.classList.add("hidden");
+    if (loadingStep) loadingStep.classList.add("hidden");
     modal.classList.remove("hidden");
     
     const accounts = getSavedGoogleAccounts();
     
     const showEmailStep = () => {
-        chooserStep.classList.add("hidden");
-        emailStep.classList.remove("hidden");
-        emailInput.focus();
+        if (chooserStep) chooserStep.classList.add("hidden");
+        if (emailStep) emailStep.classList.remove("hidden");
+        if (emailInput) emailInput.focus();
     };
     
     const startSimulatedAuth = (email, googleId) => {
