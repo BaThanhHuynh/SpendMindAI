@@ -45,11 +45,11 @@ if (in_array($action, ['get_notification_settings', 'save_notification_settings'
 
 // 4. Route Chatbot Actions (Gemini API LLM)
 if ($action === 'get_gemini_key') {
-    $geminiApiKey = getenv('GEMINI_API_KEY');
+    $geminiApiKey = function_exists('getEnvVar') ? getEnvVar('GEMINI_API_KEY') : getenv('GEMINI_API_KEY');
     echo json_encode([
         "success" => !empty($geminiApiKey),
         "key" => $geminiApiKey,
-        "message" => empty($geminiApiKey) ? "GEMINI_API_KEY chưa được cấu hình trong file .env" : ""
+        "message" => empty($geminiApiKey) ? "GEMINI_API_KEY chưa được cấu hình trong biến môi trường" : ""
     ]);
     exit();
 }

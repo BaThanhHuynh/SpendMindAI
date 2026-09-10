@@ -44,7 +44,7 @@ if ($action === 'check_session') {
 
 // Get Google Client ID config
 if ($action === 'get_google_client_id') {
-    $clientId = getenv('GOOGLE_CLIENT_ID') ?: '';
+    $clientId = (function_exists('getEnvVar') ? getEnvVar('GOOGLE_CLIENT_ID') : getenv('GOOGLE_CLIENT_ID')) ?: '';
     echo json_encode(["client_id" => $clientId]);
     exit();
 }

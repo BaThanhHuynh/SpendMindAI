@@ -124,6 +124,44 @@ Dự án được tích hợp sẵn một script watcher chạy ngầm gọn nh�
 Mỗi khi bạn bấm lưu file (`Ctrl + S`), tệp script sẽ tự động phát hiện, debouncing trì hoãn 0.5 giây để tránh xung đột ghi, rồi tự động gọi `deploy_vps.py` để đồng bộ lên live.
 
 
+## Hướng Dẫn Triển Khai Lên Vercel (Serverless Cloud)
+
+Dự án đã được tích hợp đầy đủ file cấu hình `vercel.json` và cơ chế **Persistent Database Session** (PdoSessionHandler) giúp chạy hoàn hảo trên kiến trúc Serverless của Vercel mà không bị lỗi mất phiên đăng nhập.
+
+### 1. Chuẩn Bị Cơ Sở Dữ Liệu MySQL Cloud (Miễn Phí)
+Vì Vercel là môi trường Serverless không chứa dịch vụ MySQL cục bộ, bạn chỉ cần tạo 1 CSDL MySQL online miễn phí:
+* **Khuyên dùng**: [TiDB Serverless](https://tidbcloud.com/) (Miễn phí vĩnh viễn 25GB, tương thích 100% MySQL, hỗ trợ SSL tự động).
+* Hoặc: [Aiven for MySQL](https://aiven.io/), [Clever Cloud](https://www.clever-cloud.com/), hoặc mở cổng kết nối từ xa đến MySQL trên VPS của bạn.
+
+Sau khi tạo CSDL trên TiDB / Cloud DB:
+1. Nhận thông tin kết nối: `Host`, `Port`, `User`, `Password`, `Database Name`.
+2. (Tùy chọn) Mở bảng điều khiển SQL Console và chạy file [database.sql](file:///database.sql) để tạo bảng trước, hoặc hệ thống sẽ tự động khởi tạo bảng khi chạy lần đầu.
+
+### 2. Triển Khai Lên Vercel Qua GitHub
+1. Đẩy mã nguồn lên tài khoản GitHub của bạn:
+   ```bash
+   git add .
+   git commit -m "Configure Vercel deployment"
+   git push origin main
+   ```
+2. Truy cập [vercel.com](https://vercel.com) và đăng nhập bằng GitHub.
+3. Bấm **Add New...** -> **Project** -> Chọn repository **SpendMindAI**.
+4. Tại mục **Environment Variables**, thêm các biến cấu hình:
+   | Tên Biến | Giá Trị Ví Dụ | Ghi Chú |
+   | :--- | :--- | :--- |
+   | `DB_HOST` | `gateway01.prod.aws.tidbcloud.com` | Host của CSDL Cloud |
+   | `DB_PORT` | `4000` (hoặc `3306`) | Cổng kết nối CSDL |
+   | `DB_USER` | `xxxxxx.root` | Tên người dùng CSDL |
+   | `DB_PASS` | `mật_khẩu_db_của_bạn` | Mật khẩu CSDL |
+   | `DB_NAME` | `quan_ly_chi_tieu` (hoặc `test`) | Tên CSDL |
+   | `DB_SSL` | `true` | Bật mã hóa SSL bảo mật |
+   | `GEMINI_API_KEY` | `AIzaSy...` | Khóa Google Gemini AI |
+   | `APP_ENV` | `production` | Môi trường chạy |
+   | `CRON_SECRET` | `chuoi_ngau_nhien_bao_mat` | Bảo mật Vercel Cron |
+5. Bấm nút **Deploy**. Vercel sẽ tự động build và cung cấp cho bạn đường dẫn truy cập trực tiếp dạng: `https://spend-mind-ai.vercel.app`.
+
+---
+
 ## Hướng Dẫn Triển Khai Lên VPS Ubuntu (Nginx)
 
 Dự án cung cấp sẵn tệp kịch bản triển khai tự động trong thư mục `vps_deployment`.

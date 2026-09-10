@@ -1,0 +1,59 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "functions": {
+    "api/*.php": {
+      "runtime": "vercel-php@0.9.0",
+      "maxDuration": 15
+    }
+  },
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/includes/(.*)",
+      "destination": "/404"
+    },
+    {
+      "source": "/scratch/(.*)",
+      "destination": "/404"
+    },
+    {
+      "source": "/vps_deployment/(.*)",
+      "destination": "/404"
+    },
+    {
+      "source": "/Dockerfile(.*)",
+      "destination": "/404"
+    },
+    {
+      "source": "/docker-compose.yml",
+      "destination": "/404"
+    },
+    {
+      "source": "/watch_deploy.py",
+      "destination": "/404"
+    },
+    {
+      "source": "/api.php",
+      "destination": "/api/index.php"
+    },
+    {
+      "source": "/cron.php",
+      "destination": "/api/cron.php"
+    },
+    {
+      "source": "/api",
+      "destination": "/api/index.php"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index.php"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron.php",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

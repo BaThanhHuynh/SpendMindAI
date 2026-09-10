@@ -25,11 +25,12 @@ function readSmtpResponse($socket) {
  */
 function sendSystemEmail($to, $subject, $body)
 {
-    $smtpEnabled = filter_var(getenv('SMTP_ENABLED') ?: false, FILTER_VALIDATE_BOOLEAN);
+    $smtpEnabled = filter_var(function_exists('getEnvVar') ? getEnvVar('SMTP_ENABLED', false) : (getenv('SMTP_ENABLED') ?: false), FILTER_VALIDATE_BOOLEAN);
 
     if (!$smtpEnabled) {
-        // Fallback: Write email details locally to log file (for offline/dev environments)
-        $logFile = __DIR__ . '/email_outbox.log';
+        // Fallback: Write email details locally to log file (or sys temp dir on serverless)
+        $logDir = is_writable(__DIR__) ? __DIR__ : sys_get_temp_dir();
+        $logFile = $logDir . '/email_outbox.log';
         $timeStr = date('Y-m-d H:i:s');
         $logContent = "==================================================\n";
         $logContent .= "Thư được gửi lúc: $timeStr\n";
@@ -38,7 +39,7 @@ function sendSystemEmail($to, $subject, $body)
         $logContent .= "Nội dung:\n$body\n";
         $logContent .= "==================================================\n\n";
         
-        file_put_contents($logFile, $logContent, FILE_APPEND);
+        @file_put_contents($logFile, $logContent, FILE_APPEND);
         
         return [
             "success" => true,
@@ -47,17 +48,17 @@ function sendSystemEmail($to, $subject, $body)
         ];
     }
 
-    $host = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
-    $port = intval(getenv('SMTP_PORT') ?: 465);
-    $user = getenv('SMTP_USER');
-    $pass = getenv('SMTP_PASS');
-    $from = getenv('SMTP_FROM') ?: $user;
-    $fromName = getenv('SMTP_FROM_NAME') ?: 'SpendMindAI';
+    $host = function_exists('getEnvVar') ? getEnvVar('SMTP_HOST', 'smtp.gmail.com') : (getenv('SMTP_HOST') ?: 'smtp.gmail.com');
+    $port = intval(function_exists('getEnvVar') ? getEnvVar('SMTP_PORT', 465) : (getenv('SMTP_PORT') ?: 465));
+    $user = function_exists('getEnvVar') ? getEnvVar('SMTP_USER') : getenv('SMTP_USER');
+    $pass = function_exists('getEnvVar') ? getEnvVar('SMTP_PASS') : getenv('SMTP_PASS');
+    $from = (function_exists('getEnvVar') ? getEnvVar('SMTP_FROM') : getenv('SMTP_FROM')) ?: $user;
+    $fromName = (function_exists('getEnvVar') ? getEnvVar('SMTP_FROM_NAME') : getenv('SMTP_FROM_NAME')) ?: 'SpendMindAI';
 
     if (empty($user) || empty($pass)) {
         return [
             "success" => false,
-            "message" => "Thiếu thông tin xác thực tài khoản SMTP trong file .env."
+            "message" => "Thiếu thông tin xác thực tài khoản SMTP trong cấu hình môi trường."
         ];
     }
 
@@ -116,7 +117,8 @@ function sendSystemEmail($to, $subject, $body)
         fwrite($socket, "DATA\r\n");
         readSmtpResponse($socket);
 
-        $messageId = "<" . bin2hex(random_bytes(16)) . "@" . (getenv('SMTP_HOST') ?: 'smtp.gmail.com') . ">";
+        $smtpHostName = function_exists('getEnvVar') ? getEnvVar('SMTP_HOST', 'smtp.gmail.com') : (getenv('SMTP_HOST') ?: 'smtp.gmail.com');
+        $messageId = "<" . bin2hex(random_bytes(16)) . "@" . $smtpHostName . ">";
         $headers = "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
         $headers .= "From: =?UTF-8?B?" . base64_encode($fromName) . "?= <$from>\r\n";

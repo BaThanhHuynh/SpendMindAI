@@ -9,10 +9,10 @@ cloudflared
 cloudflared.exe
 
 # Database files
-database.sql
-*.sql
 *.sqlite
 *.db
+# Keep database.sql schema template tracked
+!database.sql
 
 # Logs and Debug
 *.log

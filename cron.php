@@ -14,12 +14,17 @@ require_once __DIR__ . '/includes/reminder_helper.php';
 // Force default timezone
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
-// Ensure this script runs from CLI or has a secure token
+// Ensure this script runs from CLI, has a secure token, or comes from Vercel Cron
 $isCli = (php_sapi_name() === 'cli');
 $token = isset($_GET['token']) ? $_GET['token'] : '';
-$expectedToken = getenv('CRON_TOKEN') ?: 'safe_cron_token_2026';
+$expectedToken = function_exists('getEnvVar') ? getEnvVar('CRON_TOKEN', 'safe_cron_token_2026') : (getenv('CRON_TOKEN') ?: 'safe_cron_token_2026');
 
-if (!$isCli && $token !== $expectedToken) {
+// Check Vercel Cron authorization header (Bearer <CRON_SECRET>)
+$authHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : '';
+$cronSecret = function_exists('getEnvVar') ? getEnvVar('CRON_SECRET', '') : (getenv('CRON_SECRET') ?: '');
+$isVercelCron = (!empty($cronSecret) && $authHeader === 'Bearer ' . $cronSecret);
+
+if (!$isCli && $token !== $expectedToken && !$isVercelCron) {
     http_response_code(403);
     echo json_encode(["success" => false, "message" => "Access denied"]);
     exit();
