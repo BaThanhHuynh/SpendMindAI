@@ -53,7 +53,7 @@
   "crons": [
     {
       "path": "/api/cron.php",
-      "schedule": "0 * * * *"
+      "schedule": "0 13 * * *"
     }
   ]
 }
