@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-const API_URL = "api.php";
+const API_URL = "api";
 
 // 1. Typewriter phrase configuration for Hero Section (only greeting phrase)
 const typewriterPhrases = [

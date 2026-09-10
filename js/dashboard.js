@@ -56,7 +56,7 @@ let currentCalendarDate = new Date();
 let selectedCalendarDay = new Date();
 
 // API Endpoint configuration
-const API_URL = "api.php";
+const API_URL = "api";
 
 // --- 2. INITIALIZATION & ROUTING SECURITY ---
 document.addEventListener("DOMContentLoaded", () => {

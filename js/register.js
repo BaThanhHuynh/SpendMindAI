@@ -2,6 +2,8 @@
    REGISTER SCRIPT - USER REGISTRATION & INPUTS VALIDATION (QUAN LY CHI TIEU)
    ========================================================================== */
 
+const API_URL = "api";
+
 document.addEventListener("DOMContentLoaded", () => {
     initTheme();
     checkAuthSession();
@@ -35,10 +37,13 @@ function saveGoogleAccount(email, googleId, username, avatarUrl) {
 
 // Initialize Google OAuth2 Token Client if client_id is set
 function initGoogleAuth() {
-    fetch('api.php?action=get_google_client_id')
-        .then(res => res.json())
+    fetch(`${API_URL}?action=get_google_client_id`)
+        .then(async res => {
+            if (!res.ok) return null;
+            return res.json().catch(() => null);
+        })
         .then(data => {
-            const clientId = data.client_id;
+            const clientId = data ? data.client_id : null;
             if (!clientId) {
                 console.log("No Google Client ID configured. Using high-fidelity simulated sign-in mode.");
                 return;
@@ -58,7 +63,7 @@ function initGoogleAuth() {
             }
         })
         .catch(err => {
-            console.error("Lỗi cấu hình Google OAuth:", err);
+            console.warn("Lỗi cấu hình Google OAuth:", err);
         });
 }
 
@@ -250,8 +255,6 @@ function triggerGoogleAuthSimulated() {
     };
 }
 
-const API_URL = "api.php";
-
 // 1. Initialize layout theme
 function applyTheme(themeName) {
     if (themeName === "system") {
@@ -279,19 +282,16 @@ function initTheme() {
 function checkAuthSession() {
     fetch(`${API_URL}?action=check_session`)
         .then(res => {
-            if (!res.ok) {
-                return res.json().then(err => { throw new Error(err.message || "Lỗi kết nối cơ sở dữ liệu"); });
-            }
-            return res.json();
+            if (!res.ok) return null;
+            return res.json().catch(() => null);
         })
         .then(data => {
-            if (data.authenticated) {
+            if (data && data.authenticated) {
                 window.location.href = "dashboard.html";
             }
         })
         .catch(err => {
-            console.error("Session check error:", err);
-            showToast(err.message, "error");
+            console.warn("Session check notice:", err);
         });
 }
 

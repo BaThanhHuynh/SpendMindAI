@@ -1,0 +1,9 @@
+.env
+.env.*
+scratch/
+vps_deployment/
+watch_deploy.py
+Dockerfile
+docker-compose.yml
+database.sql
+includes/

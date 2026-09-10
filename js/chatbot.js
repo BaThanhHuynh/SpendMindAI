@@ -424,7 +424,7 @@ function initChatbot() {
         if (cachedGeminiKey) {
             callGeminiDirectly(cachedGeminiKey);
         } else {
-            fetch("api.php?action=get_gemini_key")
+            fetch("api?action=get_gemini_key")
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && data.key) {
