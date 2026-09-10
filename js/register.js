@@ -35,6 +35,30 @@ function saveGoogleAccount(email, googleId, username, avatarUrl) {
     localStorage.setItem("google_accounts_list", JSON.stringify(accounts));
 }
 
+const DEFAULT_GOOGLE_CLIENT_ID = "125274610515-6qi1cnl41k7itnfch3v6123q6tbqgovf.apps.googleusercontent.com";
+
+function setupGoogleTokenClient(clientId) {
+    if (window.google && window.google.accounts) {
+        try {
+            googleTokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+                callback: (tokenResponse) => {
+                    if (tokenResponse && tokenResponse.access_token) {
+                        handleGoogleToken(tokenResponse.access_token);
+                    } else {
+                        showToast("Không nhận được Access Token từ Google.", "error");
+                    }
+                }
+            });
+        } catch (e) {
+            console.warn("Lỗi khởi tạo Google Token Client:", e);
+        }
+    } else {
+        setTimeout(() => setupGoogleTokenClient(clientId), 500);
+    }
+}
+
 // Initialize Google OAuth2 Token Client if client_id is set
 function initGoogleAuth() {
     fetch(`${API_URL}?action=get_google_client_id`)
@@ -43,27 +67,12 @@ function initGoogleAuth() {
             return res.json().catch(() => null);
         })
         .then(data => {
-            const clientId = data ? data.client_id : null;
-            if (!clientId) {
-                console.log("No Google Client ID configured. Using high-fidelity simulated sign-in mode.");
-                return;
-            }
-            if (window.google && window.google.accounts) {
-                googleTokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: clientId,
-                    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
-                    callback: (tokenResponse) => {
-                        if (tokenResponse && tokenResponse.access_token) {
-                            handleGoogleToken(tokenResponse.access_token);
-                        } else {
-                            showToast("Không nhận được Access Token từ Google.", "error");
-                        }
-                    }
-                });
-            }
+            const clientId = (data && data.client_id) ? data.client_id : DEFAULT_GOOGLE_CLIENT_ID;
+            setupGoogleTokenClient(clientId);
         })
         .catch(err => {
-            console.warn("Lỗi cấu hình Google OAuth:", err);
+            console.warn("Lỗi cấu hình Google OAuth, sử dụng Client ID mặc định:", err);
+            setupGoogleTokenClient(DEFAULT_GOOGLE_CLIENT_ID);
         });
 }
 
@@ -118,11 +127,28 @@ function handleGoogleToken(accessToken) {
     });
 }
 
-// Trigger Google Sign-In (Real or Simulated)
 function triggerGoogleAuthSimulated() {
     if (googleTokenClient) {
         googleTokenClient.requestAccessToken({ prompt: 'select_account' });
         return;
+    }
+    
+    if (window.google && window.google.accounts) {
+        try {
+            googleTokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: DEFAULT_GOOGLE_CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+                callback: (tokenResponse) => {
+                    if (tokenResponse && tokenResponse.access_token) {
+                        handleGoogleToken(tokenResponse.access_token);
+                    }
+                }
+            });
+            googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+            return;
+        } catch (e) {
+            console.warn("Lỗi khởi tạo nhanh Google Token Client:", e);
+        }
     }
     const modal = document.getElementById("google-sim-modal");
     const emailInput = document.getElementById("google-sim-email");

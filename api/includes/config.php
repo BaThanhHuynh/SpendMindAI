@@ -50,6 +50,7 @@ if (!function_exists('getEnvVar')) {
 }
 
 // Load .env from workspace root if exists
+loadEnv(__DIR__ . '/../../.env');
 loadEnv(__DIR__ . '/../.env');
 
 // 2. Environment Mode Configuration
@@ -110,7 +111,7 @@ $dbUser = getEnvVar('DB_USER', 'root');
 $dbPass = getEnvVar('DB_PASS') !== null ? getEnvVar('DB_PASS') : '';
 $dbName = getEnvVar('DB_NAME', 'quan_ly_chi_tieu');
 
-// Parse DATABASE_URL / MYSQL_URL if provided (e.g. from Vercel / Railway / Cloud providers)
+// Parse DATABASE_URL / MYSQL_URL if provided (e.g. from Vercel / TiDB Cloud / Railway)
 if (!empty($dbUrl)) {
     $parsed = parse_url($dbUrl);
     if ($parsed) {
@@ -140,15 +141,16 @@ $pdoError = null;
 
 try {
     $dsn = "mysql:host=$dbHost;port=$dbPort;dbname=$dbName;charset=utf8mb4";
-    $pdo = new PDO($dsn, $dbUser, $dbPass, $pdoOptions);
-} catch (PDOException $e) {
+    // Error suppression (@) prevents low-level driver connection warnings from interrupting error handling
+    $pdo = @new PDO($dsn, $dbUser, $dbPass, $pdoOptions);
+} catch (Throwable $e) {
     if ($isLocalHost && (strpos($e->getMessage(), '1049') !== false || strpos($e->getMessage(), 'Unknown database') !== false)) {
         try {
             $rootDsn = "mysql:host=$dbHost;port=$dbPort;charset=utf8mb4";
-            $rootPdo = new PDO($rootDsn, $dbUser, $dbPass, $pdoOptions);
+            $rootPdo = @new PDO($rootDsn, $dbUser, $dbPass, $pdoOptions);
             $rootPdo->exec("CREATE DATABASE IF NOT EXISTS `$dbName` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            $pdo = new PDO($dsn, $dbUser, $dbPass, $pdoOptions);
-        } catch (Exception $e2) {
+            $pdo = @new PDO($dsn, $dbUser, $dbPass, $pdoOptions);
+        } catch (Throwable $e2) {
             $pdoError = $e2->getMessage();
         }
     } else {
@@ -156,95 +158,79 @@ try {
     }
 }
 
-// If DB connection failed
+// If DB connection failed, log notice but do NOT immediately exit here,
+// so lightweight endpoints like get_google_client_id, get_gemini_key, and check_session continue to work.
 if (!$pdo) {
-    error_log("Database connection error: " . $pdoError);
-    // If checking session on landing page, don't crash landing page
-    if (isset($_GET['action']) && $_GET['action'] === 'check_session') {
-        echo json_encode([
-            "authenticated" => false,
-            "db_connected" => false,
-            "message" => "Chưa kết nối cơ sở dữ liệu"
-        ]);
-        exit();
-    }
-    
-    // For actions that strictly require DB (login, register, google_auth, CRUD, etc.)
-    http_response_code(503);
-    echo json_encode([
-        "success" => false,
-        "authenticated" => false,
-        "db_connected" => false,
-        "message" => "Chưa cấu hình CSDL Cloud hoặc không thể kết nối MySQL (Host: $dbHost). Vui lòng cấu hình biến môi trường DB_HOST, DB_USER, DB_PASS trên Vercel."
-    ]);
-    exit();
+    error_log("Database connection notice: " . ($pdoError ?: "Unknown connection failure"));
 }
 
-// 5. Automatic Schema & Tables Initialization
-try {
-    // Users table
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS `users` (
-            `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `username` VARCHAR(50) NOT NULL UNIQUE,
-            `password` VARCHAR(255) NOT NULL,
-            `email` VARCHAR(100) NOT NULL UNIQUE,
-            `google_id` VARCHAR(100) NULL DEFAULT NULL UNIQUE,
-            `reminder_time` TIME NULL DEFAULT NULL,
-            `email_notifications` TINYINT(1) DEFAULT 0,
-            `last_reminder_sent` DATE NULL DEFAULT NULL,
-            `avatar_url` TEXT NULL DEFAULT NULL,
-            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    ");
+// 5. Automatic Schema & Tables Initialization (Only when PDO is connected)
+if ($pdo) {
+    try {
+        // Users table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `users` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `username` VARCHAR(50) NOT NULL UNIQUE,
+                `password` VARCHAR(255) NOT NULL,
+                `email` VARCHAR(100) NOT NULL UNIQUE,
+                `google_id` VARCHAR(100) NULL DEFAULT NULL UNIQUE,
+                `reminder_time` TIME NULL DEFAULT NULL,
+                `email_notifications` TINYINT(1) DEFAULT 0,
+                `last_reminder_sent` DATE NULL DEFAULT NULL,
+                `avatar_url` TEXT NULL DEFAULT NULL,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
 
-    // Transactions table
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS `transactions` (
-            `id` VARCHAR(50) NOT NULL,
-            `user_id` INT NOT NULL,
-            `type` VARCHAR(10) NOT NULL,
-            `amount` DECIMAL(15, 2) NOT NULL,
-            `category` VARCHAR(50) NOT NULL,
-            `date` DATE NOT NULL,
-            `description` TEXT,
-            PRIMARY KEY (`id`),
-            FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    ");
+        // Transactions table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `transactions` (
+                `id` VARCHAR(50) NOT NULL,
+                `user_id` INT NOT NULL,
+                `type` VARCHAR(10) NOT NULL,
+                `amount` DECIMAL(15, 2) NOT NULL,
+                `category` VARCHAR(50) NOT NULL,
+                `date` DATE NOT NULL,
+                `description` TEXT,
+                PRIMARY KEY (`id`),
+                FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
 
-    // Budgets table
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS `budgets` (
-            `user_id` INT NOT NULL,
-            `category` VARCHAR(50) NOT NULL,
-            `limit_amount` DECIMAL(15, 2) NOT NULL,
-            PRIMARY KEY (`user_id`, `category`),
-            FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    ");
+        // Budgets table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `budgets` (
+                `user_id` INT NOT NULL,
+                `category` VARCHAR(50) NOT NULL,
+                `limit_amount` DECIMAL(15, 2) NOT NULL,
+                PRIMARY KEY (`user_id`, `category`),
+                FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
 
-    // Serverless Persistent Sessions table
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS `sessions` (
-            `id` VARCHAR(128) NOT NULL PRIMARY KEY,
-            `data` MEDIUMTEXT NOT NULL,
-            `expiry` INT UNSIGNED NOT NULL,
-            INDEX (`expiry`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    ");
+        // Serverless Persistent Sessions table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `sessions` (
+                `id` VARCHAR(128) NOT NULL PRIMARY KEY,
+                `data` MEDIUMTEXT NOT NULL,
+                `expiry` INT UNSIGNED NOT NULL,
+                INDEX (`expiry`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
 
-    // Backward compatibility migration for older users table schema
-    $colCheck = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'google_id'");
-    if ($colCheck && $colCheck->rowCount() === 0) {
-        $pdo->exec("ALTER TABLE `users` ADD `google_id` VARCHAR(100) NULL DEFAULT NULL UNIQUE");
-        $pdo->exec("ALTER TABLE `users` ADD `reminder_time` TIME NULL DEFAULT NULL");
-        $pdo->exec("ALTER TABLE `users` ADD `email_notifications` TINYINT(1) DEFAULT 0");
-        $pdo->exec("ALTER TABLE `users` ADD `last_reminder_sent` DATE NULL DEFAULT NULL");
-        $pdo->exec("ALTER TABLE `users` ADD `avatar_url` TEXT NULL DEFAULT NULL");
+        // Backward compatibility migration for older users table schema
+        $colCheck = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'google_id'");
+        if ($colCheck && $colCheck->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `users` ADD `google_id` VARCHAR(100) NULL DEFAULT NULL UNIQUE");
+            $pdo->exec("ALTER TABLE `users` ADD `reminder_time` TIME NULL DEFAULT NULL");
+            $pdo->exec("ALTER TABLE `users` ADD `email_notifications` TINYINT(1) DEFAULT 0");
+            $pdo->exec("ALTER TABLE `users` ADD `last_reminder_sent` DATE NULL DEFAULT NULL");
+            $pdo->exec("ALTER TABLE `users` ADD `avatar_url` TEXT NULL DEFAULT NULL");
+        }
+    } catch (Throwable $schemaErr) {
+        error_log("Schema initialization notice: " . $schemaErr->getMessage());
     }
-} catch (Exception $schemaErr) {
-    error_log("Schema initialization notice: " . $schemaErr->getMessage());
 }
 
 // 6. PDO Database Session Handler (Essential for Serverless / Vercel multi-instance persistence)
@@ -254,64 +240,79 @@ if (!class_exists('PdoSessionHandler')) {
         public function __construct(PDO $pdo) {
             $this->pdo = $pdo;
         }
+        #[\ReturnTypeWillChange]
         public function open(string $path, string $name): bool {
             return true;
         }
+        #[\ReturnTypeWillChange]
         public function close(): bool {
             return true;
         }
+        #[\ReturnTypeWillChange]
         public function read(string $id): string|false {
             try {
                 $stmt = $this->pdo->prepare("SELECT `data` FROM `sessions` WHERE `id` = :id AND `expiry` > :now");
                 $stmt->execute([':id' => $id, ':now' => time()]);
                 $data = $stmt->fetchColumn();
                 return $data !== false ? (string)$data : '';
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 return '';
             }
         }
+        #[\ReturnTypeWillChange]
         public function write(string $id, string $data): bool {
             try {
                 $expiry = time() + 2592000; // 30 days
                 $stmt = $this->pdo->prepare("REPLACE INTO `sessions` (`id`, `data`, `expiry`) VALUES (:id, :data, :expiry)");
                 return $stmt->execute([':id' => $id, ':data' => $data, ':expiry' => $expiry]);
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 return false;
             }
         }
+        #[\ReturnTypeWillChange]
         public function destroy(string $id): bool {
             try {
                 $stmt = $this->pdo->prepare("DELETE FROM `sessions` WHERE `id` = :id");
                 return $stmt->execute([':id' => $id]);
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 return false;
             }
         }
+        #[\ReturnTypeWillChange]
         public function gc(int $max_lifetime): int|false {
             try {
                 $stmt = $this->pdo->prepare("DELETE FROM `sessions` WHERE `expiry` < :now");
                 $stmt->execute([':now' => time()]);
                 return $stmt->rowCount();
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 return false;
             }
         }
     }
 }
 
-// Initialize Session with Database Handler
+// Initialize Session safely
 if (session_status() === PHP_SESSION_NONE) {
-    if (isset($pdo) && $pdo instanceof PDO) {
-        session_set_save_handler(new PdoSessionHandler($pdo), true);
+    try {
+        if ($pdo instanceof PDO) {
+            session_set_save_handler(new PdoSessionHandler($pdo), true);
+        } else {
+            $tmpDir = sys_get_temp_dir();
+            if (is_dir($tmpDir) && is_writable($tmpDir)) {
+                session_save_path($tmpDir);
+            }
+        }
+        $cookieLifetime = isset($_COOKIE['remember_me']) ? 2592000 : 0;
+        ini_set('session.gc_maxlifetime', '2592000');
+        @session_start([
+            'cookie_lifetime' => $cookieLifetime,
+            'cookie_httponly' => true,
+            'cookie_secure'   => $isSecure,
+            'cookie_samesite' => 'Lax'
+        ]);
+    } catch (Throwable $sessErr) {
+        error_log("Session initialization notice: " . $sessErr->getMessage());
     }
-    $cookieLifetime = isset($_COOKIE['remember_me']) ? 2592000 : 0;
-    ini_set('session.gc_maxlifetime', '2592000');
-    session_start([
-        'cookie_lifetime' => $cookieLifetime,
-        'cookie_httponly' => true,
-        'cookie_secure'   => $isSecure,
-        'cookie_samesite' => 'Lax'
-    ]);
 }
 
 // 7. Dynamic Application URL Resolution

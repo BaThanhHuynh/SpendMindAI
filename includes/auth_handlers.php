@@ -1,10 +1,10 @@
 <?php
 /* ==========================================================================
-   AUTHENTICATION ACTION HANDLERS (check_session, google_auth, login, register, logout)
+   AUTHENTICATION ACTION HANDLERS (check_session, get_google_client_id, google_auth, login, register, logout)
+   SpendMindAI - Quản Lý Tài Chính Cá Nhân Thông Minh
    ========================================================================== */
 
 if (!defined('PDO_CONNECT_VERIFIED')) {
-    // Prevent direct execution if pdo is not configured
     exit("Access Denied");
 }
 
@@ -19,37 +19,63 @@ function handleRememberCookie($remember, $isSecure) {
     }
 }
 
-// Check Session Status
+// 1. Check Session Status (Always returns 200, never crashes even if DB is offline)
 if ($action === 'check_session') {
     $userId = getLoggedInUserId();
-    if ($userId) {
-        $stmt = $pdo->prepare("SELECT username, email, google_id, reminder_time, email_notifications, avatar_url FROM users WHERE id = :id");
-        $stmt->execute([':id' => $userId]);
-        $u = $stmt->fetch(PDO::FETCH_ASSOC);
-        echo json_encode([
-            "authenticated" => true,
-            "username" => $u['username'],
-            "email" => $u['email'],
-            "google_id" => $u['google_id'],
-            "reminder_time" => $u['reminder_time'] ? substr($u['reminder_time'], 0, 5) : '',
-            "email_notifications" => intval($u['email_notifications']),
-            "avatar_url" => $u['avatar_url'],
-            "userId" => $userId
-        ]);
-    } else {
-        echo json_encode(["authenticated" => false]);
+    if ($userId && $pdo) {
+        try {
+            $stmt = $pdo->prepare("SELECT username, email, google_id, reminder_time, email_notifications, avatar_url FROM users WHERE id = :id");
+            $stmt->execute([':id' => $userId]);
+            $u = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($u) {
+                echo json_encode([
+                    "authenticated" => true,
+                    "username" => $u['username'],
+                    "email" => $u['email'],
+                    "google_id" => $u['google_id'],
+                    "reminder_time" => $u['reminder_time'] ? substr($u['reminder_time'], 0, 5) : '',
+                    "email_notifications" => intval($u['email_notifications']),
+                    "avatar_url" => $u['avatar_url'],
+                    "userId" => $userId,
+                    "db_connected" => true
+                ]);
+                exit();
+            }
+        } catch (Throwable $e) {
+            error_log("check_session DB error: " . $e->getMessage());
+        }
     }
+    echo json_encode([
+        "authenticated" => false,
+        "db_connected" => ($pdo !== null)
+    ]);
     exit();
 }
 
-// Get Google Client ID config
+// 2. Get Google Client ID (Always returns 200, uses configured Client ID or fallback)
 if ($action === 'get_google_client_id') {
-    $clientId = (function_exists('getEnvVar') ? getEnvVar('GOOGLE_CLIENT_ID') : getenv('GOOGLE_CLIENT_ID')) ?: '125274610515-6qi1cnl41k7itnfch3v6123q6tbqgovf.apps.googleusercontent.com';
-    echo json_encode(["client_id" => $clientId]);
+    $clientId = (function_exists('getEnvVar') ? getEnvVar('GOOGLE_CLIENT_ID') : getenv('GOOGLE_CLIENT_ID')) 
+                ?: '125274610515-6qi1cnl41k7itnfch3v6123q6tbqgovf.apps.googleusercontent.com';
+    echo json_encode([
+        "success" => true,
+        "client_id" => $clientId
+    ]);
     exit();
 }
 
-// Google Quick Authentication (Login & Auto-Register)
+// 3. Database Guard for operations that write/read accounts (google_auth, register, login)
+if (in_array($action, ['google_auth', 'register', 'login']) && !$pdo) {
+    http_response_code(503);
+    echo json_encode([
+        "success" => false,
+        "authenticated" => false,
+        "db_connected" => false,
+        "message" => "Chưa kết nối cơ sở dữ liệu Cloud trên Vercel. Vui lòng cấu hình biến môi trường DATABASE_URL hoặc DB_HOST, DB_USER, DB_PASS (TiDB Cloud) trong mục Settings -> Environment Variables."
+    ]);
+    exit();
+}
+
+// 4. Google Quick Authentication (Login & Auto-Register)
 if ($action === 'google_auth' && $method === 'POST') {
     $email = null;
     $googleId = null;
@@ -91,7 +117,6 @@ if ($action === 'google_auth' && $method === 'POST') {
         }
         $email = trim($input['email']);
         $googleId = trim($input['google_id']);
-        // Simulated avatar url using ui-avatars.com
         $avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode(explode('@', $email)[0]) . '&background=059669&color=fff&size=128';
     }
 
@@ -102,13 +127,11 @@ if ($action === 'google_auth' && $method === 'POST') {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user) {
-            // Update avatar_url if fetched
             if ($avatarUrl) {
                 $stmt = $pdo->prepare("UPDATE users SET avatar_url = :avatar WHERE id = :id");
                 $stmt->execute([':avatar' => $avatarUrl, ':id' => $user['id']]);
                 $user['avatar_url'] = $avatarUrl;
             }
-            // Log user in
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             
@@ -131,7 +154,6 @@ if ($action === 'google_auth' && $method === 'POST') {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user) {
-            // Update user to link Google ID & avatar
             $stmt = $pdo->prepare("UPDATE users SET google_id = :gid, avatar_url = :avatar WHERE id = :id");
             $stmt->execute([':gid' => $googleId, ':avatar' => $avatarUrl, ':id' => $user['id']]);
 
@@ -155,14 +177,12 @@ if ($action === 'google_auth' && $method === 'POST') {
         $usernamePrefix = explode('@', $email)[0];
         $username = $usernamePrefix;
 
-        // Check for duplicates
         $stmt = $pdo->prepare("SELECT id FROM users WHERE username = :usr");
         $stmt->execute([':usr' => $username]);
         if ($stmt->fetch()) {
             $username = $usernamePrefix . rand(100, 999);
         }
 
-        // Save user (random password since they login with Google)
         $randomPass = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
         $stmt = $pdo->prepare("INSERT INTO users (username, password, email, google_id, avatar_url) VALUES (:usr, :pass, :email, :gid, :avatar)");
         $stmt->execute([
@@ -188,14 +208,14 @@ if ($action === 'google_auth' && $method === 'POST') {
             "google_id" => $googleId
         ]);
 
-    } catch (PDOException $e) {
+    } catch (Throwable $e) {
         http_response_code(500);
         echo json_encode(["success" => false, "message" => "Lỗi CSDL Google Login: " . $e->getMessage()]);
     }
     exit();
 }
 
-// Register Account
+// 5. Register Account
 if ($action === 'register' && $method === 'POST') {
     if (empty($input['username']) || empty($input['password']) || empty($input['email'])) {
         http_response_code(400);
@@ -219,7 +239,6 @@ if ($action === 'register' && $method === 'POST') {
     }
 
     try {
-        // Check if username already exists
         $stmt = $pdo->prepare("SELECT id FROM users WHERE username = :usr OR email = :email");
         $stmt->execute([':usr' => $usr, ':email' => $email]);
         if ($stmt->fetch()) {
@@ -228,7 +247,6 @@ if ($action === 'register' && $method === 'POST') {
             exit();
         }
 
-        // Hash password and insert
         $hashedPass = password_hash($pass, PASSWORD_DEFAULT);
         $stmt = $pdo->prepare("INSERT INTO users (username, password, email) VALUES (:usr, :pass, :email)");
         $stmt->execute([
@@ -238,14 +256,14 @@ if ($action === 'register' && $method === 'POST') {
         ]);
 
         echo json_encode(["success" => true, "message" => "Đăng ký tài khoản thành công! Hãy đăng nhập"]);
-    } catch (PDOException $e) {
+    } catch (Throwable $e) {
         http_response_code(500);
         echo json_encode(["success" => false, "message" => "Lỗi đăng ký CSDL: " . $e->getMessage()]);
     }
     exit();
 }
 
-// Login
+// 6. Login
 if ($action === 'login' && $method === 'POST') {
     if (empty($input['username']) || empty($input['password'])) {
         http_response_code(400);
@@ -268,7 +286,6 @@ if ($action === 'login' && $method === 'POST') {
             http_response_code(401);
             echo json_encode(["success" => false, "message" => "Mật khẩu không chính xác. Vui lòng thử lại."]);
         } else {
-            // Write session variables
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
 
@@ -280,19 +297,18 @@ if ($action === 'login' && $method === 'POST') {
                 "username" => $user['username']
             ]);
         }
-    } catch (PDOException $e) {
+    } catch (Throwable $e) {
         http_response_code(500);
         echo json_encode(["success" => false, "message" => "Lỗi đăng nhập: " . $e->getMessage()]);
     }
     exit();
 }
 
-// Logout
+// 7. Logout
 if ($action === 'logout' && $method === 'POST') {
     session_unset();
     session_destroy();
     
-    // Clear remember_me cookie
     setcookie('remember_me', '', time() - 3600, '/', '', $isSecure, true);
     
     echo json_encode(["success" => true, "message" => "Đăng xuất thành công"]);
