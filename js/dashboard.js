@@ -104,12 +104,12 @@ function checkAuthSession() {
                 triggerLazyCronReminderCheck();
             } else {
                 // If not authenticated, kick back to login.html immediately
-                window.location.href = "login.html";
+                window.location.href = "login";
             }
         })
         .catch(err => {
             console.error("Auth Guard error:", err);
-            window.location.href = "login.html";
+            window.location.href = "login";
         });
 }
 
@@ -150,7 +150,7 @@ function fetchStateFromServer() {
     fetch(API_URL)
         .then(response => {
             if (response.status === 401) {
-                window.location.href = "login.html";
+                window.location.href = "login";
                 throw new Error("Phiên làm việc đã hết hạn");
             }
             if (!response.ok) {

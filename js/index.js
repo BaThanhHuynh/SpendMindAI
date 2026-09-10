@@ -98,7 +98,7 @@ function checkGoogleOAuthRedirect() {
             })
             .then(data => {
                 if (data.success) {
-                    window.location.href = "dashboard.html";
+                    window.location.href = "dashboard";
                 }
             })
             .catch(err => {
@@ -124,9 +124,9 @@ function checkAuthSession() {
                 const splash = document.getElementById("iphone-splash-screen");
                 // If splash screen is active, wait for animation to complete smoothly
                 if (splash && !splash.classList.contains("splash-hidden")) {
-                    pendingAuthRedirect = "dashboard.html";
+                    pendingAuthRedirect = "dashboard";
                 } else {
-                    window.location.href = "dashboard.html";
+                    window.location.href = "dashboard";
                 }
             }
         })

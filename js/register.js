@@ -87,7 +87,7 @@ function handleGoogleCredentialResponse(response) {
             if (modal) modal.classList.add("hidden");
             showToast(data.message, "success");
             setTimeout(() => {
-                window.location.href = "dashboard.html";
+                window.location.href = "dashboard";
             }, 1000);
         }
     })
@@ -217,7 +217,7 @@ function handleGoogleToken(accessToken) {
             modal.classList.add("hidden");
             showToast(data.message, "success");
             setTimeout(() => {
-                window.location.href = "dashboard.html";
+                window.location.href = "dashboard";
             }, 1000);
         }
     })
@@ -303,7 +303,7 @@ function triggerGoogleSimulatedModalDirectly() {
                     modal.classList.add("hidden");
                     showToast(data.message, "success");
                     setTimeout(() => {
-                        window.location.href = "dashboard.html";
+                        window.location.href = "dashboard";
                     }, 1000);
                 }
             })
@@ -414,7 +414,7 @@ function checkAuthSession() {
         })
         .then(data => {
             if (data && data.authenticated) {
-                window.location.href = "dashboard.html";
+                window.location.href = "dashboard";
             }
         })
         .catch(err => {
@@ -457,7 +457,7 @@ function handleRegisterSubmit(e) {
             showToast(data.message, "success");
             // Delay redirect to allow user to read the message
             setTimeout(() => {
-                window.location.href = "login.html";
+                window.location.href = "login";
             }, 1500);
         }
     })
