@@ -37,34 +37,119 @@ function saveGoogleAccount(email, googleId, username, avatarUrl) {
 
 const DEFAULT_GOOGLE_CLIENT_ID = "125274610515-6qi1cnl41k7itnfch3v6123q6tbqgovf.apps.googleusercontent.com";
 
+function handleGoogleCredentialResponse(response) {
+    if (!response || !response.credential) {
+        showToast("Không nhận được chứng thực từ Google.", "error");
+        return;
+    }
+    
+    const modal = document.getElementById("google-sim-modal");
+    const emailStep = document.getElementById("google-email-step");
+    const chooserStep = document.getElementById("google-chooser-step");
+    const loadingStep = document.getElementById("google-loading-step");
+    if (modal) {
+        if (emailStep) emailStep.classList.add("hidden");
+        if (chooserStep) chooserStep.classList.add("hidden");
+        if (loadingStep) loadingStep.classList.remove("hidden");
+        modal.classList.remove("hidden");
+    }
+    
+    fetch(`${API_URL}?action=google_auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: response.credential, remember: true })
+    })
+    .then(async res => {
+        let data;
+        try {
+            data = await res.json();
+        } catch (e) {
+            throw new Error(!res.ok ? `Lỗi kết nối máy chủ (${res.status}). Vui lòng kiểm tra biến môi trường CSDL trên Vercel.` : "Phản hồi máy chủ không hợp lệ");
+        }
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || "Xác thực Google thất bại");
+        }
+        return data;
+    })
+    .then(data => {
+        if (data.success) {
+            if (data.email) {
+                const finalAvatar = data.avatar_url || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(data.email.split('@')[0]) + '&background=059669&color=fff&size=128');
+                const googleId = data.google_id || ("google_id_" + btoa(unescape(encodeURIComponent(data.email))).replace(/[^a-zA-Z0-9]/g, "").substring(0, 24));
+                saveGoogleAccount(data.email, googleId, data.username, finalAvatar);
+            }
+            if (modal) modal.classList.add("hidden");
+            showToast(data.message, "success");
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 1000);
+        }
+    })
+    .catch(err => {
+        if (modal) modal.classList.add("hidden");
+        showToast(err.message, "error");
+    });
+}
+
 function setupGoogleTokenClient(clientId) {
     if (window.google && window.google.accounts) {
-        try {
-            googleTokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: clientId,
-                scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
-                callback: (tokenResponse) => {
-                    if (tokenResponse && tokenResponse.access_token) {
-                        handleGoogleToken(tokenResponse.access_token);
-                    } else {
-                        showToast("Không nhận được Access Token từ Google.", "error");
+        // 1. Initialize official Google Identity Services (Never blocked by popup blocker)
+        if (window.google.accounts.id) {
+            try {
+                window.google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: handleGoogleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+                const btnContainer = document.getElementById("g_id_signin");
+                if (btnContainer) {
+                    window.google.accounts.id.renderButton(btnContainer, {
+                        theme: "outline",
+                        size: "large",
+                        type: "standard",
+                        shape: "pill",
+                        text: "continue_with",
+                        logo_alignment: "left",
+                        width: 320
+                    });
+                    const customBtn = document.getElementById("google-auth-btn");
+                    if (customBtn) {
+                        customBtn.style.display = "none";
                     }
-                },
-                error_callback: (error) => {
-                    console.warn("Google OAuth Error Callback:", error);
-                    if (error && error.type === 'popup_failed_to_open') {
-                        showToast("Trình duyệt đang chặn cửa sổ bật lên (Pop-up). Vui lòng bấm vào biểu tượng 🚫 ở thanh địa chỉ URL để Cho phép pop-up.", "warning");
-                        if (typeof triggerGoogleSimulatedModalDirectly === 'function') {
+                }
+            } catch (errId) {
+                console.warn("Lỗi khởi tạo Google ID button:", errId);
+            }
+        }
+
+        // 2. Fallback OAuth Token Client
+        if (window.google.accounts.oauth2) {
+            try {
+                googleTokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: clientId,
+                    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+                    callback: (tokenResponse) => {
+                        if (tokenResponse && tokenResponse.access_token) {
+                            handleGoogleToken(tokenResponse.access_token);
+                        } else {
+                            showToast("Không nhận được Access Token từ Google.", "error");
+                        }
+                    },
+                    error_callback: (error) => {
+                        console.warn("Google OAuth Error Callback:", error);
+                        if (error && error.type === 'popup_failed_to_open') {
+                            showToast("Trình duyệt đang chặn cửa sổ bật lên (Pop-up). Vui lòng bấm vào biểu tượng 🚫 ở thanh địa chỉ URL để Cho phép pop-up.", "warning");
                             triggerGoogleSimulatedModalDirectly();
                         }
                     }
-                }
-            });
-        } catch (e) {
-            console.warn("Lỗi khởi tạo Google Token Client:", e);
+                });
+            } catch (e) {
+                console.warn("Lỗi khởi tạo Google Token Client:", e);
+            }
         }
     } else {
-        setTimeout(() => setupGoogleTokenClient(clientId), 500);
+        setTimeout(() => setupGoogleTokenClient(clientId), 400);
     }
 }
 

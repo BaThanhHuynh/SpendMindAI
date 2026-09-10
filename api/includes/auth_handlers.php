@@ -81,7 +81,25 @@ if ($action === 'google_auth' && $method === 'POST') {
     $googleId = null;
     $avatarUrl = null;
 
-    if (!empty($input['access_token'])) {
+    if (!empty($input['credential'])) {
+        // Handle Google ID Token (JWT) from official Sign In With Google button
+        $credential = trim($input['credential']);
+        $jwtParts = explode('.', $credential);
+        if (count($jwtParts) === 3) {
+            $payloadJson = base64_decode(strtr($jwtParts[1], '-_', '+/'));
+            $payload = json_decode($payloadJson, true);
+            if ($payload && !empty($payload['email']) && !empty($payload['sub'])) {
+                $email = trim($payload['email']);
+                $googleId = trim($payload['sub']);
+                $avatarUrl = isset($payload['picture']) ? trim($payload['picture']) : null;
+            }
+        }
+        if (!$email || !$googleId) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "Xác thực mã Google ID Token thất bại"]);
+            exit();
+        }
+    } elseif (!empty($input['access_token'])) {
         $accessToken = trim($input['access_token']);
         $userInfoUrl = 'https://www.googleapis.com/oauth2/v3/userinfo?access_token=' . urlencode($accessToken);
         
