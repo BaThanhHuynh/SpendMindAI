@@ -7,7 +7,6 @@
       "maxDuration": 15
     }
   },
-  "cleanUrls": true,
   "headers": [
     {
       "source": "/(.*)",
@@ -84,6 +83,18 @@
     {
       "source": "/api/:path*",
       "destination": "/api/index.php"
+    },
+    {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/register",
+      "destination": "/register.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
     }
   ],
   "crons": [
