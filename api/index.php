@@ -54,8 +54,11 @@ register_shutdown_function(function () {
     }
 });
 
+// Locate includes directory (supports both /api/includes and root /includes)
+$baseIncludeDir = file_exists(__DIR__ . '/includes/config.php') ? __DIR__ . '/includes' : (file_exists(__DIR__ . '/../includes/config.php') ? __DIR__ . '/../includes' : __DIR__ . '/includes');
+
 // Include configuration
-require_once __DIR__ . '/includes/config.php';
+require_once $baseIncludeDir . '/config.php';
 
 // Define verification constant for security in handler files
 define('PDO_CONNECT_VERIFIED', true);
@@ -80,7 +83,7 @@ function getLoggedInUserId()
 // 1. Route Authentication Actions (Session check, Google client ID, Google auth, login, register, logout)
 // check_session & get_google_client_id work gracefully even without database connection!
 if (in_array($action, ['check_session', 'get_google_client_id', 'google_auth', 'register', 'login', 'logout'])) {
-    require_once __DIR__ . '/includes/auth_handlers.php';
+    require_once $baseIncludeDir . '/auth_handlers.php';
     exit();
 }
 
@@ -117,20 +120,20 @@ if (!$userId) {
 
 // 5. Route Settings & Reminder Actions
 if (in_array($action, ['get_notification_settings', 'save_notification_settings', 'check_and_send_reminder'])) {
-    require_once __DIR__ . '/includes/reminder_handlers.php';
+    require_once $baseIncludeDir . '/reminder_handlers.php';
     exit();
 }
 
 // 6. Route Transaction & Budget Actions
 if ($method === 'GET') {
-    require_once __DIR__ . '/includes/transaction_handlers.php';
+    require_once $baseIncludeDir . '/transaction_handlers.php';
     exit();
 } elseif ($method === 'POST') {
     if (in_array($action, ['save_transaction', 'delete_transaction', 'clear_all_data'])) {
-        require_once __DIR__ . '/includes/transaction_handlers.php';
+        require_once $baseIncludeDir . '/transaction_handlers.php';
         exit();
     } elseif ($action === 'save_budgets') {
-        require_once __DIR__ . '/includes/budget_handlers.php';
+        require_once $baseIncludeDir . '/budget_handlers.php';
         exit();
     }
 }

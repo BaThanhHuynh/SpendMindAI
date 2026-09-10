@@ -6,4 +6,3 @@ watch_deploy.py
 Dockerfile
 docker-compose.yml
 database.sql
-includes/

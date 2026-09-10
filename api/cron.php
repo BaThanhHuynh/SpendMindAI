@@ -7,10 +7,13 @@
 // Set CLI execution timeout to unlimited
 set_time_limit(0);
 
+// Locate includes directory (supports both /api/includes and root /includes)
+$baseIncludeDir = file_exists(__DIR__ . '/includes/config.php') ? __DIR__ . '/includes' : (file_exists(__DIR__ . '/../includes/config.php') ? __DIR__ . '/../includes' : __DIR__ . '/includes');
+
 // Load configuration and mailer
-require_once __DIR__ . '/includes/config.php';
-require_once __DIR__ . '/includes/mailer.php';
-require_once __DIR__ . '/includes/reminder_helper.php';
+require_once $baseIncludeDir . '/config.php';
+require_once $baseIncludeDir . '/mailer.php';
+require_once $baseIncludeDir . '/reminder_helper.php';
 
 // Force default timezone
 date_default_timezone_set('Asia/Ho_Chi_Minh');
