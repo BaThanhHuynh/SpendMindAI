@@ -5,7 +5,9 @@
 document.addEventListener("DOMContentLoaded", () => {
     initTheme();
     initSplashScreen();
-    checkAuthSession();
+    if (!checkGoogleOAuthRedirect()) {
+        checkAuthSession();
+    }
     initMobileNav();
     initScrollTypewriter();
     if (typeof lucide !== 'undefined') {
@@ -71,7 +73,42 @@ function initTheme() {
     });
 }
 
-// 3. Router check: If logged in, redirect directly to dashboard.html
+// 3. Check if user returned from Google OAuth Redirect (Bypasses popup blocker completely)
+function checkGoogleOAuthRedirect() {
+    const hash = window.location.hash;
+    if (hash && hash.includes("access_token=")) {
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get("access_token");
+        if (accessToken) {
+            history.replaceState(null, "", window.location.pathname + window.location.search);
+            fetch(`${API_URL}?action=google_auth`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ access_token: accessToken, remember: true })
+            })
+            .then(async res => {
+                let data;
+                try { data = await res.json(); } catch (e) { throw new Error("Phản hồi máy chủ không hợp lệ"); }
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || "Xác thực Google thất bại");
+                }
+                return data;
+            })
+            .then(data => {
+                if (data.success) {
+                    window.location.href = "dashboard.html";
+                }
+            })
+            .catch(err => {
+                showConnectionError(err.message);
+            });
+            return true;
+        }
+    }
+    return false;
+}
+
+// 4. Router check: If logged in, redirect directly to dashboard.html
 function checkAuthSession() {
     fetch(`${API_URL}?action=check_session`)
         .then(res => {

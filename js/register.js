@@ -6,10 +6,16 @@ const API_URL = "api";
 
 document.addEventListener("DOMContentLoaded", () => {
     initTheme();
-    checkAuthSession();
+    if (!checkGoogleOAuthRedirect()) {
+        checkAuthSession();
+    }
     initGoogleAuth();
     document.getElementById("register-form").addEventListener("submit", handleRegisterSubmit);
     document.getElementById("google-auth-btn").addEventListener("click", triggerGoogleAuthSimulated);
+    const btnOpenSim = document.getElementById("btn-open-simulated");
+    if (btnOpenSim) {
+        btnOpenSim.addEventListener("click", triggerGoogleSimulatedModalDirectly);
+    }
     lucide.createIcons();
 });
 
@@ -221,24 +227,26 @@ function handleGoogleToken(accessToken) {
     });
 }
 
-function triggerGoogleAuthSimulated() {
-    if (googleTokenClient) {
-        googleTokenClient.requestAccessToken({ prompt: 'select_account' });
-        return;
-    }
-    
-    if (window.google && window.google.accounts) {
-        try {
-            setupGoogleTokenClient(DEFAULT_GOOGLE_CLIENT_ID);
-            if (googleTokenClient) {
-                googleTokenClient.requestAccessToken({ prompt: 'select_account' });
-                return;
-            }
-        } catch (e) {
-            console.warn("Lỗi khởi tạo nhanh Google Token Client:", e);
+function checkGoogleOAuthRedirect() {
+    const hash = window.location.hash;
+    if (hash && hash.includes("access_token=")) {
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get("access_token");
+        if (accessToken) {
+            history.replaceState(null, "", window.location.pathname + window.location.search);
+            handleGoogleToken(accessToken);
+            return true;
         }
     }
-    triggerGoogleSimulatedModalDirectly();
+    return false;
+}
+
+function triggerGoogleAuthSimulated() {
+    // Direct page navigation to Google OAuth (Completely immune to popup blockers!)
+    const clientId = DEFAULT_GOOGLE_CLIENT_ID;
+    const redirectUri = window.location.origin; // https://spend-mind-aia.vercel.app
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile`;
+    window.location.href = authUrl;
 }
 
 function triggerGoogleSimulatedModalDirectly() {
