@@ -76,18 +76,17 @@ function checkAuthSession() {
     fetch(`${API_URL}?action=check_session`)
         .then(res => {
             if (!res.ok) {
-                return res.json().then(err => { throw new Error(err.message || "Lỗi kết nối cơ sở dữ liệu"); });
+                return null;
             }
             return res.json();
         })
         .then(data => {
-            if (data.authenticated) {
+            if (data && data.authenticated) {
                 window.location.href = "dashboard.html";
             }
         })
         .catch(err => {
-            console.error("Session router check error:", err);
-            showConnectionError(err.message);
+            console.warn("Session check notice:", err);
         });
 }
 

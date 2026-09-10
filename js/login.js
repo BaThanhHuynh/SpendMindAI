@@ -82,11 +82,17 @@ function handleGoogleToken(accessToken) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ access_token: accessToken, remember: rememberChecked })
     })
-    .then(res => {
-        if (!res.ok) {
-            return res.json().then(err => { throw new Error(err.message || "Xác thực Google thất bại"); });
+    .then(async res => {
+        let data;
+        try {
+            data = await res.json();
+        } catch (e) {
+            throw new Error(!res.ok ? `Lỗi kết nối máy chủ (${res.status}). Vui lòng kiểm tra biến môi trường CSDL trên Vercel.` : "Phản hồi máy chủ không hợp lệ");
         }
-        return res.json();
+        if (!res.ok) {
+            throw new Error(data.message || "Xác thực Google thất bại");
+        }
+        return data;
     })
     .then(data => {
         if (data.success) {
@@ -149,11 +155,17 @@ function triggerGoogleAuthSimulated() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: email, google_id: googleId, remember: rememberChecked })
             })
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(err => { throw new Error(err.message || "Xác thực Google thất bại"); });
+            .then(async res => {
+                let data;
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    throw new Error(!res.ok ? `Lỗi kết nối máy chủ (${res.status}). Vui lòng kiểm tra biến môi trường CSDL trên Vercel.` : "Phản hồi máy chủ không hợp lệ");
                 }
-                return res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || "Xác thực Google thất bại");
+                }
+                return data;
             })
             .then(data => {
                 if (data.success) {
@@ -299,11 +311,17 @@ function handleLoginSubmit(e) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: usernameInput, password: passwordInput, remember: rememberChecked })
     })
-    .then(res => {
-        if (!res.ok) {
-            return res.json().then(err => { throw new Error(err.message || "Đăng nhập thất bại"); });
+    .then(async res => {
+        let data;
+        try {
+            data = await res.json();
+        } catch (e) {
+            throw new Error(!res.ok ? `Lỗi kết nối máy chủ (${res.status}). Vui lòng kiểm tra biến môi trường CSDL trên Vercel.` : "Phản hồi máy chủ không hợp lệ");
         }
-        return res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || "Đăng nhập thất bại");
+        }
+        return data;
     })
     .then(data => {
         if (data.success) {
