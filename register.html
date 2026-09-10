@@ -15,9 +15,18 @@
     <!-- Lucide Icons CDN (pinned version for consistent + faster loading) -->
     <script src="https://unpkg.com/lucide@0.460.0" defer></script>
     
+    <!-- PWA & Mobile Web App Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#10b981">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SpendMindAI">
+    <link rel="apple-touch-icon" href="images/logoapp.png">
+
     <!-- Stylesheet -->
     <link rel="stylesheet" href="css/styles.css">
-    
+    <link rel="stylesheet" href="css/mobile.css">
+
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -159,5 +168,12 @@
     </div>
 
     <script src="js/register.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+    </script>
 </body>
 </html>

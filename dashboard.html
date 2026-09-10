@@ -22,8 +22,17 @@
     <!-- Chart.js CDN (deferred to not block initial paint) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
-    <!-- Stylesheet -->
+    <!-- PWA & Mobile Web App Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#10b981">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SpendMindAI">
+    <link rel="apple-touch-icon" href="images/logoapp.png">
+
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/mobile.css">
     
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -526,9 +535,43 @@
         </div>
     </div>
 
+    <!-- MOBILE BOTTOM NAVIGATION (Native iOS & Android App Bar) -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Điều hướng di động">
+        <button type="button" class="mobile-nav-item active" id="nav-btn-overview" data-target="overview" title="Tổng quan tài chính">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Tổng quan</span>
+        </button>
+        <button type="button" class="mobile-nav-item" id="nav-btn-calendar" data-target="calendar" title="Lịch thu chi">
+            <i data-lucide="calendar"></i>
+            <span>Lịch</span>
+        </button>
+        <button type="button" class="mobile-nav-item nav-add-btn" id="nav-btn-add" title="Thêm giao dịch mới">
+            <i data-lucide="plus"></i>
+        </button>
+        <button type="button" class="mobile-nav-item" id="nav-btn-chatbot" data-target="chatbot" title="Trợ lý ảo AI">
+            <i data-lucide="bot"></i>
+            <span>Trợ lý AI</span>
+        </button>
+        <button type="button" class="mobile-nav-item" id="nav-btn-settings" data-target="settings" title="Cài đặt hệ thống">
+            <i data-lucide="settings"></i>
+            <span>Cài đặt</span>
+        </button>
+    </nav>
+
     <!-- Main Dashboard script -->
     <script src="js/chatbot.js?v=20260618_2125"></script>
     <script src="js/dashboard.js?v=20260618_2125"></script>
+
+    <!-- Service Worker Registration for PWA & Offline Support -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.log('ServiceWorker registration error: ', err);
+                });
+            });
+        }
+    </script>
 </body>
 
 </html>

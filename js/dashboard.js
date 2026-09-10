@@ -509,6 +509,55 @@ function initEventListeners() {
         }
     });
 
+    // Mobile Bottom Navigation Handlers (Touch-Optimized)
+    const navBtnOverview = document.getElementById("nav-btn-overview");
+    const navBtnCalendar = document.getElementById("nav-btn-calendar");
+    const navBtnAdd = document.getElementById("nav-btn-add");
+    const navBtnChatbot = document.getElementById("nav-btn-chatbot");
+    const navBtnSettings = document.getElementById("nav-btn-settings");
+
+    if (navBtnOverview) {
+        navBtnOverview.addEventListener("click", () => {
+            document.querySelectorAll(".mobile-nav-item").forEach(b => b.classList.remove("active"));
+            navBtnOverview.classList.add("active");
+            const target = document.querySelector(".dashboard-section");
+            if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    }
+
+    if (navBtnCalendar) {
+        navBtnCalendar.addEventListener("click", () => {
+            document.querySelectorAll(".mobile-nav-item").forEach(b => b.classList.remove("active"));
+            navBtnCalendar.classList.add("active");
+            const target = document.querySelector(".calendar-section");
+            if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    }
+
+    if (navBtnAdd) {
+        navBtnAdd.addEventListener("click", () => {
+            openTransactionModal();
+        });
+    }
+
+    if (navBtnChatbot) {
+        navBtnChatbot.addEventListener("click", () => {
+            const chatBtn = document.getElementById("chatbot-trigger-btn");
+            if (chatBtn) chatBtn.click();
+        });
+    }
+
+    if (navBtnSettings) {
+        navBtnSettings.addEventListener("click", () => {
+            const settingsBtn = document.getElementById("btn-settings");
+            if (settingsBtn) {
+                settingsBtn.click();
+                const settingsDropdown = document.getElementById("settings-dropdown");
+                if (settingsDropdown) settingsDropdown.scrollIntoView({ behavior: "smooth" });
+            }
+        });
+    }
+
     // Amount input formatting (vietnamese thousands separator with caret preservation)
     document.getElementById("amount").addEventListener("input", function(e) {
         const cursorPosition = this.selectionStart;

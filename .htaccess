@@ -1,0 +1,31 @@
+# Apache configuration for SpendMindAI
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Block sensitive internal directories and files
+    RewriteRule ^api/config/.*$ - [F,L]
+    RewriteRule ^api/controllers/.*$ - [F,L]
+    RewriteRule ^api/services/.*$ - [F,L]
+    RewriteRule ^api/includes/.*$ - [F,L]
+    RewriteRule ^includes/.*$ - [F,L]
+    RewriteRule ^scratch/.*$ - [F,L]
+    RewriteRule ^vps_deployment/.*$ - [F,L]
+    RewriteRule ^\.env.*$ - [F,L]
+    RewriteRule ^Dockerfile.*$ - [F,L]
+    RewriteRule ^docker-compose.*$ - [F,L]
+
+    # Clean URL rewrites for API and Cron
+    RewriteRule ^api/?$ api/index.php [QSA,L]
+    RewriteRule ^api/(.+)$ api/index.php [QSA,L]
+    RewriteRule ^api\.php$ api/index.php [QSA,L]
+    RewriteRule ^cron\.php$ api/cron.php [QSA,L]
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

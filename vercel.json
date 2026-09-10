@@ -10,6 +10,18 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/config/(.*)",
+      "destination": "/404"
+    },
+    {
+      "source": "/api/controllers/(.*)",
+      "destination": "/404"
+    },
+    {
+      "source": "/api/services/(.*)",
+      "destination": "/404"
+    },
+    {
       "source": "/includes/(.*)",
       "destination": "/404"
     },

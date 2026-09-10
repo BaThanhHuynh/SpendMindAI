@@ -1,0 +1,204 @@
+/* ==========================================================================
+   SPENDMINDAI - MOBILE & PWA APP STYLES
+   Mobile Bottom Navigation, Touch Ergonomics & Responsive Enhancements
+   ========================================================================== */
+
+/* 1. Mobile Bottom Navigation Bar (App Bar) */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(15, 23, 20, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 1000;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .mobile-bottom-nav {
+    background: rgba(255, 255, 255, 0.94);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
+}
+
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-secondary, #94a3b8);
+    font-size: 0.68rem;
+    font-weight: 500;
+    gap: 4px;
+    padding: 6px 12px;
+    min-width: 58px;
+    min-height: 48px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    border-radius: 12px;
+    text-decoration: none;
+}
+
+.mobile-nav-item i {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.2s ease;
+}
+
+.mobile-nav-item:active {
+    transform: scale(0.92);
+}
+
+.mobile-nav-item.active {
+    color: #10b981;
+}
+
+.mobile-nav-item.active i {
+    transform: translateY(-2px);
+}
+
+/* Center Floating Add Button (+) */
+.mobile-nav-item.nav-add-btn {
+    position: relative;
+    top: -14px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff !important;
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    min-height: 52px;
+    border-radius: 50%;
+    padding: 0;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+    border: 3px solid #090d0b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+
+[data-theme="light"] .mobile-nav-item.nav-add-btn {
+    border-color: #ffffff;
+}
+
+.mobile-nav-item.nav-add-btn:active {
+    transform: scale(0.9) translateY(2px);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+}
+
+.mobile-nav-item.nav-add-btn i {
+    width: 26px;
+    height: 26px;
+}
+
+/* 2. Responsive Mobile Layout Adaptations */
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: flex;
+    }
+
+    /* Add bottom padding to dashboard so content is not obscured by bottom bar */
+    .app-container {
+        padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    /* Single column layout optimized for touch */
+    .app-main-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+
+    /* Mobile Bottom Sheet Modal */
+    .modal-overlay {
+        align-items: flex-end !important;
+        padding: 0 !important;
+    }
+
+    .modal-content.form-card {
+        max-width: 100% !important;
+        width: 100% !important;
+        border-radius: 24px 24px 0 0 !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 !important;
+        animation: slideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    @keyframes slideUpMobile {
+        from {
+            transform: translateY(100%);
+            opacity: 0.5;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* Chatbot repositioning above bottom nav */
+    .chatbot-widget {
+        bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+        right: 16px !important;
+    }
+
+    .chatbot-container {
+        width: calc(100vw - 32px) !important;
+        max-width: 420px !important;
+        right: 0 !important;
+        bottom: 60px !important;
+        height: 70vh !important;
+        max-height: 520px !important;
+    }
+
+    /* Mobile Header Layout */
+    .app-header {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 14px 16px;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    /* Touch target sizes (minimum 44px) */
+    .btn, 
+    .btn-icon-label, 
+    .theme-toggle-btn, 
+    .btn-month-nav,
+    .toggle-label {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+
+    /* Calendar Grid cells touch optimization */
+    .calendar-grid {
+        gap: 2px !important;
+    }
+
+    .calendar-cell {
+        min-height: 48px !important;
+        padding: 4px 2px !important;
+    }
+
+    .calendar-cell .cell-date {
+        font-size: 0.8rem !important;
+    }
+
+    /* Pull to refresh & overscroll behavior */
+    body {
+        overscroll-behavior-y: contain;
+    }
+}

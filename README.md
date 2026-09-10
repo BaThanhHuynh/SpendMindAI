@@ -35,41 +35,50 @@ SpendMindAI là ứng dụng web quản lý tài chính cá nhân toàn diện �
 *   **Môi trường chạy**: Apache/Nginx, Docker (tùy chọn), hoặc LEMP Stack trên VPS Ubuntu.
 
 
-## Cấu Trúc Thư Mục Dự Án
+## Kiến Trúc Hệ Thống Chuẩn Hóa Production
+
+Dự án được phân tách rành mạch thành 2 phần độc lập: **Backend** và **Frontend**, đáp ứng tiêu chuẩn sản xuất (Production-Grade), dễ dàng bảo trì, mở rộng và tái lập môi trường.
 
 ```text
-QuanLyChiTieu/
-├── css/
-│   └── styles.css              # File CSS chứa toàn bộ kiểu dáng giao diện Glassmorphism và Responsive
-├── images/                     # Ảnh mockup và logo chính thức của ứng dụng (logoapp.png)
-├── includes/                   # Các tệp xử lý backend PHP hướng module
-│   ├── auth_handlers.php       # Xử lý đăng ký, đăng nhập, liên kết Google OAuth
-│   ├── budget_handlers.php     # Xử lý thiết lập hạn mức ngân sách
-│   ├── config.php              # Nạp biến môi trường (.env), thiết lập PDO và tự động tạo bảng (migration)
-│   ├── mailer.php              # Bộ gửi mail SMTP qua Socket thuần không phụ thuộc thư viện ngoài
-│   ├── reminder_handlers.php   # Xử lý kiểm tra và gửi mail nhắc nhở
-│   ├── reminder_helper.php     # Các hàm phụ trợ kiểm tra giờ giấc nhắc nhở
-│   └── transaction_handlers.php# Xử lý CRUD giao dịch thu chi và thống kê số liệu
-├── js/                         # Logic điều khiển Frontend bằng Javascript thuần
-│   ├── chatbot.js              # Tương tác giao diện chatbot và truy vấn trực tiếp đến Google Gemini API
-│   ├── dashboard.js            # Quản lý giao dịch, hạn mức, biểu đồ thống kê và thiết lập trên Dashboard
-│   ├── index.js                # Logic hiệu ứng Landing page và tự động định tuyến
-│   ├── login.js                # Logic đăng nhập tài khoản và tích hợp Google Login SDK
-│   └── register.js             # Logic đăng ký tài khoản mới
-├── vps_deployment/             # Kịch bản cấu hình cấu trúc tự động lên VPS Ubuntu
-│   ├── deploy.sh               # Bash script tự động cấu hình LEMP Stack & SSL Let's Encrypt
-│   └── nginx.conf              # File cấu hình Nginx tối ưu hóa bảo mật và nén gzip cho dự án
-├── .env                        # Chứa các biến môi trường cấu hình DB, SMTP, Gemini API (Không commit!)
-├── .env.example                # File cấu hình mẫu cho các biến môi trường
-├── .gitignore                  # Chỉ định các file/thư mục nhạy cảm cần tránh đưa lên Git
-├── api.php                     # Cổng API duy nhất chuyển tiếp yêu cầu (Single entry point router)
-├── cron.php                    # Cron-job kiểm tra chạy ngầm định kỳ gửi email nhắc nhở người dùng
-├── dashboard.html              # Giao diện Bảng điều khiển chính
-├── database.sql                # Script cấu trúc database dự phòng
-├── index.html                  # Trang giới thiệu ứng dụng (Landing Page)
-├── login.html                  # Giao diện Đăng nhập tài khoản
-├── register.html               # Giao diện Đăng ký tài khoản
-└── watch_deploy.py             # Script chạy ngầm local tự động deploy lên VPS khi lưu file (Ctrl+S)
+SpendMindAI/
+├── api/                             # BACKEND: RESTful API & Serverless Functions
+│   ├── config/
+│   │   ├── security.php             # Error handling, CORS, Session security & Dynamic URL
+│   │   └── database.php             # Singleton PDO, TiDB Cloud SSL, Auto-migration, PdoSessionHandler
+│   ├── services/
+│   │   └── MailerService.php        # Client SMTP Socket thuần gửi mail thông báo & template hài hước
+│   ├── controllers/
+│   │   ├── AuthController.php       # Đăng ký, đăng nhập, Google OAuth, Session Guard
+│   │   ├── TransactionController.php# CRUD giao dịch thu chi & thống kê
+│   │   ├── BudgetController.php     # Quản lý hạn mức chi tiêu theo danh mục
+│   │   ├── ReminderController.php   # Quản lý cài đặt nhắc nhở, Lazy Cron & System Cron
+│   │   └── ChatbotController.php    # Kết nối trợ lý tài chính Google Gemini AI
+│   ├── index.php                    # Front Controller điều phối API duy nhất
+│   └── cron.php                     # Endpoint kích hoạt cron job định kỳ (Vercel Cron / CLI)
+│
+├── css/                             # FRONTEND STYLING
+│   ├── styles.css                   # Giao diện Glassmorphism cao cấp, Dark/Light Mode
+│   └── mobile.css                   # Giao diện tối ưu Mobile, Mobile Bottom Nav & Touch targets
+│
+├── js/                              # FRONTEND LOGIC (Zero-build ES6+)
+│   ├── chatbot.js                   # Logic giao diện Chatbot tương tác Gemini API
+│   ├── dashboard.js                 # Quản lý giao dịch, hạn mức, biểu đồ Chart.js & Calendar
+│   ├── index.js                     # Landing page script
+│   ├── login.js                     # Xử lý đăng nhập, Google OAuth popup/redirect flow
+│   └── register.js                  # Xử lý đăng ký tài khoản & Google Sign-In
+│
+├── images/                          # Tài nguyên hình ảnh, mockup & icon ứng dụng
+├── manifest.json                    # Progressive Web App (PWA) manifest
+├── sw.js                            # Service Worker hỗ trợ lưu cache & PWA Offline
+├── vercel.json                      # Cấu hình Serverless Vercel PHP & URL Rewrites
+├── Dockerfile                       # Container hóa Docker với PHP 8.2 & Apache
+├── docker-compose.yml               # Cấu hình khởi chạy nhanh Docker container
+├── .htaccess                        # URL Rewrites & Security headers cho Apache/VPS
+├── dashboard.html                   # Ứng dụng Web App quản lý thu chi chính
+├── index.html                       # Trang giới thiệu ứng dụng (Landing Page)
+├── login.html                       # Trang Đăng nhập
+├── register.html                    # Trang Đăng ký
+└── .env.example                     # Mẫu biến môi trường
 ```
 
 

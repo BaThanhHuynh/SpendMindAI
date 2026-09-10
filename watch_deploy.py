@@ -5,7 +5,7 @@ import subprocess
 
 # Configure monitored extensions and folders
 EXTENSIONS = ('.html', '.js', '.css', '.php', '.sql', '.env', '.md')
-MONITORED_DIRS = ['js', 'css', 'includes', 'vps_deployment']
+MONITORED_DIRS = ['js', 'css', 'api', 'vps_deployment']
 EXCLUDE_DIRS = ['.git', '__pycache__', '.idea', '.vscode', 'scratch', 'brand']
 
 # Path to the deployment script
