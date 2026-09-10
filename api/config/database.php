@@ -45,8 +45,24 @@ class Database {
         $isLocalHost = in_array(strtolower($dbHost), ['127.0.0.1', 'localhost', '::1', 'db', 'mysql']);
         $useSsl = (getEnvVar('DB_SSL') === 'true') || (!empty($dbUrl) && strpos($dbUrl, 'ssl') !== false) || (!$isLocalHost && getEnvVar('DB_SSL') !== 'false');
 
-        if ($useSsl && defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
-            $pdoOptions[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+        if ($useSsl) {
+            if (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
+                $pdoOptions[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+            }
+            if (defined('PDO::MYSQL_ATTR_SSL_CA')) {
+                $possibleCas = [
+                    '/etc/ssl/certs/ca-certificates.crt',
+                    '/etc/pki/tls/certs/ca-bundle.crt',
+                    '/etc/ssl/ca-bundle.pem',
+                    '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem'
+                ];
+                foreach ($possibleCas as $ca) {
+                    if (file_exists($ca)) {
+                        $pdoOptions[PDO::MYSQL_ATTR_SSL_CA] = $ca;
+                        break;
+                    }
+                }
+            }
         }
 
         try {

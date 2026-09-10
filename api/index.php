@@ -67,11 +67,13 @@ switch ($action) {
 // 6. Database Guard for Protected Endpoints
 if (!$pdo) {
     http_response_code(503);
+    $dbErr = Database::getError();
     echo json_encode([
         "success" => false,
         "authenticated" => false,
         "db_connected" => false,
-        "message" => "Chưa kết nối cơ sở dữ liệu Cloud trên Vercel. Vui lòng cấu hình biến môi trường DATABASE_URL hoặc DB_HOST, DB_USER, DB_PASS (TiDB Cloud) trong mục Settings -> Environment Variables."
+        "db_error" => $dbErr,
+        "message" => $dbErr ? "Lỗi kết nối cơ sở dữ liệu: $dbErr" : "Chưa kết nối cơ sở dữ liệu Cloud trên Vercel. Vui lòng cấu hình biến môi trường DATABASE_URL hoặc DB_HOST, DB_USER, DB_PASS (TiDB Cloud) trong mục Settings -> Environment Variables."
     ]);
     exit();
 }

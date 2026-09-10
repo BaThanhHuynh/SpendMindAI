@@ -44,7 +44,13 @@ class AuthController {
         }
         echo json_encode([
             "authenticated" => false,
-            "db_connected" => ($this->pdo !== null)
+            "db_connected" => ($this->pdo !== null),
+            "db_error" => Database::getError(),
+            "env_status" => [
+                "has_db_host" => (getEnvVar('DB_HOST') !== null && getEnvVar('DB_HOST') !== '127.0.0.1'),
+                "has_db_url" => (getEnvVar('DATABASE_URL') !== null),
+                "has_db_user" => (getEnvVar('DB_USER') !== null && getEnvVar('DB_USER') !== 'root')
+            ]
         ]);
         exit();
     }
