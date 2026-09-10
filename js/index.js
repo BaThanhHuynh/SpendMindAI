@@ -73,6 +73,8 @@ function initTheme() {
     });
 }
 
+let pendingAuthRedirect = null;
+
 // 3. Check if user returned from Google OAuth Redirect (Bypasses popup blocker completely)
 function checkGoogleOAuthRedirect() {
     const hash = window.location.hash;
@@ -119,7 +121,13 @@ function checkAuthSession() {
         })
         .then(data => {
             if (data && data.authenticated) {
-                window.location.href = "dashboard.html";
+                const splash = document.getElementById("iphone-splash-screen");
+                // If splash screen is active, wait for animation to complete smoothly
+                if (splash && !splash.classList.contains("splash-hidden")) {
+                    pendingAuthRedirect = "dashboard.html";
+                } else {
+                    window.location.href = "dashboard.html";
+                }
             }
         })
         .catch(err => {
@@ -166,12 +174,10 @@ function initSplashScreen() {
         return;
     }
 
-    if (sessionStorage.getItem("splash_screen_shown")) {
-        splash.remove();
-        document.body.classList.add("splash-completed");
-        runTypewriter();
-        return;
-    }
+    // Clear legacy flag so splash always animates
+    try {
+        sessionStorage.removeItem("splash_screen_shown");
+    } catch (e) {}
 
     const path1 = document.querySelector(".path-1");
     const path2 = document.querySelector(".path-2");
@@ -183,39 +189,53 @@ function initSplashScreen() {
         return;
     }
 
-    const len1 = path1.getTotalLength();
-    const len2 = path2.getTotalLength();
+    try {
+        const len1 = Math.ceil(path1.getTotalLength());
+        const len2 = Math.ceil(path2.getTotalLength());
 
-    path1.style.strokeDasharray = len1;
-    path1.style.strokeDashoffset = len1;
-    path2.style.strokeDasharray = len2;
-    path2.style.strokeDashoffset = len2;
+        path1.style.strokeDasharray = `${len1}`;
+        path1.style.strokeDashoffset = `${len1}`;
+        path2.style.strokeDasharray = `${len2}`;
+        path2.style.strokeDashoffset = `${len2}`;
 
-    setTimeout(() => {
-        path1.style.transition = "stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1)";
-        path1.style.strokeDashoffset = "0";
+        // Trigger reflow to guarantee initial stroke-dashoffset is painted
+        path1.getBoundingClientRect();
+        path2.getBoundingClientRect();
 
         setTimeout(() => {
-            path2.style.transition = "stroke-dashoffset 1.8s cubic-bezier(0.4, 0, 0.2, 1)";
-            path2.style.strokeDashoffset = "0";
-        }, 300);
-    }, 500);
+            path1.style.transition = "stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1)";
+            path1.style.strokeDashoffset = "0";
 
-    setTimeout(() => {
-        const subtitle = document.querySelector(".splash-subtitle");
-        if (subtitle) subtitle.classList.add("subtitle-visible");
-    }, 1600);
+            setTimeout(() => {
+                path2.style.transition = "stroke-dashoffset 1.8s cubic-bezier(0.4, 0, 0.2, 1)";
+                path2.style.strokeDashoffset = "0";
+            }, 300);
+        }, 200);
 
-    setTimeout(() => {
-        splash.classList.add("splash-hidden");
+        setTimeout(() => {
+            const subtitle = document.querySelector(".splash-subtitle");
+            if (subtitle) subtitle.classList.add("subtitle-visible");
+        }, 1500);
+
+        setTimeout(() => {
+            splash.classList.add("splash-hidden");
+            document.body.classList.add("splash-completed");
+
+            setTimeout(() => {
+                splash.remove();
+                if (pendingAuthRedirect) {
+                    window.location.href = pendingAuthRedirect;
+                } else {
+                    runTypewriter();
+                }
+            }, 800);
+        }, 3200);
+    } catch (e) {
+        console.error("Splash error:", e);
+        splash.remove();
         document.body.classList.add("splash-completed");
-        sessionStorage.setItem("splash_screen_shown", "true");
-
-        setTimeout(() => {
-            splash.remove();
-            runTypewriter();
-        }, 800);
-    }, 3400);
+        runTypewriter();
+    }
 }
 
 // 5. Initialize Mobile Hamburger Menu

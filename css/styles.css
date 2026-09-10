@@ -480,13 +480,16 @@ body {
 /* Charts Grid */
 .charts-grid {
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
     gap: 24px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 @media (max-width: 768px) {
     .charts-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
@@ -494,16 +497,28 @@ body {
     height: 300px;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .chart-container {
     position: relative;
     flex-grow: 1;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+}
+
+.chart-container canvas {
+    max-width: 100% !important;
+    max-height: 100% !important;
 }
 
 .no-data-msg {
@@ -1874,7 +1889,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: var(--bg-default);
+    background-color: var(--bg-primary, #0a0a0a);
     z-index: 99999;
     display: flex;
     justify-content: center;
@@ -2344,10 +2359,6 @@ body {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
 }
-.logo-icon, .logo-icon-sm {
-    background: linear-gradient(135deg, #6ee7b7, #059669);
-    box-shadow: 0 10px 24px -8px rgba(52, 211, 153, 0.45);
-}
 .logo-area h1 { font-weight: 800; }
 
 /* --- Buttons: solid luminous emerald with dark ink --- */
@@ -2380,18 +2391,7 @@ body {
     box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
-/* --- Balance card: premium emerald-on-black --- */
-.balance-card {
-    background:
-        radial-gradient(130% 130% at 100% 0%, rgba(52, 211, 153, 0.16), transparent 55%),
-        linear-gradient(160deg, rgba(16, 40, 29, 0.92), rgba(5, 12, 9, 0.94));
-    border: 1px solid rgba(52, 211, 153, 0.16);
-    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-.balance-card::before {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent-strong), var(--accent-color), transparent);
-}
+/* --- Balance card typography --- */
 .balance-label { color: rgba(255, 255, 255, 0.62); letter-spacing: 0.12em; }
 .balance-amount {
     font-weight: 800;
@@ -2486,13 +2486,14 @@ body {
 /* --- Balance card: deliberate dark-emerald hero panel in BOTH themes
        (matches mockup), flat solid, always white text for readability --- */
 .balance-card {
-    background: #0e2519;
-    border: 1px solid rgba(52, 211, 153, 0.18);
+    background-color: #0f231a !important;
+    background-image: none !important;
+    border: none !important;
     box-shadow: var(--shadow-md);
 }
 .balance-card::before {
-    height: 3px;
-    background: var(--accent-color);
+    height: 3px !important;
+    background: var(--accent-color) !important;
 }
 .balance-label { color: rgba(255, 255, 255, 0.6); letter-spacing: 0.1em; }
 .balance-amount {
@@ -2567,10 +2568,18 @@ body {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 @media (min-width: 768px) {
-    /* Charts row: equal-width columns */
-    .charts-grid { grid-template-columns: 1fr 1fr; }
+    /* Charts row: equal-width columns constrained to prevent overflow */
+    .charts-grid { 
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); 
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
     /* Form + budget row: equal-width AND equal-height cards */
     .sidebar-section {
         display: block;
@@ -2585,15 +2594,7 @@ body {
    text-clip so the amount is a clean solid white on a solid dark-emerald panel.
    Last in file + !important to guarantee it wins.
    ========================================================================== */
-.balance-card {
-    background-image: none !important;
-    background-color: #0f231a !important;
-    border: none !important;
-}
-.balance-card::before {
-    background: var(--accent-color) !important;
-    height: 3px !important;
-}
+
 .balance-label {
     color: rgba(255, 255, 255, 0.6) !important;
     -webkit-text-fill-color: rgba(255, 255, 255, 0.6) !important;
@@ -4993,6 +4994,47 @@ html, body {
 .daily-transactions-section {
     max-width: 100%;
     overflow-x: hidden;
+}
+
+/* ---------- Fix: Ensure charts grid never overflows dashboard container ---------- */
+.dashboard-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+}
+
+.charts-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 24px !important;
+}
+
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
+
+.chart-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+.chart-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+.chart-container canvas {
+    max-width: 100% !important;
+    max-height: 100% !important;
 }
 
 /* ---------- Fix: Glass card hover should NOT shift layout on touch ---------- */

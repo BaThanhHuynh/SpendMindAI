@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
     '/js/dashboard.js',
     '/js/chatbot.js',
     '/js/login.js',
+    '/js/index.js',
     '/images/logoapp.png',
     '/images/logoapp.webp',
     '/manifest.json'

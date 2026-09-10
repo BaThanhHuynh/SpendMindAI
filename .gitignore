@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 local_dev_data.json
+spendmind_local.db
+local_demo_server.py
+.agents/
 
 # Cloudflare Tunnel temporary link and executable
 cloudflare_link.txt
