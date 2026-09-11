@@ -71,15 +71,24 @@ SpendMindAI/
 ├── manifest.json                    # Progressive Web App (PWA) manifest
 ├── sw.js                            # Service Worker hỗ trợ lưu cache & PWA Offline
 ├── vercel.json                      # Cấu hình Serverless Vercel PHP & URL Rewrites
-├── Dockerfile                       # Container hóa Docker với PHP 8.2 & Apache
-├── docker-compose.yml               # Cấu hình khởi chạy nhanh Docker container
-├── .htaccess                        # URL Rewrites & Security headers cho Apache/VPS
+├── .htaccess                        # URL Rewrites & Security headers cho Apache
+├── dev_server.py                    # Server Python cục bộ không phụ thuộc môi trường
+├── database.sql                     # Mẫu cấu trúc CSDL TiDB / MySQL
 ├── dashboard.html                   # Ứng dụng Web App quản lý thu chi chính
 ├── index.html                       # Trang giới thiệu ứng dụng (Landing Page)
 ├── login.html                       # Trang Đăng nhập
 ├── register.html                    # Trang Đăng ký
 └── .env.example                     # Mẫu biến môi trường
 ```
+
+
+## Hướng Dẫn Chạy Cục Bộ (Local Development Server)
+
+Dự án cung cấp sẵn server phát triển cục bộ bằng Python thuần không cần cài đặt thêm thư viện:
+```powershell
+python dev_server.py
+```
+Ứng dụng sẽ tự động mở tại `http://localhost:8080` với đầy đủ tính năng mô phỏng và tự đồng bộ.
 
 
 ## Hướng Dẫn Cài Đặt Chi Tiết (Local XAMPP)
@@ -89,9 +98,9 @@ SpendMindAI/
 *   Khởi chạy dịch vụ **Apache** và **MySQL** trên cửa sổ quản lý XAMPP Control Panel.
 
 ### 2. Copy Thư Mục Mã Nguồn
-Di chuyển thư mục `QuanLyChiTieu` vào bên trong thư mục Web Root của XAMPP:
+Di chuyển thư mục `SpendMindAI` vào bên trong thư mục Web Root của XAMPP:
 ```text
-C:\xampp\htdocs\QuanLyChiTieu
+C:\xampp\htdocs\SpendMindAI
 ```
 
 ### 3. Cấu Hình Biến Môi Trường (.env)
@@ -114,23 +123,12 @@ C:\xampp\htdocs\QuanLyChiTieu
     # Khóa Google Gemini API
     GEMINI_API_KEY=khoa_api_gemini_cua_ban
     ```
-    > *Lưu ý*: `SMTP_PASS` phải là mật khẩu ứng dụng (App Password) được tạo từ tài khoản Google (sau khi bật xác thực 2 lớp), không phải mật khẩu đăng nhập tài khoản Gmail thông thường.
 
 ### 4. Khởi Chạy Ứng Dụng
 Truy cập đường dẫn sau trên trình duyệt để sử dụng ứng dụng:
 ```text
-http://localhost/QuanLyChiTieu/index.html
+http://localhost/SpendMindAI/index.html
 ```
-*Lưu ý*: Mọi cấu trúc bảng và cơ sở dữ liệu sẽ **tự động khởi tạo** khi frontend thực hiện lệnh gọi API đầu tiên vào `api.php`. Bạn không bắt buộc phải import file `database.sql` bằng tay.
-
-### 5. Tự Động Đồng Bộ Lên VPS Khi Lưu File (Auto-Deploy Watcher)
-Dự án được tích hợp sẵn một script watcher chạy ngầm gọn nhẹ ở local. Khi bạn tự chỉnh sửa code ở máy tính, để tự động đóng gói và deploy ngay lập tức lên VPS live mà không cần gõ lệnh thủ công:
-1. Mở Terminal tại thư mục gốc của dự án.
-2. Chạy lệnh:
-   ```powershell
-   python watch_deploy.py
-   ```
-Mỗi khi bạn bấm lưu file (`Ctrl + S`), tệp script sẽ tự động phát hiện, debouncing trì hoãn 0.5 giây để tránh xung đột ghi, rồi tự động gọi `deploy_vps.py` để đồng bộ lên live.
 
 
 ## Hướng Dẫn Triển Khai Lên Vercel (Serverless Cloud)
