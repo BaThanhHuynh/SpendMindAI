@@ -6,10 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Bảng Điều Khiển - SpendMindAI</title>
     <meta name="description" content="Trang bảng điều khiển quản lý chi tiêu cá nhân trên SpendMindAI.">
-    <link rel="icon" type="image/png" href="images/logoapp.png">
+    <link rel="icon" type="image/png" href="images/logoapp.png?v=20260911_v8">
+    <link rel="shortcut icon" href="favicon.ico?v=20260911_v8">
 
     <!-- Preload critical CSS & Fonts -->
-    <link rel="preload" href="css/styles.css?v=20260911_v7" as="style">
+    <link rel="preload" href="css/styles.css?v=20260911_v8" as="style">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" as="style">
 
     <!-- Google Fonts: Montserrat -->
@@ -24,17 +25,17 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 
     <!-- PWA & Mobile Web App Meta -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json?v=20260911_v8">
     <meta name="theme-color" content="#10b981">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SpendMindAI">
-    <link rel="apple-touch-icon" href="images/logoapp.png">
+    <link rel="apple-touch-icon" href="images/logoapp.png?v=20260911_v8">
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/styles.css?v=20260911_v7">
-    <link rel="stylesheet" href="css/mobile.css?v=20260911_v7">
+    <link rel="stylesheet" href="css/styles.css?v=20260911_v8">
+    <link rel="stylesheet" href="css/mobile.css?v=20260911_v8">
     
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -51,7 +52,7 @@
         <header class="app-header">
             <div class="logo-area">
                 <div class="logo-icon has-image">
-                    <img src="images/logoapp.png" alt="SpendMindAI Logo" width="38" height="38" loading="lazy">
+                    <img src="images/logoapp.png?v=20260911_v8" alt="SpendMindAI Logo" width="38" height="38" loading="lazy">
                 </div>
                 <div>
                     <h1>Xin chào, <strong id="user-display-name">...</strong>!</h1>
@@ -513,11 +514,11 @@
             <!-- Header -->
             <div class="chatbot-header">
                 <div class="chatbot-bot-info">
-                    <div class="chatbot-avatar">
-                        <i data-lucide="bot"></i>
+                    <div class="chatbot-avatar" style="overflow: hidden; padding: 2px;">
+                        <img src="images/logoapp.png?v=20260911_v8" alt="SpendMindAI Logo" width="28" height="28" style="border-radius: 50%; object-fit: contain;">
                     </div>
                     <div>
-                        <h4 style="margin: 0;">Trợ Lý Tài Chính</h4>
+                        <h4 style="margin: 0;">Trợ Lý Tài Chính SpendMindAI</h4>
                     </div>
                 </div>
                 <button id="chatbot-close-btn" class="chatbot-close-btn" title="Đóng">
@@ -533,15 +534,14 @@
             <!-- Suggestion Chips -->
             <div id="chatbot-suggestions" class="chatbot-suggestions">
                 <button type="button" class="suggestion-chip" data-query="số dư">Số dư</button>
-                <button type="button" class="suggestion-chip" data-query="hôm nay">Hôm nay chi gì?</button>
-                <button type="button" class="suggestion-chip" data-query="lớn nhất">Giao dịch lớn nhất</button>
-                <button type="button" class="suggestion-chip" data-query="hạn mức">Hạn mức</button>
+                <button type="button" class="suggestion-chip" data-query="tổng quan chi tiêu">Tổng quan</button>
+                <button type="button" class="suggestion-chip" data-query="ngân sách còn lại">Ngân sách</button>
+                <button type="button" class="suggestion-chip" data-query="lời khuyên tiết kiệm">Lời khuyên</button>
             </div>
 
             <!-- Input area -->
             <form id="chatbot-input-form" class="chatbot-input-form">
-                <input type="text" id="chatbot-input" placeholder="Hỏi tôi về số dư, chi tiêu..." required
-                    autocomplete="off">
+                <input type="text" id="chatbot-input" placeholder="Hỏi tôi về số dư, chi tiêu..." required autocomplete="off">
                 <button type="submit" id="chatbot-send-btn" title="Gửi câu hỏi">
                     <i data-lucide="send"></i>
                 </button>
@@ -549,18 +549,21 @@
         </div>
     </div>
 
-    <!-- MOBILE BOTTOM NAVIGATION (Native iOS & Android App Bar) -->
-    <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Điều hướng di động">
-        <button type="button" class="mobile-nav-item active" id="nav-btn-overview" data-target="overview" title="Tổng quan tài chính">
+    <!-- Mobile Bottom Navigation Bar (Hidden on desktop) -->
+    <nav class="mobile-nav-bar" id="mobile-nav-bar">
+        <button type="button" class="mobile-nav-item active" id="nav-btn-home" data-target="dashboard" title="Tổng quan">
             <i data-lucide="layout-dashboard"></i>
             <span>Tổng quan</span>
         </button>
-        <button type="button" class="mobile-nav-item" id="nav-btn-calendar" data-target="calendar" title="Lịch thu chi">
-            <i data-lucide="calendar"></i>
-            <span>Lịch</span>
+        <button type="button" class="mobile-nav-item" id="nav-btn-transactions" data-target="transactions" title="Lịch sử giao dịch">
+            <i data-lucide="receipt"></i>
+            <span>Lịch sử</span>
         </button>
-        <button type="button" class="mobile-nav-item nav-add-btn" id="nav-btn-add" title="Thêm giao dịch mới">
-            <i data-lucide="plus"></i>
+        <button type="button" class="mobile-nav-item mobile-add-btn" id="nav-btn-add" data-target="add" title="Thêm giao dịch mới">
+            <div class="mobile-add-circle">
+                <i data-lucide="plus"></i>
+            </div>
+            <span>Thêm</span>
         </button>
         <button type="button" class="mobile-nav-item" id="nav-btn-chatbot" data-target="chatbot" title="Trợ lý ảo AI">
             <i data-lucide="bot"></i>
@@ -573,10 +576,10 @@
     </nav>
 
     <!-- Main Dashboard script -->
-    <script src="js/chatbot.js?v=20260911_v7"></script>
-    <script src="js/dashboard.js?v=20260911_v7"></script>
+    <script src="js/chatbot.js?v=20260911_v8"></script>
+    <script src="js/dashboard.js?v=20260911_v8"></script>
     <!-- Cookie Consent & Preferences System -->
-    <script src="js/cookie-consent.js?v=20260911_v7"></script>
+    <script src="js/cookie-consent.js?v=20260911_v8"></script>
 
     <!-- Service Worker Registration for PWA & Offline Support -->
     <script>

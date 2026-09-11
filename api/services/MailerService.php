@@ -199,10 +199,8 @@ class MailerService {
         $body = "
         <div style='font-family: \"SF Pro Display\", -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;'>
             <div style='text-align: center; margin-bottom: 24px;'>
-                <div style='display: inline-block; width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #34d399, #059669); color: white; text-align: center; line-height: 48px; font-size: 24px;'>
-                    💰
-                </div>
-                <h2 style='color: #0c1c13; margin-top: 12px; font-weight: 700;'>SpendMindAI</h2>
+                <img src='https://huynhbathanh.site/images/logoapp.png?v=20260911_v8' width='52' height='52' style='border-radius: 12px; display: inline-block; vertical-align: middle;' alt='SpendMindAI Logo'>
+                <h2 style='color: #0c1c13; margin-top: 10px; font-weight: 700;'>SpendMindAI</h2>
             </div>
             <p style='color: #4a5c52; font-size: 16px; line-height: 1.6;'>
                 Xin chào <strong>" . htmlspecialchars($username) . "</strong>,

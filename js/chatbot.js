@@ -123,13 +123,16 @@ function initChatbot() {
     }
 
     function sendWelcomeMessage() {
-        const displayName = document.getElementById("user-display-name").textContent;
+        const displayName = document.getElementById("user-display-name")?.textContent || "";
         const cleanName = getFriendlyName(displayName);
 
         const welcomeHtml = `
-            <div class="chatbot-welcome-intro">
-                <h2>Xin chào, ${cleanName}</h2>
-                <p>Hỏi tôi về số dư, chi tiêu hoặc phân tích tài chính cá nhân của bạn.</p>
+            <div class="chatbot-welcome-intro" style="text-align: center; padding: 12px 8px;">
+                <div style="display: inline-flex; justify-content: center; align-items: center; width: 56px; height: 56px; border-radius: 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); margin-bottom: 12px; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.15);">
+                    <img src="images/logoapp.png?v=20260911_v8" alt="SpendMindAI Logo" width="44" height="44" style="border-radius: 12px; object-fit: contain;">
+                </div>
+                <h2 style="margin: 0 0 6px 0;">Xin chào, ${cleanName}</h2>
+                <p style="margin: 0; color: var(--text-secondary, #94a3b8);">Hỏi tôi về số dư, chi tiêu hoặc phân tích tài chính cá nhân của bạn.</p>
             </div>
         `;
         messagesContainer.innerHTML = welcomeHtml;

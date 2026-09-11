@@ -145,22 +145,25 @@ function checkAuthSession() {
 // Update Logo Avatar UI with strict URL protocol verification
 function updateAvatarUI(avatarUrl) {
     const logoIcon = document.querySelector(".logo-area .logo-icon");
-    if (!logoIcon) return;
-    
-    logoIcon.innerHTML = "";
-    const img = document.createElement("img");
-    if (avatarUrl && (avatarUrl.startsWith("https://") || avatarUrl.startsWith("http://"))) {
-        img.src = avatarUrl;
-        img.alt = "Avatar";
-    } else {
-        img.src = "images/logoapp.png";
+    if (logoIcon) {
+        logoIcon.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = "images/logoapp.png?v=20260911_v8";
         img.alt = "SpendMindAI Logo";
+        img.width = 38;
+        img.height = 38;
+        img.loading = "lazy";
+        logoIcon.appendChild(img);
+        logoIcon.classList.add("has-image");
     }
-    img.width = 38;
-    img.height = 38;
-    img.loading = "lazy";
-    logoIcon.appendChild(img);
-    logoIcon.classList.add("has-image");
+
+    // Display user profile avatar cleanly on the settings button if available
+    if (avatarUrl && (avatarUrl.startsWith("https://") || avatarUrl.startsWith("http://"))) {
+        const btnSettings = document.getElementById("btn-settings");
+        if (btnSettings && !btnSettings.querySelector(".user-avatar-img")) {
+            btnSettings.innerHTML = `<img src="${avatarUrl}" class="user-avatar-img" alt="Avatar" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover; display: block; border: 1.5px solid var(--accent-color);">`;
+        }
+    }
 }
 
 // Lazy Cron reminder checker

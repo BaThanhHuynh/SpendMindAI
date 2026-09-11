@@ -11,16 +11,21 @@
   "categories": ["finance", "productivity", "utilities"],
   "icons": [
     {
-      "src": "images/logoapp.png",
+      "src": "images/logoapp.png?v=20260911_v8",
       "sizes": "192x192 512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "images/logoapp.webp",
+      "src": "images/logoapp.webp?v=20260911_v8",
       "sizes": "192x192 512x512",
       "type": "image/webp",
       "purpose": "any"
+    },
+    {
+      "src": "favicon.ico?v=20260911_v8",
+      "sizes": "48x48 32x32 16x16",
+      "type": "image/x-icon"
     }
   ]
 }
