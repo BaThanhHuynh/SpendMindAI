@@ -106,6 +106,13 @@ function checkAuthSession() {
                 // Update avatar image safely
                 updateAvatarUI(data.avatar_url);
                 
+                // Pre-populate userSettingsState immediately from initial session response
+                if (data.email) userSettingsState.email = data.email;
+                if (data.google_id) userSettingsState.googleId = data.google_id;
+                if (data.reminder_time) userSettingsState.reminderTime = data.reminder_time;
+                if (data.email_notifications !== undefined) userSettingsState.emailNotifications = Number(data.email_notifications);
+                updateSettingsStatusBadges();
+                
                 // If combined state returned in 1 round-trip, initialize directly
                 if (Array.isArray(data.transactions)) {
                     state.transactions = data.transactions;
@@ -654,12 +661,7 @@ function initEventListeners() {
 
     if (navBtnSettings) {
         navBtnSettings.addEventListener("click", () => {
-            const settingsBtn = document.getElementById("btn-settings");
-            if (settingsBtn) {
-                settingsBtn.click();
-                const settingsDropdown = document.getElementById("settings-dropdown");
-                if (settingsDropdown) settingsDropdown.scrollIntoView({ behavior: "smooth" });
-            }
+            toggleSettingsDropdown();
         });
     }
 
@@ -1674,58 +1676,54 @@ function importData(e) {
 // --- 7. SETTINGS MODAL & GOOGLE LINK LOGIC ---
 // userSettingsState is initialized at top state
 
-// Toggle Settings Dropdown & Load Data
+// Toggle Settings Dropdown & Load Data (Instant 0ms response like Chatbot AI)
 function toggleSettingsDropdown() {
     const dropdown = document.getElementById("settings-dropdown");
+    if (!dropdown) return;
     const isHidden = dropdown.classList.contains("hidden");
     if (isHidden) {
         // Close any open sub panels first
         closeSubPanels();
         
-        fetch(`${API_URL}?action=get_notification_settings`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    userSettingsState.email = data.email || '';
-                    userSettingsState.googleId = data.google_id || null;
-                    userSettingsState.reminderTime = data.reminder_time || '';
-                    userSettingsState.emailNotifications = data.email_notifications || 0;
-                    
-                    // Populate form inputs
-                    document.getElementById("settings-email").value = userSettingsState.email;
-                    document.getElementById("settings-reminder-time").value = userSettingsState.reminderTime;
-                    document.getElementById("settings-email-notifications").checked = userSettingsState.emailNotifications === 1;
-                    
-                    // Populate main panel toggle switch
-                    const mainToggle = document.getElementById("settings-reminder-toggle");
-                    if (mainToggle) {
-                        mainToggle.checked = userSettingsState.emailNotifications === 1;
-                    }
-                    
-                    // Update sub UI checkmarks
-                    updateThemeSubPanelUI();
-                    
-                    // Update main row status text badges
-                    updateSettingsStatusBadges();
-                    
-                    // Display settings dropdown
-                    dropdown.classList.remove("hidden");
-                    
-                    // Position dropdown below the settings button (for fixed positioning on mobile)
-                    const btnSettings = document.getElementById("btn-settings");
-                    if (btnSettings && window.innerWidth <= 600) {
-                        const rect = btnSettings.getBoundingClientRect();
-                        dropdown.style.top = (rect.bottom + 8) + "px";
-                    } else {
-                        dropdown.style.top = "";
-                    }
-                } else {
-                    showToast("Lỗi tải cài đặt: " + data.message, "error");
-                }
-            })
-            .catch(err => {
-                showToast("Lỗi kết nối máy chủ: " + err.message, "error");
-            });
+        // Instant sync of form inputs from in-memory userSettingsState
+        const emailInput = document.getElementById("settings-email");
+        if (emailInput) emailInput.value = userSettingsState.email || '';
+        
+        const timeInput = document.getElementById("settings-reminder-time");
+        if (timeInput) timeInput.value = userSettingsState.reminderTime || '';
+        
+        const notifCheck = document.getElementById("settings-email-notifications");
+        if (notifCheck) notifCheck.checked = userSettingsState.emailNotifications === 1;
+        
+        // Populate main panel toggle switch
+        const mainToggle = document.getElementById("settings-reminder-toggle");
+        if (mainToggle) {
+            mainToggle.checked = userSettingsState.emailNotifications === 1;
+        }
+        
+        // Update sub UI checkmarks and main row status badges immediately
+        updateThemeSubPanelUI();
+        updateSettingsStatusBadges();
+        
+        // Position dropdown properly on mobile vs desktop
+        const btnSettings = document.getElementById("btn-settings");
+        if (btnSettings && window.innerWidth <= 768) {
+            const rect = btnSettings.getBoundingClientRect();
+            if (rect.bottom > 0 && rect.bottom < window.innerHeight - 200) {
+                dropdown.style.top = (rect.bottom + 8) + "px";
+            } else {
+                dropdown.style.top = "70px";
+            }
+        } else {
+            dropdown.style.top = "";
+        }
+        
+        // Display settings dropdown INSTANTLY (0ms latency, matching AI Chatbot)
+        dropdown.classList.remove("hidden");
+        if (btnSettings) btnSettings.classList.add("active");
+        
+        // Asynchronously refresh in background without blocking UI
+        refreshNotificationSettingsFromServer();
     } else {
         closeSettingsDropdown();
     }
@@ -1734,9 +1732,52 @@ function toggleSettingsDropdown() {
 // Close Settings Dropdown
 function closeSettingsDropdown() {
     const dropdown = document.getElementById("settings-dropdown");
-    dropdown.classList.add("hidden");
-    dropdown.style.top = "";
+    if (dropdown) {
+        dropdown.classList.add("hidden");
+        dropdown.style.top = "";
+    }
+    const btnSettings = document.getElementById("btn-settings");
+    if (btnSettings) {
+        btnSettings.classList.remove("active");
+    }
     closeSubPanels();
+}
+
+// Background sync of notification settings without blocking user interaction
+function refreshNotificationSettingsFromServer() {
+    fetch(`${API_URL}?action=get_notification_settings`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                userSettingsState.email = data.email || '';
+                userSettingsState.googleId = data.google_id || null;
+                userSettingsState.reminderTime = data.reminder_time || '';
+                userSettingsState.emailNotifications = data.email_notifications || 0;
+                
+                const emailInput = document.getElementById("settings-email");
+                if (emailInput && !emailInput.matches(':focus')) {
+                    emailInput.value = userSettingsState.email;
+                }
+                const timeInput = document.getElementById("settings-reminder-time");
+                if (timeInput && !timeInput.matches(':focus')) {
+                    timeInput.value = userSettingsState.reminderTime;
+                }
+                const notifCheck = document.getElementById("settings-email-notifications");
+                if (notifCheck) {
+                    notifCheck.checked = userSettingsState.emailNotifications === 1;
+                }
+                const mainToggle = document.getElementById("settings-reminder-toggle");
+                if (mainToggle) {
+                    mainToggle.checked = userSettingsState.emailNotifications === 1;
+                }
+                
+                updateThemeSubPanelUI();
+                updateSettingsStatusBadges();
+            }
+        })
+        .catch(err => {
+            console.warn("Background notification settings sync notice:", err);
+        });
 }
 
 // Open specific Sub Panel in Settings

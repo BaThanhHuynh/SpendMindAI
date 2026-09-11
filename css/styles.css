@@ -4022,27 +4022,27 @@ html[data-theme="light"] .theme-option-item:hover {
 @keyframes scale-up {
     from {
         opacity: 0;
-        transform: scale(0.95);
+        transform: translateY(-8px) scale(0.97);
     }
     to {
         opacity: 1;
-        transform: scale(1);
+        transform: translateY(0) scale(1);
     }
 }
 
 .animate-scale-up {
-    animation: scale-up 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: scale-up 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Dropdown scale-up centered animation for mobile */
 @keyframes scale-up-centered {
     from {
         opacity: 0;
-        transform: translateX(-50%) scale(0.95);
+        transform: translateX(-50%) translateY(-10px) scale(0.97);
     }
     to {
         opacity: 1;
-        transform: translateX(-50%) scale(1);
+        transform: translateX(-50%) translateY(0) scale(1);
     }
 }
 
