@@ -32,9 +32,7 @@
         content="Ứng dụng quản lý chi tiêu thông minh, trực quan hóa tài chính cá nhân với biểu đồ tương tác, thiết lập ngân sách và chế độ giao diện cao cấp.">
     <meta name="twitter:image" content="https://huynhbathanh.site/images/cashflow_mockup.png">
 
-    <!-- Cookie bar CSS -->
-    <link href="https://www.gstatic.com/glue/cookienotificationbar/cookienotificationbar.min.css" rel="stylesheet">
-    <!--end of cookie-->
+    <!-- Favicon -->
 
     <link rel="icon" type="image/png" href="images/logoapp.png">
 
@@ -61,15 +59,16 @@
     <script src="https://unpkg.com/lucide@0.460.0" defer></script>
 
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=20260911_v2">
 </head>
 
 <body class="landing-page-body">
     <script>
         window.dataLayer = window.dataLayer || [];
 
-        function glueCookieNotificationBarLoaded() {
-            // GTM BOOTSTRAP CODE
+        function loadAnalytics() {
+            if (window._gtmLoaded) return;
+            window._gtmLoaded = true;
             (function (w, d, s, l, i) {
                 w[l] = w[l] || [];
                 w[l].push({
@@ -82,9 +81,22 @@
                 j.async = true;
                 j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
                 f.parentNode.insertBefore(j, f);
-            }
-            )(window, document, 'script', 'dataLayer', 'GTM-M4N2ZKXQ');
+            })(window, document, 'script', 'dataLayer', 'GTM-M4N2ZKXQ');
         }
+
+        // Activate analytics only when user grants consent
+        window.addEventListener('spendmind:cookie-consent-updated', function (e) {
+            if (e.detail && e.detail.analytics) {
+                loadAnalytics();
+            }
+        });
+
+        try {
+            var consent = JSON.parse(localStorage.getItem('spendmind_cookie_consent') || '{}');
+            if (consent.analytics) {
+                loadAnalytics();
+            }
+        } catch(e) {}
     </script>
     <!-- Apple iPhone Inspired Cursive Welcome Splash Screen -->
     <div id="iphone-splash-screen">
@@ -289,17 +301,23 @@
 
         <!-- Footer -->
         <footer class="landing-footer">
-            <p class="footer-copyright-text">&copy; 2026 SpendMindAI. Thuộc quyền sở hữu của Huỳnh Bá Thành.</p>
+            <div class="footer-content-row">
+                <p class="footer-copyright-text">&copy; 2026 SpendMindAI. Thuộc quyền sở hữu của Huỳnh Bá Thành.</p>
+                <div class="footer-links">
+                    <button type="button" class="footer-cookie-btn" id="open-cookie-settings-footer">
+                        <i data-lucide="cookie"></i>
+                        <span>Tùy chọn Cookie</span>
+                    </button>
+                </div>
+            </div>
         </footer>
 
     </div>
 
     <!-- Script index -->
-    <script src="js/index.js"></script>
-    <!-- Cookie Notification Bar -->
-    <script src="https://www.gstatic.com/glue/cookienotificationbar/cookienotificationbar.min.js"
-        data-glue-cookie-notification-bar-category="2A" data-glue-cookie-notification-bar-language=""
-        data-glue-cookie-notification-bar-site-id=""></script>
+    <script src="js/index.js?v=20260911_v2"></script>
+    <!-- Cookie Consent & Preferences System -->
+    <script src="js/cookie-consent.js?v=20260911_v2"></script>
 </body>
 
 </html>

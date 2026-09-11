@@ -119,6 +119,18 @@
                                     </div>
                                 </button>
 
+                                <!-- Cookie preferences row -->
+                                <button type="button" class="settings-list-item" id="menu-item-cookies">
+                                    <div class="item-left">
+                                        <i data-lucide="cookie"></i>
+                                        <span>Tùy chọn Cookie</span>
+                                    </div>
+                                    <div class="item-right">
+                                        <span id="badge-cookie-status" style="font-size: 0.75rem; color: var(--text-secondary);">Quản lý</span>
+                                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
+                                    </div>
+                                </button>
+
                                 <hr class="settings-divider">
 
                                 <!-- Danger operations -->
@@ -561,6 +573,8 @@
     <!-- Main Dashboard script -->
     <script src="js/chatbot.js?v=20260911_v2"></script>
     <script src="js/dashboard.js?v=20260911_v2"></script>
+    <!-- Cookie Consent & Preferences System -->
+    <script src="js/cookie-consent.js?v=20260911_v2"></script>
 
     <!-- Service Worker Registration for PWA & Offline Support -->
     <script>
