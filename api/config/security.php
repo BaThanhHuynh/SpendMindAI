@@ -10,29 +10,33 @@ error_reporting(E_ALL);
 // Safe JSON Error Handling: Intercept fatal user errors without breaking try-catch on warnings
 set_error_handler(function ($errno, $errstr, $errfile, $errline) {
     if ($errno === E_USER_ERROR || $errno === E_RECOVERABLE_ERROR) {
+        error_log("PHP Error [$errno]: $errstr in $errfile on line $errline");
         if (!headers_sent()) {
             header('Content-Type: application/json; charset=UTF-8');
             http_response_code(500);
         }
+        $isDev = (getenv('APP_ENV') === 'development');
         echo json_encode([
             "success" => false,
-            "message" => "Lỗi xử lý API: $errstr"
-        ]);
+            "message" => $isDev ? "Lỗi xử lý API: $errstr" : "Lỗi xử lý hệ thống. Vui lòng thử lại sau."
+        ], JSON_UNESCAPED_UNICODE);
         exit();
     }
     return false;
 });
 
-// Clean JSON Exception Handler
-set_exception_handler(function ($ex) {
+// Clean JSON Exception Handler: Never leak database credentials or internal stack to client
+set_exception_handler(function (Throwable $ex) {
+    error_log("Uncaught Exception: " . $ex->getMessage() . "\n" . $ex->getTraceAsString());
     if (!headers_sent()) {
         header('Content-Type: application/json; charset=UTF-8');
         http_response_code(500);
     }
+    $isDev = (getenv('APP_ENV') === 'development');
     echo json_encode([
         "success" => false,
-        "message" => "Lỗi hệ thống: " . $ex->getMessage()
-    ]);
+        "message" => $isDev ? ("Lỗi hệ thống: " . $ex->getMessage()) : "Đã xảy ra lỗi trong quá trình xử lý. Vui lòng thử lại sau."
+    ], JSON_UNESCAPED_UNICODE);
     exit();
 });
 
@@ -40,16 +44,45 @@ set_exception_handler(function ($ex) {
 register_shutdown_function(function () {
     $error = error_get_last();
     if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        error_log("Fatal Engine Error: " . $error['message'] . " in " . $error['file'] . " on line " . $error['line']);
         if (!headers_sent()) {
             header('Content-Type: application/json; charset=UTF-8');
             http_response_code(500);
         }
+        $isDev = (getenv('APP_ENV') === 'development');
         echo json_encode([
             "success" => false,
-            "message" => "Lỗi nghiêm trọng: " . $error['message'] . " (dòng " . $error['line'] . ")"
-        ]);
+            "message" => $isDev ? ("Lỗi nghiêm trọng: " . $error['message'] . " (dòng " . $error['line'] . ")") : "Lỗi máy chủ nghiêm trọng. Vui lòng thử lại sau."
+        ], JSON_UNESCAPED_UNICODE);
     }
 });
+
+/**
+ * Standardized JSON API response helpers
+ */
+if (!function_exists('sendJson')) {
+    function sendJson(array $data, int $statusCode = 200): void {
+        if (!headers_sent()) {
+            http_response_code($statusCode);
+            header('Content-Type: application/json; charset=UTF-8');
+        }
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+}
+
+if (!function_exists('sendError')) {
+    function sendError(string $message, int $statusCode = 400, ?string $code = null): void {
+        $payload = [
+            "success" => false,
+            "message" => $message
+        ];
+        if ($code !== null) {
+            $payload["code"] = $code;
+        }
+        sendJson($payload, $statusCode);
+    }
+}
 
 // Environment Variable Helpers
 if (!function_exists('loadEnv')) {

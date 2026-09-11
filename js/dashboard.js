@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Secure Session Guard Check
 function checkAuthSession() {
-    fetch(`${API_URL}?action=check_session`)
+    fetch(`${API_URL}?action=check_session&include_state=1`)
         .then(res => res.json())
         .then(data => {
             if (data.authenticated) {
@@ -95,15 +95,29 @@ function checkAuthSession() {
                 
                 document.getElementById("user-display-name").textContent = friendlyName;
                 
-                // Update avatar image if available
+                // Update avatar image safely
                 updateAvatarUI(data.avatar_url);
                 
-                fetchStateFromServer(); // Load MySQL Data
+                // If combined state returned in 1 round-trip, initialize directly
+                if (Array.isArray(data.transactions)) {
+                    state.transactions = data.transactions;
+                    state.budgets = (data.budgets && Object.keys(data.budgets).length > 0)
+                        ? data.budgets
+                        : { ...DEFAULT_BUDGETS };
+                    updateUI();
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            updateUI(false);
+                        });
+                    });
+                } else {
+                    fetchStateFromServer(); // Fallback to secondary fetch if omitted
+                }
                 
                 // Trigger Lazy Cron Check here
                 triggerLazyCronReminderCheck();
             } else {
-                // If not authenticated, kick back to login.html immediately
+                // If not authenticated, kick back to login immediately
                 window.location.href = "login";
             }
         })
@@ -113,18 +127,25 @@ function checkAuthSession() {
         });
 }
 
-// Update Logo Avatar UI based on link status
+// Update Logo Avatar UI with strict URL protocol verification
 function updateAvatarUI(avatarUrl) {
     const logoIcon = document.querySelector(".logo-area .logo-icon");
     if (!logoIcon) return;
     
-    if (avatarUrl) {
-        logoIcon.innerHTML = `<img src="${avatarUrl}" alt="Avatar">`;
-        logoIcon.classList.add("has-image");
+    logoIcon.innerHTML = "";
+    const img = document.createElement("img");
+    if (avatarUrl && (avatarUrl.startsWith("https://") || avatarUrl.startsWith("http://"))) {
+        img.src = avatarUrl;
+        img.alt = "Avatar";
     } else {
-        logoIcon.innerHTML = `<img src="images/logoapp.png" alt="SpendMindAI Logo">`;
-        logoIcon.classList.add("has-image");
+        img.src = "images/logoapp.png";
+        img.alt = "SpendMindAI Logo";
     }
+    img.width = 38;
+    img.height = 38;
+    img.loading = "lazy";
+    logoIcon.appendChild(img);
+    logoIcon.classList.add("has-image");
 }
 
 // Lazy Cron reminder checker
@@ -348,11 +369,38 @@ function initEventListeners() {
 
     document.getElementById("btn-export").addEventListener("click", exportData);
     
-    const importTrigger = document.getElementById("btn-import-trigger");
-    const fileInput = document.getElementById("import-file");
-    
     importTrigger.addEventListener("click", () => fileInput.click());
     fileInput.addEventListener("change", importData);
+
+    // Event delegation for calendar grid and daily transactions list
+    const calendarGrid = document.getElementById("calendar-grid-cells");
+    if (calendarGrid) {
+        calendarGrid.addEventListener("click", (e) => {
+            const quickAddBtn = e.target.closest(".btn-quick-add");
+            if (quickAddBtn) {
+                e.stopPropagation();
+                const time = Number(quickAddBtn.dataset.time);
+                if (time) {
+                    openTransactionModalForDate(time, e);
+                }
+                return;
+            }
+            const cell = e.target.closest(".calendar-cell");
+            if (cell && cell.dataset.time) {
+                selectCalendarDay(Number(cell.dataset.time));
+            }
+        });
+    }
+
+    const dailyTransactionsList = document.getElementById("daily-transactions-list");
+    if (dailyTransactionsList) {
+        dailyTransactionsList.addEventListener("click", (e) => {
+            const item = e.target.closest(".daily-item");
+            if (item && item.dataset.id) {
+                editTransaction(item.dataset.id);
+            }
+        });
+    }
 
     // Logout Click Handler
     document.getElementById("btn-logout").addEventListener("click", handleLogout);
@@ -996,7 +1044,7 @@ function selectCalendarDay(time) {
     const cells = document.querySelectorAll(".calendar-cell");
     cells.forEach(cell => {
         cell.classList.remove("selected");
-        if (cell.getAttribute("onclick") === `selectCalendarDay(${time})`) {
+        if (cell.dataset.time === String(time)) {
             cell.classList.add("selected");
         }
     });
@@ -1087,7 +1135,7 @@ function renderCalendarView(filteredTransactions) {
 
         const cellEl = document.createElement("div");
         cellEl.className = `calendar-cell ${isCurrentMonth ? 'current-month' : 'other-month'} ${isSelected ? 'selected' : ''}`;
-        cellEl.setAttribute("onclick", `selectCalendarDay(${cellDate.getTime()})`);
+        cellEl.dataset.time = cellDate.getTime();
 
         const cellDayOfWeek = cellDate.getDay();
         let dayClass = "";
@@ -1107,7 +1155,7 @@ function renderCalendarView(filteredTransactions) {
         cellEl.innerHTML = `
             <span class="day-num ${dayClass}">${cellDate.getDate()}</span>
             ${amountHTML}
-            <button class="btn-quick-add" onclick="openTransactionModalForDate(${cellDate.getTime()}, event)" title="Thêm giao dịch mới"><i data-lucide="edit-2"></i></button>
+            <button type="button" class="btn-quick-add" data-time="${cellDate.getTime()}" title="Thêm giao dịch mới"><i data-lucide="edit-2"></i></button>
         `;
         gridCells.appendChild(cellEl);
     }
@@ -1170,7 +1218,7 @@ function updateDailyTransactionsView() {
             const cat = CATEGORIES[t.category] || { label: t.category, icon: "help-circle", colorClass: "badge-color-mint" };
             const item = document.createElement("div");
             item.className = "daily-item";
-            item.setAttribute("onclick", `editTransaction('${t.id}')`);
+            item.dataset.id = t.id;
 
             item.innerHTML = `
                 <div class="daily-item-left">
@@ -1784,3 +1832,7 @@ function handleClearAllData() {
     }
 }
 
+// Global window exposure for compatibility
+window.editTransaction = editTransaction;
+window.selectCalendarDay = selectCalendarDay;
+window.openTransactionModalForDate = openTransactionModalForDate;

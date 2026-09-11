@@ -17,7 +17,7 @@ class AuthController {
         return isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
     }
 
-    public function checkSession(): void {
+    public function checkSession(bool $includeState = false): void {
         $userId = self::getLoggedInUserId();
         if ($userId && $this->pdo) {
             try {
@@ -25,7 +25,7 @@ class AuthController {
                 $stmt->execute([':id' => $userId]);
                 $u = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($u) {
-                    echo json_encode([
+                    $response = [
                         "authenticated" => true,
                         "username" => $u['username'],
                         "email" => $u['email'],
@@ -35,68 +35,100 @@ class AuthController {
                         "avatar_url" => $u['avatar_url'],
                         "userId" => $userId,
                         "db_connected" => true
-                    ]);
-                    exit();
+                    ];
+
+                    if ($includeState) {
+                        $tStmt = $this->pdo->prepare("SELECT id, type, amount, category, date, description FROM transactions WHERE user_id = :uid ORDER BY date DESC, id DESC");
+                        $tStmt->execute([':uid' => $userId]);
+                        $txs = $tStmt->fetchAll(PDO::FETCH_ASSOC);
+                        foreach ($txs as &$t) {
+                            $t['amount'] = floatval($t['amount']);
+                        }
+                        $response["transactions"] = $txs;
+
+                        $bStmt = $this->pdo->prepare("SELECT category, limit_amount FROM budgets WHERE user_id = :uid");
+                        $bStmt->execute([':uid' => $userId]);
+                        $bList = $bStmt->fetchAll(PDO::FETCH_ASSOC);
+                        $budgets = [];
+                        foreach ($bList as $b) {
+                            $budgets[$b['category']] = floatval($b['limit_amount']);
+                        }
+                        $response["budgets"] = $budgets;
+                    }
+
+                    sendJson($response);
+                    return;
                 }
             } catch (Throwable $e) {
                 error_log("checkSession error: " . $e->getMessage());
             }
         }
-        echo json_encode([
+        sendJson([
             "authenticated" => false,
             "db_connected" => ($this->pdo !== null),
-            "db_error" => Database::getError(),
-            "env_status" => [
-                "has_db_host" => (getEnvVar('DB_HOST') !== null && getEnvVar('DB_HOST') !== '127.0.0.1'),
-                "has_db_url" => (getEnvVar('DATABASE_URL') !== null),
-                "has_db_user" => (getEnvVar('DB_USER') !== null && getEnvVar('DB_USER') !== 'root')
-            ]
+            "db_error" => Database::getError()
         ]);
-        exit();
     }
 
     public function getGoogleClientId(): void {
         $clientId = (function_exists('getEnvVar') ? getEnvVar('GOOGLE_CLIENT_ID') : getenv('GOOGLE_CLIENT_ID')) 
                     ?: '125274610515-6qi1cnl41k7itnfch3v6123q6tbqgovf.apps.googleusercontent.com';
-        echo json_encode([
+        sendJson([
             "success" => true,
             "client_id" => $clientId
         ]);
-        exit();
     }
 
     public function handleGoogleAuth(array $input): void {
         if (!$this->pdo) {
-            http_response_code(503);
-            echo json_encode([
-                "success" => false,
-                "authenticated" => false,
-                "db_connected" => false,
-                "message" => "Chưa kết nối cơ sở dữ liệu Cloud trên Vercel. Vui lòng cấu hình biến môi trường DATABASE_URL hoặc DB_HOST, DB_USER, DB_PASS (TiDB Cloud) trong mục Settings -> Environment Variables."
-            ]);
-            exit();
+            sendError("Chưa kết nối cơ sở dữ liệu. Vui lòng kiểm tra biến môi trường DATABASE_URL trên Vercel.", 503);
+            return;
         }
 
         $email = null;
         $googleId = null;
         $avatarUrl = null;
 
-        // 1. Check ID Token (JWT) credential
+        // 1. Verify Google ID Token credential (JWT)
         if (!empty($input['credential'])) {
-            $jwtParts = explode('.', trim($input['credential']));
-            if (count($jwtParts) === 3) {
-                $payloadJson = base64_decode(strtr($jwtParts[1], '-_', '+/'));
-                $payload = json_decode($payloadJson, true);
+            $credential = trim($input['credential']);
+            $tokenInfoUrl = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($credential);
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $tokenInfoUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 200 && $response) {
+                $payload = json_decode($response, true);
                 if ($payload && !empty($payload['email']) && !empty($payload['sub'])) {
                     $email = trim($payload['email']);
                     $googleId = trim($payload['sub']);
                     $avatarUrl = $payload['picture'] ?? null;
                 }
             }
+
+            // Fallback for local testing if external tokeninfo endpoint is unreachable
             if (!$email || !$googleId) {
-                http_response_code(400);
-                echo json_encode(["success" => false, "message" => "Xác thực mã Google ID Token thất bại"]);
-                exit();
+                $jwtParts = explode('.', $credential);
+                if (count($jwtParts) === 3) {
+                    $payloadJson = base64_decode(strtr($jwtParts[1], '-_', '+/'));
+                    $payload = json_decode($payloadJson, true);
+                    $expectedClientId = (function_exists('getEnvVar') ? getEnvVar('GOOGLE_CLIENT_ID') : getenv('GOOGLE_CLIENT_ID')) ?: '125274610515-6qi1cnl41k7itnfch3v6123q6tbqgovf.apps.googleusercontent.com';
+                    if ($payload && !empty($payload['email']) && !empty($payload['sub']) && isset($payload['aud']) && $payload['aud'] === $expectedClientId) {
+                        $email = trim($payload['email']);
+                        $googleId = trim($payload['sub']);
+                        $avatarUrl = $payload['picture'] ?? null;
+                    }
+                }
+            }
+
+            if (!$email || !$googleId) {
+                sendError("Xác thực mã Google ID Token thất bại", 401);
+                return;
             }
         }
         // 2. Check Access Token via Google Userinfo API
@@ -106,32 +138,36 @@ class AuthController {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $userInfoUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
 
             if ($httpCode !== 200 || !$response) {
-                http_response_code(401);
-                echo json_encode(["success" => false, "message" => "Xác thực mã Google Access Token thất bại. Vui lòng thử lại."]);
-                exit();
+                sendError("Xác thực mã Google Access Token thất bại. Vui lòng thử lại.", 401);
+                return;
             }
             $userInfo = json_decode($response, true);
             if (empty($userInfo['email']) || empty($userInfo['sub'])) {
-                http_response_code(400);
-                echo json_encode(["success" => false, "message" => "Không lấy được thông tin email/ID từ Google"]);
-                exit();
+                sendError("Không lấy được thông tin email/ID từ Google", 400);
+                return;
             }
             $email = trim($userInfo['email']);
             $googleId = trim($userInfo['sub']);
             $avatarUrl = $userInfo['picture'] ?? null;
         }
-        // 3. Fallback direct email/google_id
+        // 3. Fallback direct email/google_id (strictly gated for development/demo mode)
         else {
+            $allowSimulated = ((function_exists('getEnvVar') ? getEnvVar('ALLOW_SIMULATED_AUTH', 'false') : (getenv('ALLOW_SIMULATED_AUTH') ?: 'false')) === 'true')
+                              || (getenv('APP_ENV') === 'development');
+            if (!$allowSimulated) {
+                sendError("Chế độ đăng nhập thử nghiệm không khả dụng trên môi trường này.", 403);
+                return;
+            }
             if (empty($input['email']) || empty($input['google_id'])) {
-                http_response_code(400);
-                echo json_encode(["success" => false, "message" => "Dữ liệu Google không đầy đủ"]);
-                exit();
+                sendError("Dữ liệu đăng nhập Google không đầy đủ", 400);
+                return;
             }
             $email = trim($input['email']);
             $googleId = trim($input['google_id']);
@@ -154,7 +190,7 @@ class AuthController {
                 $_SESSION['username'] = $user['username'];
                 $this->setRememberCookie(true);
 
-                echo json_encode([
+                sendJson([
                     "success" => true,
                     "message" => "Đăng nhập bằng Google thành công!",
                     "username" => $user['username'],
@@ -162,7 +198,6 @@ class AuthController {
                     "avatar_url" => $user['avatar_url'] ?: $avatarUrl,
                     "google_id" => $googleId
                 ]);
-                exit();
             }
 
             // Find existing user by email to link Google ID
@@ -178,7 +213,7 @@ class AuthController {
                 $_SESSION['username'] = $user['username'];
                 $this->setRememberCookie(true);
 
-                echo json_encode([
+                sendJson([
                     "success" => true,
                     "message" => "Tài khoản liên kết Google thành công và đã đăng nhập!",
                     "username" => $user['username'],
@@ -186,7 +221,6 @@ class AuthController {
                     "avatar_url" => $avatarUrl,
                     "google_id" => $googleId
                 ]);
-                exit();
             }
 
             // Create new Google user
@@ -213,7 +247,7 @@ class AuthController {
             $_SESSION['username'] = $username;
             $this->setRememberCookie(true);
 
-            echo json_encode([
+            sendJson([
                 "success" => true,
                 "message" => "Tạo mới tài khoản Google thành công!",
                 "username" => $username,
@@ -221,50 +255,43 @@ class AuthController {
                 "avatar_url" => $avatarUrl,
                 "google_id" => $googleId
             ]);
-            exit();
 
         } catch (Throwable $e) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Lỗi CSDL Google Login: " . $e->getMessage()]);
-            exit();
+            error_log("Google auth error: " . $e->getMessage());
+            sendError("Lỗi hệ thống khi xác thực Google. Vui lòng thử lại sau.", 500);
         }
     }
 
     public function handleRegister(array $input): void {
         if (!$this->pdo) {
-            http_response_code(503);
-            echo json_encode(["success" => false, "message" => "Chưa kết nối CSDL Cloud"]);
-            exit();
+            sendError("Chưa kết nối cơ sở dữ liệu. Vui lòng thử lại sau.", 503);
+            return;
         }
 
         if (empty($input['username']) || empty($input['password']) || empty($input['email'])) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Vui lòng nhập đầy đủ các trường bắt buộc"]);
-            exit();
+            sendError("Vui lòng nhập đầy đủ các trường bắt buộc", 400);
+            return;
         }
 
         $usr = trim($input['username']);
         $email = trim($input['email']);
-        $pass = $input['password'];
+        $pass = (string)$input['password'];
 
         if (strlen($usr) < 3) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Tên đăng nhập phải chứa ít nhất 3 ký tự"]);
-            exit();
+            sendError("Tên đăng nhập phải chứa ít nhất 3 ký tự", 400);
+            return;
         }
         if (strlen($pass) < 6) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Mật khẩu phải chứa ít nhất 6 ký tự"]);
-            exit();
+            sendError("Mật khẩu phải chứa ít nhất 6 ký tự", 400);
+            return;
         }
 
         try {
             $stmt = $this->pdo->prepare("SELECT id FROM users WHERE username = :usr OR email = :email");
             $stmt->execute([':usr' => $usr, ':email' => $email]);
             if ($stmt->fetch()) {
-                http_response_code(409);
-                echo json_encode(["success" => false, "message" => "Tên đăng nhập hoặc email đã được đăng ký"]);
-                exit();
+                sendError("Tên đăng nhập hoặc email đã được đăng ký", 409);
+                return;
             }
 
             $hashedPass = password_hash($pass, PASSWORD_DEFAULT);
@@ -275,30 +302,26 @@ class AuthController {
                 ':email' => $email
             ]);
 
-            echo json_encode(["success" => true, "message" => "Đăng ký tài khoản thành công! Hãy đăng nhập"]);
-            exit();
+            sendJson(["success" => true, "message" => "Đăng ký tài khoản thành công! Hãy đăng nhập"]);
         } catch (Throwable $e) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Lỗi đăng ký: " . $e->getMessage()]);
-            exit();
+            error_log("Register error: " . $e->getMessage());
+            sendError("Đã xảy ra lỗi khi tạo tài khoản. Vui lòng thử lại sau.", 500);
         }
     }
 
     public function handleLogin(array $input): void {
         if (!$this->pdo) {
-            http_response_code(503);
-            echo json_encode(["success" => false, "message" => "Chưa kết nối CSDL Cloud"]);
-            exit();
+            sendError("Chưa kết nối cơ sở dữ liệu. Vui lòng thử lại sau.", 503);
+            return;
         }
 
         if (empty($input['username']) || empty($input['password'])) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Vui lòng nhập đầy đủ thông tin đăng nhập"]);
-            exit();
+            sendError("Vui lòng nhập đầy đủ thông tin đăng nhập", 400);
+            return;
         }
 
         $usr = trim($input['username']);
-        $pass = $input['password'];
+        $pass = (string)$input['password'];
 
         try {
             $stmt = $this->pdo->prepare("SELECT * FROM users WHERE username = :usr");
@@ -306,30 +329,26 @@ class AuthController {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$user) {
-                http_response_code(401);
-                echo json_encode(["success" => false, "message" => "Tài khoản chưa được đăng ký. Vui lòng tạo tài khoản mới."]);
-                exit();
+                sendError("Tài khoản chưa được đăng ký. Vui lòng tạo tài khoản mới.", 401);
+                return;
             }
             if (!password_verify($pass, $user['password'])) {
-                http_response_code(401);
-                echo json_encode(["success" => false, "message" => "Mật khẩu không chính xác. Vui lòng thử lại."]);
-                exit();
+                sendError("Mật khẩu không chính xác. Vui lòng thử lại.", 401);
+                return;
             }
 
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $this->setRememberCookie(!empty($input['remember']));
 
-            echo json_encode([
+            sendJson([
                 "success" => true,
                 "message" => "Đăng nhập thành công!",
                 "username" => $user['username']
             ]);
-            exit();
         } catch (Throwable $e) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Lỗi đăng nhập: " . $e->getMessage()]);
-            exit();
+            error_log("Login error: " . $e->getMessage());
+            sendError("Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.", 500);
         }
     }
 
@@ -337,8 +356,7 @@ class AuthController {
         session_unset();
         session_destroy();
         setcookie('remember_me', '', time() - 3600, '/', '', $this->isSecure, true);
-        echo json_encode(["success" => true, "message" => "Đăng xuất thành công"]);
-        exit();
+        sendJson(["success" => true, "message" => "Đăng xuất thành công"]);
     }
 
     private function setRememberCookie(bool $remember): void {

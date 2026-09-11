@@ -36,7 +36,8 @@ $chatbotCtrl = new ChatbotController();
 // 5. Public Authentication Endpoints (Works even if Database is not yet configured)
 switch ($action) {
     case 'check_session':
-        $authCtrl->checkSession();
+        $includeState = !empty($_GET['include_state']) && $_GET['include_state'] == '1';
+        $authCtrl->checkSession($includeState);
         exit();
 
     case 'get_google_client_id':
@@ -66,31 +67,24 @@ switch ($action) {
 
 // 6. Database Guard for Protected Endpoints
 if (!$pdo) {
-    http_response_code(503);
-    $dbErr = Database::getError();
-    echo json_encode([
-        "success" => false,
-        "authenticated" => false,
-        "db_connected" => false,
-        "db_error" => $dbErr,
-        "message" => $dbErr ? "Lỗi kết nối cơ sở dữ liệu: $dbErr" : "Chưa kết nối cơ sở dữ liệu Cloud trên Vercel. Vui lòng cấu hình biến môi trường DATABASE_URL hoặc DB_HOST, DB_USER, DB_PASS (TiDB Cloud) trong mục Settings -> Environment Variables."
-    ]);
+    sendError("Chưa kết nối cơ sở dữ liệu trên máy chủ. Vui lòng cấu hình biến môi trường DATABASE_URL trong Settings Vercel.", 503);
     exit();
 }
 
 // 7. Authentication Guard for Protected User Endpoints
 $userId = AuthController::getLoggedInUserId();
 if (!$userId) {
-    http_response_code(401);
-    echo json_encode([
-        "success" => false,
-        "authenticated" => false,
-        "message" => "Vui lòng đăng nhập để thực hiện thao tác"
-    ]);
+    sendError("Vui lòng đăng nhập để thực hiện thao tác", 401);
     exit();
 }
 
-// 8. Reminder & Settings Endpoints
+// 8. AI Chatbot Endpoint (Protected)
+if ($action === 'chat' && $method === 'POST') {
+    $chatbotCtrl->handleChat($userId, $input, $pdo);
+    exit();
+}
+
+// 9. Reminder & Settings Endpoints
 if ($action === 'get_notification_settings' && $method === 'GET') {
     $reminderCtrl->getSettings($userId);
     exit();
@@ -104,7 +98,7 @@ if ($action === 'check_and_send_reminder') {
     exit();
 }
 
-// 9. Transaction & Budget Endpoints
+// 10. Transaction & Budget Endpoints
 if ($method === 'GET') {
     $transCtrl->list($userId);
     exit();
@@ -130,10 +124,6 @@ if ($method === 'POST') {
     }
 }
 
-// 10. Fallback for Unmatched Endpoints
-http_response_code(404);
-echo json_encode([
-    "success" => false,
-    "message" => "Hành động API không hợp lệ hoặc không được hỗ trợ"
-]);
+// 11. Fallback for Unmatched Endpoints
+sendError("Hành động API không hợp lệ hoặc không được hỗ trợ", 404);
 exit();

@@ -270,7 +270,7 @@ function initChatbot() {
         return processedLines.join('\n');
     }
 
-    let cachedGeminiKey = null;
+    let activeChatAbortController = null;
 
     function handleUserMessage(text) {
         clearActiveTyping();
@@ -282,168 +282,91 @@ function initChatbot() {
         addMessage("user", text);
 
         const indicator = showTypingIndicator();
+        const sendBtn = document.getElementById("chatbot-send-btn");
+        if (sendBtn) sendBtn.disabled = true;
+        if (inputField) inputField.disabled = true;
 
-        function callGeminiDirectly(apiKey) {
-            const categoryLabels = {
-                "food": "Ăn uống",
-                "transport": "Di chuyển",
-                "shopping": "Mua sắm",
-                "entertainment": "Giải trí",
-                "home": "Nhà cửa",
-                "other_expense": "Khác (Chi)",
-                "salary": "Lương",
-                "freelance": "Freelance",
-                "investment": "Đầu tư",
-                "gift": "Được tặng / Khác"
-            };
-
-            // Format budgets context
-            let budgetsText = "";
-            const budgetsKeys = Object.keys(state.budgets);
-            if (budgetsKeys.length === 0) {
-                budgetsText = "- Chưa thiết lập hạn mức ngân sách nào.\n";
-            } else {
-                budgetsKeys.forEach(k => {
-                    const limit = state.budgets[k];
-                    if (limit > 0) {
-                        const label = categoryLabels[k] || k;
-                        budgetsText += `- Hạng mục ${label}: ${Number(limit).toLocaleString('vi-VN')}đ\n`;
-                    }
-                });
-            }
-
-            // Format recent transactions (last 60)
-            let transactionsText = "";
-            const recentTx = state.transactions.slice(0, 60);
-            if (recentTx.length === 0) {
-                transactionsText = "- Chưa ghi nhận giao dịch nào.\n";
-            } else {
-                recentTx.forEach(t => {
-                    const typeLabel = (t.type === 'income') ? 'Thu nhập (+)' : 'Chi tiêu (-)';
-                    const label = categoryLabels[t.category] || t.category;
-                    const desc = t.description ? ` - Ghi chú: ${t.description}` : "";
-                    transactionsText += `- Ngày ${t.date}: ${typeLabel} | ${Number(t.amount).toLocaleString('vi-VN')}đ | Danh mục: ${label}${desc}\n`;
-                });
-            }
-
-            const rawUsername = document.getElementById("user-display-name").textContent;
-            const friendlyName = getFriendlyName(rawUsername);
-            const now = new Date();
-            const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-
-            let systemPrompt = `Bạn là trợ lý tài chính ảo SpendMindAI thông thái, thân thiện và nhiệt tình của người dùng tên là '${friendlyName}'.\n\n`;
-            systemPrompt += "Dưới đây là thông tin tài chính hiện tại của họ lấy từ cơ sở dữ liệu hệ thống:\n\n";
-            systemPrompt += "### [DANH SÁCH NGÂN SÁCH/HẠN MỨC CHI TIÊU HÀNG THÁNG]\n" + budgetsText + "\n";
-            systemPrompt += "### [LỊCH SỬ 60 GIAO DỊCH GẦN NHẤT]\n" + transactionsText + "\n";
-            systemPrompt += "### [CẤU HÌNH THỜI GIAN]\n";
-            systemPrompt += `- Thời gian hiện tại trên hệ thống: ${dateStr}\n\n`;
-            systemPrompt += "Nhiệm vụ của bạn:\n";
-            systemPrompt += "1. Trả lời câu hỏi của người dùng thật ngắn gọn, súc tích, đi thẳng vào trọng tâm, hỏi gì đáp nấy (không trả lời lan man dài dòng, không giải thích vòng vo).\n";
-            systemPrompt += "2. CHỈ trả lời và tư vấn các câu hỏi trong phạm vi thông tin tài chính cá nhân được cung cấp ở trên (thu nhập, chi tiêu, số dư, ngân sách, phân tích tài chính). Đối với các câu hỏi ngoài lề hoặc ngoài phạm vi hệ thống (như lập trình, thơ ca, kiến thức xã hội, giải toán, câu hỏi chung...), bạn phải lịch sự từ chối trả lời và hướng người dùng hỏi về tài chính cá nhân.\n";
-            systemPrompt += "3. Tuyệt đối không bịa đặt số liệu hay tự tạo ra thông tin không có trong danh sách giao dịch hay ngân sách được cung cấp. Luôn nói đúng sự thật khách quan của dữ liệu.\n";
-            systemPrompt += "4. Sử dụng tiếng Việt chuẩn, định dạng markdown gọn đẹp (bảng, danh sách gạch đầu dòng, chữ in đậm) khi trình bày dữ liệu.\n\n";
-            systemPrompt += `Câu hỏi của người dùng: "${text}"\n\n`;
-            systemPrompt += "Trả lời:";
-
-            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
-
-            fetch(geminiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            parts: [
-                                { text: systemPrompt }
-                            ]
-                        }
-                    ]
-                })
-            })
-                .then(res => {
-                    if (!res.ok) {
-                        return res.json().then(errData => {
-                            throw new Error(errData.error?.message || `Lỗi HTTP ${res.status}`);
-                        });
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    indicator.remove();
-                    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (replyText) {
-                        clearActiveTyping();
-                        
-                        activeTypingFullText = replyText;
-                        const msgDiv = document.createElement("div");
-                        msgDiv.className = "chat-message bot";
-                        messagesContainer.appendChild(msgDiv);
-                        activeTypingDiv = msgDiv;
-                        
-                        let currentText = "";
-                        let index = 0;
-                        const totalLen = replyText.length;
-                        const charsPerTick = Math.max(1, Math.ceil(totalLen / 150));
-                        
-                        activeTypingTimer = setInterval(() => {
-                            if (index >= totalLen) {
-                                clearInterval(activeTypingTimer);
-                                activeTypingTimer = null;
-                                activeTypingDiv = null;
-                                activeTypingFullText = "";
-                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                                return;
-                            }
-                            
-                            currentText += replyText.substring(index, index + charsPerTick);
-                            index += charsPerTick;
-                            
-                            msgDiv.innerHTML = formatMarkdown(currentText);
-                            
-                            const threshold = 60;
-                            const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < threshold;
-                            if (isNearBottom) {
-                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                            }
-                        }, 12);
-                    } else {
-                        throw new Error("Không có phản hồi từ Gemini.");
-                    }
-                })
-                .catch(err => {
-                    indicator.remove();
-                    console.error("Gemini Direct API error:", err);
-                    const errorMsg = `<p>🤖 <strong>Lỗi gọi trực tiếp Gemini API từ trình duyệt:</strong></p>
-                <p style="color: #ef4444; font-size: 12.5px; background: rgba(239, 68, 68, 0.08); padding: 8px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.2); margin: 6px 0;">${err.message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
-                <p style="font-size: 12px; opacity: 0.85; margin-top: 6px;">Vui lòng kiểm tra lại tính hợp lệ hoặc giới hạn địa lý của API Key của bạn.</p>`;
-                    addMessage("bot", errorMsg, true);
-                });
+        if (activeChatAbortController) {
+            activeChatAbortController.abort();
         }
+        activeChatAbortController = new AbortController();
 
-        // Get or fetch the Gemini API key, then execute query
-        if (cachedGeminiKey) {
-            callGeminiDirectly(cachedGeminiKey);
-        } else {
-            fetch("api?action=get_gemini_key")
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success && data.key) {
-                        cachedGeminiKey = data.key;
-                        callGeminiDirectly(cachedGeminiKey);
-                    } else {
-                        indicator.remove();
-                        const errorMsg = `<p>🤖 <strong>Trợ lý AI chưa hoạt động.</strong></p>
-                    <p>Vui lòng cấu hình khóa <code>GEMINI_API_KEY</code> trong tệp <code>.env</code> trên máy tính rồi chạy deploy lại nhé!</p>`;
-                        addMessage("bot", errorMsg, true);
+        fetch("api?action=chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text }),
+            signal: activeChatAbortController.signal
+        })
+        .then(async res => {
+            let data;
+            try {
+                data = await res.json();
+            } catch (e) {
+                throw new Error(!res.ok ? `Lỗi kết nối máy chủ (${res.status})` : "Phản hồi không hợp lệ");
+            }
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || "Lỗi xử lý câu trả lời từ AI");
+            }
+            return data;
+        })
+        .then(data => {
+            indicator.remove();
+            const replyText = data.reply;
+            if (replyText) {
+                clearActiveTyping();
+                
+                activeTypingFullText = replyText;
+                const msgDiv = document.createElement("div");
+                msgDiv.className = "chat-message bot";
+                messagesContainer.appendChild(msgDiv);
+                activeTypingDiv = msgDiv;
+                
+                let currentText = "";
+                let index = 0;
+                const totalLen = replyText.length;
+                const charsPerTick = Math.max(1, Math.ceil(totalLen / 150));
+                
+                activeTypingTimer = setInterval(() => {
+                    if (index >= totalLen) {
+                        clearInterval(activeTypingTimer);
+                        activeTypingTimer = null;
+                        activeTypingDiv = null;
+                        activeTypingFullText = "";
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        return;
                     }
-                })
-                .catch(err => {
-                    indicator.remove();
-                    console.error("Failed to fetch API key from backend:", err);
-                    const errorMsg = `<p>🤖 <strong>Trợ lý AI gặp lỗi kết nối với máy chủ.</strong></p>
-                <p>Không thể lấy khóa cấu hình từ backend.</p>`;
-                    addMessage("bot", errorMsg, true);
-                });
-        }
+                    
+                    currentText += replyText.substring(index, index + charsPerTick);
+                    index += charsPerTick;
+                    
+                    msgDiv.innerHTML = formatMarkdown(currentText);
+                    
+                    const threshold = 60;
+                    const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < threshold;
+                    if (isNearBottom) {
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
+                }, 12);
+            } else {
+                throw new Error("Không nhận được nội dung từ trợ lý AI.");
+            }
+        })
+        .catch(err => {
+            if (err.name === 'AbortError') return;
+            indicator.remove();
+            console.error("Chatbot API error:", err);
+            const safeErr = String(err.message || err).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const errorMsg = `<p>🤖 <strong>Trợ lý AI tạm thời gián đoạn:</strong></p>
+                <p style="color: #ef4444; font-size: 12.5px; background: rgba(239, 68, 68, 0.08); padding: 8px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.2); margin: 6px 0;">${safeErr}</p>
+                <p style="font-size: 12px; opacity: 0.85; margin-top: 6px;">Vui lòng thử lại sau giây lát hoặc kiểm tra cấu hình biến môi trường GEMINI_API_KEY.</p>`;
+            addMessage("bot", errorMsg, true);
+        })
+        .finally(() => {
+            if (sendBtn) sendBtn.disabled = false;
+            if (inputField) {
+                inputField.disabled = false;
+                inputField.focus();
+            }
+        });
     }
 }

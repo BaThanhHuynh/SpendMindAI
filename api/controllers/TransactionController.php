@@ -16,13 +16,12 @@ class TransactionController {
      */
     public function list(int $userId): void {
         if (!$this->pdo) {
-            http_response_code(503);
-            echo json_encode(["success" => false, "message" => "Cơ sở dữ liệu chưa sẵn sàng"]);
-            exit();
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
         }
 
         try {
-            // Fetch user transactions
+            // Fetch user transactions using composite index
             $stmt = $this->pdo->prepare("
                 SELECT `id`, `type`, `amount`, `category`, `date`, `description` 
                 FROM `transactions` 
@@ -46,19 +45,16 @@ class TransactionController {
                 $budgets[$b['category']] = floatval($b['limit_amount']);
             }
 
-            echo json_encode([
+            sendJson([
                 "success" => true,
                 "authenticated" => true,
                 "username" => $_SESSION['username'] ?? '',
                 "transactions" => $transactions,
                 "budgets" => $budgets
             ]);
-            exit();
-
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Lỗi truy vấn CSDL: " . $e->getMessage()]);
-            exit();
+        } catch (Throwable $e) {
+            error_log("Transaction list error: " . $e->getMessage());
+            sendError("Không thể tải danh sách giao dịch. Vui lòng thử lại sau.", 500);
         }
     }
 
@@ -67,26 +63,39 @@ class TransactionController {
      */
     public function save(int $userId, array $input): void {
         if (!$this->pdo) {
-            http_response_code(503);
-            echo json_encode(["success" => false, "message" => "Cơ sở dữ liệu chưa sẵn sàng"]);
-            exit();
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
         }
 
         if (
             empty($input['id']) || empty($input['type']) ||
-            empty($input['amount']) || empty($input['category']) || empty($input['date'])
+            !isset($input['amount']) || empty($input['category']) || empty($input['date'])
         ) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Dữ liệu giao dịch thiếu trường bắt buộc"]);
-            exit();
+            sendError("Dữ liệu giao dịch thiếu trường bắt buộc", 400);
+            return;
         }
 
-        $id = trim($input['id']);
-        $type = in_array($input['type'], ['income', 'expense']) ? $input['type'] : 'expense';
-        $amount = floatval($input['amount']);
-        $category = trim($input['category']);
-        $date = trim($input['date']);
-        $description = isset($input['description']) ? trim($input['description']) : '';
+        $id = trim((string)$input['id']);
+        if (strlen($id) > 50 || !preg_match('/^[a-zA-Z0-9_-]+$/', $id)) {
+            sendError("Mã giao dịch không hợp lệ", 400);
+            return;
+        }
+
+        $type = ($input['type'] === 'income') ? 'income' : 'expense';
+        $amount = abs(floatval($input['amount']));
+        if ($amount <= 0) {
+            sendError("Số tiền giao dịch phải lớn hơn 0", 400);
+            return;
+        }
+
+        $category = mb_substr(trim((string)$input['category']), 0, 50);
+        $date = trim((string)$input['date']);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            sendError("Định dạng ngày không hợp lệ (YYYY-MM-DD)", 400);
+            return;
+        }
+
+        $description = isset($input['description']) ? mb_substr(trim((string)$input['description']), 0, 500) : '';
 
         try {
             // Verify ownership if record exists
@@ -95,9 +104,8 @@ class TransactionController {
             $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existing && intval($existing['user_id']) !== $userId) {
-                http_response_code(403);
-                echo json_encode(["success" => false, "message" => "Bạn không có quyền chỉnh sửa giao dịch này"]);
-                exit();
+                sendError("Bạn không có quyền chỉnh sửa giao dịch này", 403);
+                return;
             }
 
             $stmt = $this->pdo->prepare("
@@ -127,13 +135,10 @@ class TransactionController {
                 ':description_up' => $description
             ]);
 
-            echo json_encode(["success" => true, "message" => "Đã ghi nhận giao dịch thành công"]);
-            exit();
-
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Lỗi ghi nhận giao dịch MySQL: " . $e->getMessage()]);
-            exit();
+            sendJson(["success" => true, "message" => "Đã ghi nhận giao dịch thành công"]);
+        } catch (Throwable $e) {
+            error_log("Transaction save error: " . $e->getMessage());
+            sendError("Lỗi ghi nhận giao dịch. Vui lòng thử lại sau.", 500);
         }
     }
 
@@ -142,35 +147,29 @@ class TransactionController {
      */
     public function delete(int $userId, array $input): void {
         if (!$this->pdo) {
-            http_response_code(503);
-            echo json_encode(["success" => false, "message" => "Cơ sở dữ liệu chưa sẵn sàng"]);
-            exit();
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
         }
 
         if (empty($input['id'])) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Thiếu ID giao dịch cần xóa"]);
-            exit();
+            sendError("Thiếu ID giao dịch cần xóa", 400);
+            return;
         }
 
-        $id = trim($input['id']);
+        $id = trim((string)$input['id']);
 
         try {
             $stmt = $this->pdo->prepare("DELETE FROM `transactions` WHERE `id` = :id AND `user_id` = :uid");
             $stmt->execute([':id' => $id, ':uid' => $userId]);
 
             if ($stmt->rowCount() > 0) {
-                echo json_encode(["success" => true, "message" => "Đã xóa giao dịch thành công"]);
+                sendJson(["success" => true, "message" => "Đã xóa giao dịch thành công"]);
             } else {
-                http_response_code(404);
-                echo json_encode(["success" => false, "message" => "Giao dịch không tồn tại hoặc bạn không có quyền xóa"]);
+                sendError("Giao dịch không tồn tại hoặc bạn không có quyền xóa", 404);
             }
-            exit();
-
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Lỗi xóa giao dịch MySQL: " . $e->getMessage()]);
-            exit();
+        } catch (Throwable $e) {
+            error_log("Transaction delete error: " . $e->getMessage());
+            sendError("Lỗi xóa giao dịch. Vui lòng thử lại sau.", 500);
         }
     }
 
@@ -179,9 +178,8 @@ class TransactionController {
      */
     public function clearAll(int $userId): void {
         if (!$this->pdo) {
-            http_response_code(503);
-            echo json_encode(["success" => false, "message" => "Cơ sở dữ liệu chưa sẵn sàng"]);
-            exit();
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
         }
 
         try {
@@ -194,16 +192,13 @@ class TransactionController {
             $stmt->execute([':uid' => $userId]);
 
             $this->pdo->commit();
-            echo json_encode(["success" => true, "message" => "Đã xóa toàn bộ dữ liệu giao dịch và ngân sách thành công."]);
-            exit();
-
-        } catch (PDOException $e) {
+            sendJson(["success" => true, "message" => "Đã xóa toàn bộ dữ liệu giao dịch và ngân sách thành công."]);
+        } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Lỗi xóa dữ liệu MySQL: " . $e->getMessage()]);
-            exit();
+            error_log("Transaction clearAll error: " . $e->getMessage());
+            sendError("Lỗi xóa dữ liệu. Vui lòng thử lại sau.", 500);
         }
     }
 }

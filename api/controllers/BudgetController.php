@@ -16,15 +16,13 @@ class BudgetController {
      */
     public function save(int $userId, array $input): void {
         if (!$this->pdo) {
-            http_response_code(503);
-            echo json_encode(["success" => false, "message" => "Cơ sở dữ liệu chưa sẵn sàng"]);
-            exit();
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
         }
 
         if (!is_array($input)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Dữ liệu hạn mức ngân sách không hợp lệ"]);
-            exit();
+            sendError("Dữ liệu hạn mức ngân sách không hợp lệ", 400);
+            return;
         }
 
         try {
@@ -37,8 +35,8 @@ class BudgetController {
             ");
 
             foreach ($input as $category => $limitAmount) {
-                $categoryName = trim((string)$category);
-                $amount = floatval($limitAmount);
+                $categoryName = mb_substr(trim((string)$category), 0, 50);
+                $amount = max(0, floatval($limitAmount));
 
                 if ($categoryName !== '') {
                     $stmt->execute([
@@ -51,16 +49,13 @@ class BudgetController {
             }
 
             $this->pdo->commit();
-            echo json_encode(["success" => true, "message" => "Đã lưu hạn mức chi tiêu thành công"]);
-            exit();
-
-        } catch (PDOException $e) {
+            sendJson(["success" => true, "message" => "Đã lưu hạn mức chi tiêu thành công"]);
+        } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Lỗi lưu hạn mức MySQL: " . $e->getMessage()]);
-            exit();
+            error_log("Budget save error: " . $e->getMessage());
+            sendError("Lỗi lưu hạn mức chi tiêu. Vui lòng thử lại sau.", 500);
         }
     }
 }

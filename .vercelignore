@@ -6,3 +6,10 @@ watch_deploy.py
 Dockerfile
 docker-compose.yml
 database.sql
+.agents/
+local_dev_data.json
+*.sqlite
+*.db
+test_*.py
+temp_*.py
+

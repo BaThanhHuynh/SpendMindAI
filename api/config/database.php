@@ -85,19 +85,26 @@ class Database {
         }
 
         if (self::$instance) {
-            self::initSchema(self::$instance);
+            $shouldInit = (getEnvVar('INIT_DB_SCHEMA') === 'true');
+            if ($shouldInit) {
+                self::initSchema(self::$instance);
+            }
         } else {
-            error_log("Database notice: " . (self::$connectionError ?: "Connection not configured"));
+            error_log("Database connection failure: " . (self::$connectionError ?: "Connection parameters not configured"));
         }
 
         return self::$instance;
     }
 
     public static function getError(): ?string {
-        return self::$connectionError;
+        $isDev = (getenv('APP_ENV') === 'development');
+        if ($isDev) {
+            return self::$connectionError;
+        }
+        return self::$connectionError ? "Không thể kết nối đến cơ sở dữ liệu." : null;
     }
 
-    private static function initSchema(PDO $pdo): void {
+    public static function initSchema(PDO $pdo): void {
         try {
             // Users table
             $pdo->exec("
@@ -115,7 +122,7 @@ class Database {
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");
 
-            // Transactions table
+            // Transactions table with high-performance composite index
             $pdo->exec("
                 CREATE TABLE IF NOT EXISTS `transactions` (
                     `id` VARCHAR(50) NOT NULL,
@@ -126,6 +133,7 @@ class Database {
                     `date` DATE NOT NULL,
                     `description` TEXT,
                     PRIMARY KEY (`id`),
+                    INDEX `idx_user_date` (`user_id`, `date`, `id`),
                     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");

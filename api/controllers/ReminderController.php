@@ -20,9 +20,8 @@ class ReminderController {
      */
     public function getSettings(int $userId): void {
         if (!$this->pdo) {
-            http_response_code(503);
-            echo json_encode(["success" => false, "message" => "Cơ sở dữ liệu chưa sẵn sàng"]);
-            exit();
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
         }
 
         try {
@@ -31,12 +30,11 @@ class ReminderController {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$user) {
-                http_response_code(404);
-                echo json_encode(["success" => false, "message" => "Không tìm thấy người dùng"]);
-                exit();
+                sendError("Không tìm thấy người dùng", 404);
+                return;
             }
 
-            echo json_encode([
+            sendJson([
                 "success" => true,
                 "email" => $user['email'],
                 "google_id" => $user['google_id'],
@@ -44,12 +42,9 @@ class ReminderController {
                 "email_notifications" => intval($user['email_notifications']),
                 "avatar_url" => $user['avatar_url']
             ]);
-            exit();
-
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Lỗi CSDL: " . $e->getMessage()]);
-            exit();
+        } catch (Throwable $e) {
+            error_log("getSettings error: " . $e->getMessage());
+            sendError("Lỗi hệ thống khi tải cài đặt nhắc nhở", 500);
         }
     }
 
@@ -58,28 +53,30 @@ class ReminderController {
      */
     public function saveSettings(int $userId, array $input): void {
         if (!$this->pdo) {
-            http_response_code(503);
-            echo json_encode(["success" => false, "message" => "Cơ sở dữ liệu chưa sẵn sàng"]);
-            exit();
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
         }
 
         if (empty($input['email'])) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Email không được để trống"]);
-            exit();
+            sendError("Email không được để trống", 400);
+            return;
         }
 
-        $email = trim($input['email']);
-        $emailNotifications = isset($input['email_notifications']) ? intval($input['email_notifications']) : 0;
-        $reminderTime = !empty($input['reminder_time']) ? trim($input['reminder_time']) . ":00" : null;
+        $email = trim((string)$input['email']);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            sendError("Địa chỉ email không hợp lệ", 400);
+            return;
+        }
+
+        $emailNotifications = !empty($input['email_notifications']) ? 1 : 0;
+        $reminderTime = !empty($input['reminder_time']) ? trim((string)$input['reminder_time']) . ":00" : null;
 
         try {
             $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = :email AND id != :id");
             $stmt->execute([':email' => $email, ':id' => $userId]);
             if ($stmt->fetch()) {
-                http_response_code(409);
-                echo json_encode(["success" => false, "message" => "Địa chỉ email này đã được sử dụng bởi tài khoản khác"]);
-                exit();
+                sendError("Địa chỉ email này đã được sử dụng bởi tài khoản khác", 409);
+                return;
             }
 
             $stmt = $this->pdo->prepare("
@@ -94,13 +91,10 @@ class ReminderController {
                 ':id' => $userId
             ]);
 
-            echo json_encode(["success" => true, "message" => "Cấu hình nhắc nhở đã được lưu thành công"]);
-            exit();
-
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Lỗi CSDL: " . $e->getMessage()]);
-            exit();
+            sendJson(["success" => true, "message" => "Cấu hình nhắc nhở đã được lưu thành công"]);
+        } catch (Throwable $e) {
+            error_log("saveSettings error: " . $e->getMessage());
+            sendError("Lỗi lưu cấu hình nhắc nhở", 500);
         }
     }
 
@@ -109,9 +103,8 @@ class ReminderController {
      */
     public function checkAndSend(int $userId): void {
         if (!$this->pdo) {
-            http_response_code(503);
-            echo json_encode(["success" => false, "message" => "Cơ sở dữ liệu chưa sẵn sàng"]);
-            exit();
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
         }
 
         try {
@@ -123,10 +116,9 @@ class ReminderController {
                 $today = date('Y-m-d');
 
                 if ($user['last_reminder_sent'] !== $today) {
-                    // Check if user has entered any transactions today
-                    $txCheck = $this->pdo->prepare("SELECT COUNT(*) FROM transactions WHERE user_id = :uid AND date = :today");
+                    $txCheck = $this->pdo->prepare("SELECT 1 FROM transactions WHERE user_id = :uid AND date = :today LIMIT 1");
                     $txCheck->execute([':uid' => $userId, ':today' => $today]);
-                    $hasTxToday = intval($txCheck->fetchColumn()) > 0;
+                    $hasTxToday = ($txCheck->fetch() !== false);
 
                     if ($hasTxToday) {
                         $updateStmt = $this->pdo->prepare("UPDATE users SET last_reminder_sent = :today WHERE id = :id");
@@ -142,34 +134,31 @@ class ReminderController {
                                 $updateStmt->execute([':today' => $today, ':id' => $userId]);
                             }
 
-                            echo json_encode([
+                            sendJson([
                                 "success" => $mailResult['success'],
                                 "sent" => $mailResult['success'],
                                 "simulated" => $mailResult['simulated'] ?? false,
                                 "message" => $mailResult['message']
                             ]);
-                            exit();
+                            return;
                         }
                     }
                 }
             }
 
-            echo json_encode([
+            sendJson([
                 "success" => true,
                 "sent" => false,
                 "message" => "Không cần gửi nhắc nhở tại thời điểm này"
             ]);
-            exit();
-
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Lỗi Lazy Cron: " . $e->getMessage()]);
-            exit();
+        } catch (Throwable $e) {
+            error_log("checkAndSend error: " . $e->getMessage());
+            sendError("Lỗi kiểm tra nhắc nhở", 500);
         }
     }
 
     /**
-     * System Cron batch execution for all users due for notification.
+     * System Cron batch execution: optimized single-batch query eliminating N+1 loop.
      */
     public function executeSystemCron(): array {
         if (!$this->pdo) {
@@ -184,47 +173,68 @@ class ReminderController {
 
         $today = date('Y-m-d');
         $currentTime = date('H:i:s');
+        $startTime = microtime(true);
 
         try {
-            $stmt = $this->pdo->prepare("
-                SELECT id, username, email, reminder_time 
-                FROM users 
-                WHERE email_notifications = 1 
-                  AND reminder_time IS NOT NULL 
-                  AND (last_reminder_sent IS NULL OR last_reminder_sent != :today)
-                  AND :current_time >= reminder_time
+            // 1. Bulk mark users who already logged transactions today as skipped in a single query
+            $skipStmt = $this->pdo->prepare("
+                UPDATE users u
+                SET u.last_reminder_sent = :today
+                WHERE u.email_notifications = 1 
+                  AND u.reminder_time IS NOT NULL 
+                  AND (u.last_reminder_sent IS NULL OR u.last_reminder_sent != :today_check)
+                  AND :current_time >= u.reminder_time
+                  AND EXISTS (
+                      SELECT 1 FROM transactions t 
+                      WHERE t.user_id = u.id AND t.date = :today_tx
+                  )
             ");
-            $stmt->execute([
+            $skipStmt->execute([
                 ':today' => $today,
-                ':current_time' => $currentTime
+                ':today_check' => $today,
+                ':current_time' => $currentTime,
+                ':today_tx' => $today
             ]);
-            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $skippedCount = $skipStmt->rowCount();
 
-            $skippedCount = 0;
+            // 2. Fetch only users who need reminders (no transactions entered today), bounded by LIMIT 15
+            $dueStmt = $this->pdo->prepare("
+                SELECT u.id, u.username, u.email, u.reminder_time 
+                FROM users u
+                WHERE u.email_notifications = 1 
+                  AND u.reminder_time IS NOT NULL 
+                  AND (u.last_reminder_sent IS NULL OR u.last_reminder_sent != :today)
+                  AND :current_time >= u.reminder_time
+                  AND NOT EXISTS (
+                      SELECT 1 FROM transactions t 
+                      WHERE t.user_id = u.id AND t.date = :today_tx
+                  )
+                LIMIT 15
+            ");
+            $dueStmt->execute([
+                ':today' => $today,
+                ':current_time' => $currentTime,
+                ':today_tx' => $today
+            ]);
+            $users = $dueStmt->fetchAll(PDO::FETCH_ASSOC);
+
             $sentCount = 0;
             $failedCount = 0;
 
+            $updateStmt = $this->pdo->prepare("UPDATE users SET last_reminder_sent = :today WHERE id = :id");
+
             foreach ($users as $user) {
-                $uid = intval($user['id']);
-
-                // Check active transactions today
-                $txCheck = $this->pdo->prepare("SELECT COUNT(*) FROM transactions WHERE user_id = :uid AND date = :today");
-                $txCheck->execute([':uid' => $uid, ':today' => $today]);
-                $hasTxToday = intval($txCheck->fetchColumn()) > 0;
-
-                if ($hasTxToday) {
-                    $updateStmt = $this->pdo->prepare("UPDATE users SET last_reminder_sent = :today WHERE id = :id");
-                    $updateStmt->execute([':today' => $today, ':id' => $uid]);
-                    $skippedCount++;
-                    continue;
+                // Safety guard: prevent exceeding serverless execution budget (10s threshold)
+                if ((microtime(true) - $startTime) > 10.0) {
+                    error_log("System cron time limit guard reached (10s). Stopping batch.");
+                    break;
                 }
 
                 $template = MailerService::buildDailyReminder($user['username'], $user['reminder_time'], $this->appUrl);
                 $mailResult = MailerService::send($user['email'], $template['subject'], $template['body']);
 
                 if ($mailResult['success']) {
-                    $updateStmt = $this->pdo->prepare("UPDATE users SET last_reminder_sent = :today WHERE id = :id");
-                    $updateStmt->execute([':today' => $today, ':id' => $uid]);
+                    $updateStmt->execute([':today' => $today, ':id' => $user['id']]);
                     $sentCount++;
                 } else {
                     $failedCount++;
@@ -240,7 +250,8 @@ class ReminderController {
                 "message" => "Xử lý Cron hoàn tất"
             ];
 
-        } catch (PDOException $e) {
+        } catch (Throwable $e) {
+            error_log("Cron batch error: " . $e->getMessage());
             return [
                 "success" => false,
                 "sent" => 0,

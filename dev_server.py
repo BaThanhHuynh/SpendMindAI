@@ -151,7 +151,11 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
         if path in ("/api", "/api.php", "/api/index.php"):
             db = load_data()
             if action == "check_session":
-                return self.send_json(db["user"])
+                res = dict(db["user"])
+                if qs.get("include_state", [""])[0] == "1":
+                    res["transactions"] = db.get("transactions", [])
+                    res["budgets"] = db.get("budgets", {})
+                return self.send_json(res)
 
             if action == "get_google_client_id":
                 return self.send_json({
@@ -286,6 +290,47 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                 save_data(db)
                 return self.send_json({"success": True, "message": "Đã lưu cấu hình nhắc nhở thành công"})
 
+            if action == "chat":
+                msg = payload.get("message", "").strip()
+                if not msg:
+                    return self.send_json({"success": False, "message": "Tin nhắn không được để trống"}, 400)
+                # Check for GEMINI_API_KEY in .env
+                gemini_key = ""
+                env_path = os.path.join(ROOT_DIR, ".env")
+                if os.path.exists(env_path):
+                    with open(env_path, "r", encoding="utf-8") as f:
+                        for line in f:
+                            if line.startswith("GEMINI_API_KEY="):
+                                gemini_key = line.split("=", 1)[1].strip().strip('"').strip("'")
+                if gemini_key:
+                    try:
+                        import urllib.request
+                        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={gemini_key}"
+                        req_body = json.dumps({
+                            "contents": [{"parts": [{"text": f"Bạn là trợ lý tài chính SpendMindAI. Câu hỏi: {msg}. Trả lời ngắn gọn súc tích bằng tiếng Việt định dạng markdown."}]}]
+                        }).encode("utf-8")
+                        req = urllib.request.Request(api_url, data=req_body, headers={"Content-Type": "application/json"})
+                        with urllib.request.urlopen(req, timeout=12) as resp:
+                            res_json = json.loads(resp.read().decode("utf-8"))
+                            reply = res_json.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                            if reply:
+                                return self.send_json({"success": True, "reply": reply})
+                    except Exception as ai_err:
+                        print(f"[Gemini Local Error] {ai_err}")
+
+                # Fallback mock response for local testing
+                total_income = sum(t["amount"] for t in db["transactions"] if t.get("type") == "income")
+                total_expense = sum(t["amount"] for t in db["transactions"] if t.get("type") == "expense")
+                balance = total_income - total_expense
+                mock_reply = (
+                    f"**Phân tích tài chính nhanh (Local Demo):**\n\n"
+                    f"- Tổng thu nhập: **{total_income:,.0f}đ**\n"
+                    f"- Tổng chi tiêu: **{total_expense:,.0f}đ**\n"
+                    f"- Số dư hiện tại: **{balance:,.0f}đ**\n\n"
+                    f"Bạn đã hỏi: *\"{msg}\"*. Hệ thống đang hoạt động ổn định ở chế độ demo!"
+                )
+                return self.send_json({"success": True, "reply": mock_reply})
+
         return self.send_json({"success": False, "message": "Unsupported POST action"}, 404)
 
 def run_server():
@@ -306,11 +351,12 @@ def run_server():
     print("  * Du lieu thu nghiem luu tu dong tai: local_dev_data.json")
     print("  * Nhan Ctrl + C de dung may chu.\n")
 
-    # Open dashboard in browser after 0.5s
-    try:
-        webbrowser.open(f"http://localhost:{PORT}/dashboard.html")
-    except Exception:
-        pass
+    # Open dashboard in browser after 0.5s if not in headless/test mode
+    if "--no-browser" not in sys.argv:
+        try:
+            webbrowser.open(f"http://localhost:{PORT}/dashboard.html")
+        except Exception:
+            pass
 
     try:
         httpd.serve_forever()

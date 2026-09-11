@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `transactions` (
     `date` DATE NOT NULL,
     `description` TEXT,
     PRIMARY KEY (`id`),
+    INDEX `idx_user_date` (`user_id`, `date`, `id`),
     INDEX (`user_id`),
     INDEX (`date`),
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
