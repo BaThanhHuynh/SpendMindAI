@@ -6,16 +6,13 @@ const API_URL = "api";
 
 document.addEventListener("DOMContentLoaded", () => {
     initTheme();
+    initGoogleButtonLabel();
     if (!checkGoogleOAuthRedirect()) {
         checkAuthSession();
     }
     initGoogleAuth();
     document.getElementById("register-form").addEventListener("submit", handleRegisterSubmit);
     document.getElementById("google-auth-btn").addEventListener("click", triggerGoogleAuthSimulated);
-    const btnOpenSim = document.getElementById("btn-open-simulated");
-    if (btnOpenSim) {
-        btnOpenSim.addEventListener("click", triggerGoogleSimulatedModalDirectly);
-    }
     lucide.createIcons();
 });
 
@@ -97,6 +94,30 @@ function handleGoogleCredentialResponse(response) {
     });
 }
 
+function initGoogleButtonLabel() {
+    const customBtn = document.getElementById("google-auth-btn");
+    const textSpan = document.getElementById("google-btn-text");
+    if (!customBtn || !textSpan) return;
+
+    const savedAccounts = getSavedGoogleAccounts();
+    if (savedAccounts && savedAccounts.length > 0) {
+        const topAccount = savedAccounts[0];
+        const displayName = topAccount.username || "Bá Thành";
+        textSpan.textContent = `Tiếp tục bằng tên ${displayName}`;
+        
+        if (topAccount.avatarUrl && !customBtn.querySelector(".google-saved-avatar")) {
+            const avatarImg = document.createElement("img");
+            avatarImg.className = "google-saved-avatar";
+            avatarImg.src = topAccount.avatarUrl;
+            avatarImg.alt = displayName;
+            avatarImg.style.cssText = "width: 22px; height: 22px; border-radius: 50%; object-fit: cover; margin-right: 4px; flex-shrink: 0;";
+            customBtn.insertBefore(avatarImg, textSpan);
+        }
+    } else {
+        textSpan.textContent = "Tiếp tục với Google";
+    }
+}
+
 function setupGoogleTokenClient(clientId) {
     if (window.google && window.google.accounts) {
         // 1. Initialize official Google Identity Services (Never blocked by popup blocker)
@@ -109,18 +130,27 @@ function setupGoogleTokenClient(clientId) {
                     cancel_on_tap_outside: true
                 });
                 const btnContainer = document.getElementById("g_id_signin");
+                const wrapper = document.getElementById("google-auth-wrapper");
                 if (btnContainer) {
+                    const isLight = document.documentElement.getAttribute("data-theme") === "light";
+                    const containerWidth = btnContainer.parentElement ? btnContainer.parentElement.clientWidth : 320;
+                    const btnWidth = Math.min(360, Math.max(240, containerWidth));
+
                     window.google.accounts.id.renderButton(btnContainer, {
-                        theme: "outline",
+                        theme: isLight ? "outline" : "filled_black",
                         size: "large",
                         type: "standard",
                         shape: "pill",
                         text: "continue_with",
                         logo_alignment: "left",
-                        width: 320
+                        width: btnWidth
                     });
+                    if (wrapper) {
+                        wrapper.classList.add("has-gis");
+                    }
                     const customBtn = document.getElementById("google-auth-btn");
                     if (customBtn) {
+                        customBtn.classList.add("hidden");
                         customBtn.style.display = "none";
                     }
                 }

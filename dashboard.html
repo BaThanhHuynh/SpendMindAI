@@ -8,19 +8,20 @@
     <meta name="description" content="Trang bảng điều khiển quản lý chi tiêu cá nhân trên SpendMindAI.">
     <link rel="icon" type="image/png" href="images/logoapp.png">
 
-    <!-- Preload critical CSS -->
-    <link rel="preload" href="css/styles.css?v=20260911_v5" as="style">
+    <!-- Preload critical CSS & Fonts -->
+    <link rel="preload" href="css/styles.css?v=20260911_v6" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" as="style">
 
-    <!-- Google Fonts: Montserrat (with font-display swap for faster text paint) -->
+    <!-- Google Fonts: Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <!-- Lucide Icons CDN (pinned version for consistent + faster loading) -->
     <script src="https://unpkg.com/lucide@0.460.0" defer></script>
 
-    <!-- Chart.js CDN (deferred to not block initial paint) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 
     <!-- PWA & Mobile Web App Meta -->
     <link rel="manifest" href="manifest.json">
@@ -31,8 +32,8 @@
     <link rel="apple-touch-icon" href="images/logoapp.png">
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/styles.css?v=20260911_v5">
-    <link rel="stylesheet" href="css/mobile.css?v=20260911_v5">
+    <link rel="stylesheet" href="css/styles.css?v=20260911_v6">
+    <link rel="stylesheet" href="css/mobile.css?v=20260911_v6">
     
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -571,10 +572,10 @@
     </nav>
 
     <!-- Main Dashboard script -->
-    <script src="js/chatbot.js?v=20260911_v5"></script>
-    <script src="js/dashboard.js?v=20260911_v5"></script>
+    <script src="js/chatbot.js?v=20260911_v6"></script>
+    <script src="js/dashboard.js?v=20260911_v6"></script>
     <!-- Cookie Consent & Preferences System -->
-    <script src="js/cookie-consent.js?v=20260911_v5"></script>
+    <script src="js/cookie-consent.js?v=20260911_v6"></script>
 
     <!-- Service Worker Registration for PWA & Offline Support -->
     <script>
