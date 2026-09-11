@@ -33,6 +33,14 @@ let state = {
     theme: "dark"
 };
 
+// User Settings State (Global)
+let userSettingsState = {
+    email: '',
+    googleId: null,
+    reminderTime: '',
+    emailNotifications: 0
+};
+
 // Chart.js Instances
 let categoryChartInstance = null;
 let trendChartInstance = null;
@@ -340,37 +348,61 @@ function initEventListeners() {
     typeRadios.forEach(radio => {
         radio.addEventListener("change", () => {
             populateCategorySelectors();
-            document.getElementById("custom-category").classList.add("hidden");
-            document.getElementById("custom-category").removeAttribute("required");
+            const customCat = document.getElementById("custom-category");
+            if (customCat) {
+                customCat.classList.add("hidden");
+                customCat.removeAttribute("required");
+            }
         });
     });
 
-    document.getElementById("category").addEventListener("change", function() {
-        const customInput = document.getElementById("custom-category");
-        if (this.value === "other_expense" || this.value === "gift") {
-            customInput.classList.remove("hidden");
-            customInput.setAttribute("required", "required");
-            customInput.focus();
-        } else {
-            customInput.classList.add("hidden");
-            customInput.removeAttribute("required");
-            customInput.value = "";
-        }
-    });
+    const categoryEl = document.getElementById("category");
+    if (categoryEl) {
+        categoryEl.addEventListener("change", function() {
+            const customInput = document.getElementById("custom-category");
+            if (!customInput) return;
+            if (this.value === "other_expense" || this.value === "gift") {
+                customInput.classList.remove("hidden");
+                customInput.setAttribute("required", "required");
+                customInput.focus();
+            } else {
+                customInput.classList.add("hidden");
+                customInput.removeAttribute("required");
+                customInput.value = "";
+            }
+        });
+    }
 
-    document.getElementById("transaction-form").addEventListener("submit", handleFormSubmit);
-    document.getElementById("btn-cancel-edit").addEventListener("click", cancelEditMode);
-    document.getElementById("btn-toggle-budget-settings").addEventListener("click", toggleBudgetSettings);
-    document.getElementById("budget-form").addEventListener("submit", handleBudgetSubmit);
+    const txForm = document.getElementById("transaction-form");
+    if (txForm) txForm.addEventListener("submit", handleFormSubmit);
 
-    document.getElementById("search-input").addEventListener("input", () => updateUI(false)); // Performance
-    document.getElementById("filter-type").addEventListener("change", () => updateUI());
-    document.getElementById("filter-category").addEventListener("change", () => updateUI());
+    const btnCancelEdit = document.getElementById("btn-cancel-edit");
+    if (btnCancelEdit) btnCancelEdit.addEventListener("click", cancelEditMode);
 
-    document.getElementById("btn-export").addEventListener("click", exportData);
+    const btnToggleBudget = document.getElementById("btn-toggle-budget-settings");
+    if (btnToggleBudget) btnToggleBudget.addEventListener("click", toggleBudgetSettings);
+
+    const budgetForm = document.getElementById("budget-form");
+    if (budgetForm) budgetForm.addEventListener("submit", handleBudgetSubmit);
+
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) searchInput.addEventListener("input", () => updateUI(false)); // Performance
+
+    const filterType = document.getElementById("filter-type");
+    if (filterType) filterType.addEventListener("change", () => updateUI());
+
+    const filterCat = document.getElementById("filter-category");
+    if (filterCat) filterCat.addEventListener("change", () => updateUI());
+
+    const btnExport = document.getElementById("btn-export");
+    if (btnExport) btnExport.addEventListener("click", exportData);
     
-    importTrigger.addEventListener("click", () => fileInput.click());
-    fileInput.addEventListener("change", importData);
+    const importTrigger = document.getElementById("btn-import-trigger");
+    const fileInput = document.getElementById("import-file");
+    if (importTrigger && fileInput) {
+        importTrigger.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", importData);
+    }
 
     // Event delegation for calendar grid and daily transactions list
     const calendarGrid = document.getElementById("calendar-grid-cells");
@@ -403,18 +435,27 @@ function initEventListeners() {
     }
 
     // Logout Click Handler
-    document.getElementById("btn-logout").addEventListener("click", handleLogout);
+    const btnLogout = document.getElementById("btn-logout");
+    if (btnLogout) btnLogout.addEventListener("click", handleLogout);
 
     // Settings Dropdown Event Listeners
-    document.getElementById("btn-settings").addEventListener("click", toggleSettingsDropdown);
-    document.getElementById("btn-close-settings-dropdown").addEventListener("click", closeSettingsDropdown);
-    document.getElementById("settings-notification-form").addEventListener("submit", handleSettingsSubmit);
+    const btnSettings = document.getElementById("btn-settings");
+    if (btnSettings) btnSettings.addEventListener("click", toggleSettingsDropdown);
+
+    const btnCloseSettings = document.getElementById("btn-close-settings-dropdown");
+    if (btnCloseSettings) btnCloseSettings.addEventListener("click", closeSettingsDropdown);
+
+    const settingsForm = document.getElementById("settings-notification-form");
+    if (settingsForm) settingsForm.addEventListener("submit", handleSettingsSubmit);
     
     // Click on settings rows to open corresponding sub-panels
-    document.getElementById("menu-item-reminder").addEventListener("click", (e) => {
-        e.stopPropagation();
-        openSubPanel("reminder");
-    });
+    const menuItemReminder = document.getElementById("menu-item-reminder");
+    if (menuItemReminder) {
+        menuItemReminder.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openSubPanel("reminder");
+        });
+    }
     
     // Stop propagation on the switch label/slider to prevent opening subpanel
     const labelSwitch = document.querySelector("#menu-item-reminder .switch");
@@ -481,10 +522,13 @@ function initEventListeners() {
         });
     }
 
-    document.getElementById("menu-item-theme").addEventListener("click", (e) => {
-        e.stopPropagation();
-        openSubPanel("theme");
-    });
+    const menuItemTheme = document.getElementById("menu-item-theme");
+    if (menuItemTheme) {
+        menuItemTheme.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openSubPanel("theme");
+        });
+    }
     
     // Modal Event Listeners
     const btnCloseModal = document.getElementById("btn-close-transaction-modal");
@@ -512,8 +556,11 @@ function initEventListeners() {
     });
 
     // Sub-panels close buttons (closes the entire dropdown menu)
-    document.getElementById("btn-close-reminder-sub").addEventListener("click", closeSettingsDropdown);
-    document.getElementById("btn-close-theme-sub").addEventListener("click", closeSettingsDropdown);
+    const btnCloseReminderSub = document.getElementById("btn-close-reminder-sub");
+    if (btnCloseReminderSub) btnCloseReminderSub.addEventListener("click", closeSettingsDropdown);
+
+    const btnCloseThemeSub = document.getElementById("btn-close-theme-sub");
+    if (btnCloseThemeSub) btnCloseThemeSub.addEventListener("click", closeSettingsDropdown);
 
     // Back buttons click in sub-panels (goes back to main menu panel)
     document.querySelectorAll(".btn-back-settings").forEach(btn => {
@@ -524,34 +571,44 @@ function initEventListeners() {
     });
 
     // Theme options list checkmark select triggers
-    document.getElementById("opt-theme-light").addEventListener("click", () => {
-        if (state.theme !== "light") {
-            setTheme("light");
-            showToast("Đã chuyển sang giao diện Sáng", "info");
-        }
-    });
-    document.getElementById("opt-theme-dark").addEventListener("click", () => {
-        if (state.theme !== "dark") {
-            setTheme("dark");
-            showToast("Đã chuyển sang giao diện Tối", "info");
-        }
-    });
-    document.getElementById("opt-theme-system").addEventListener("click", () => {
-        if (state.theme !== "system") {
-            setTheme("system");
-            showToast("Đã chuyển sang giao diện Hệ thống", "info");
-        }
-    });
+    const optLight = document.getElementById("opt-theme-light");
+    if (optLight) {
+        optLight.addEventListener("click", () => {
+            if (state.theme !== "light") {
+                setTheme("light");
+                showToast("Đã chuyển sang giao diện Sáng", "info");
+            }
+        });
+    }
+    const optDark = document.getElementById("opt-theme-dark");
+    if (optDark) {
+        optDark.addEventListener("click", () => {
+            if (state.theme !== "dark") {
+                setTheme("dark");
+                showToast("Đã chuyển sang giao diện Tối", "info");
+            }
+        });
+    }
+    const optSystem = document.getElementById("opt-theme-system");
+    if (optSystem) {
+        optSystem.addEventListener("click", () => {
+            if (state.theme !== "system") {
+                setTheme("system");
+                showToast("Đã chuyển sang giao diện Hệ thống", "info");
+            }
+        });
+    }
 
     // Clear all data event listener
-    document.getElementById("btn-clear-all-data").addEventListener("click", handleClearAllData);
+    const btnClear = document.getElementById("btn-clear-all-data");
+    if (btnClear) btnClear.addEventListener("click", handleClearAllData);
 
     // Close dropdown on click outside
     document.addEventListener("click", (e) => {
         const dropdown = document.getElementById("settings-dropdown");
-        const btnSettings = document.getElementById("btn-settings");
-        if (dropdown && btnSettings && !dropdown.classList.contains("hidden")) {
-            if (!dropdown.contains(e.target) && !btnSettings.contains(e.target)) {
+        const btnSettingsEl = document.getElementById("btn-settings");
+        if (dropdown && btnSettingsEl && !dropdown.classList.contains("hidden")) {
+            if (!dropdown.contains(e.target) && !btnSettingsEl.contains(e.target)) {
                 closeSettingsDropdown();
             }
         }
@@ -607,49 +664,62 @@ function initEventListeners() {
     }
 
     // Amount input formatting (vietnamese thousands separator with caret preservation)
-    document.getElementById("amount").addEventListener("input", function(e) {
-        const cursorPosition = this.selectionStart;
-        const originalLength = this.value.length;
-        
-        let val = this.value.replace(/,/g, '');
-        val = val.replace(/[^\d]/g, '');
-        if (val) {
-            const formatted = formatNumberWithCommas(val);
-            this.value = formatted;
+    const amountInput = document.getElementById("amount");
+    if (amountInput) {
+        amountInput.addEventListener("input", function(e) {
+            const cursorPosition = this.selectionStart;
+            const originalLength = this.value.length;
             
-            const newLength = formatted.length;
-            let newCursorPosition = cursorPosition + (newLength - originalLength);
-            newCursorPosition = Math.max(0, Math.min(newCursorPosition, newLength));
-            this.setSelectionRange(newCursorPosition, newCursorPosition);
-        } else {
-            this.value = '';
-        }
-    });
+            let val = this.value.replace(/,/g, '');
+            val = val.replace(/[^\d]/g, '');
+            if (val) {
+                const formatted = formatNumberWithCommas(val);
+                this.value = formatted;
+                
+                const newLength = formatted.length;
+                let newCursorPosition = cursorPosition + (newLength - originalLength);
+                newCursorPosition = Math.max(0, Math.min(newCursorPosition, newLength));
+                this.setSelectionRange(newCursorPosition, newCursorPosition);
+            } else {
+                this.value = '';
+            }
+        });
+    }
 
     // Calendar navigation
-    document.getElementById("btn-prev-month").addEventListener("click", () => {
-        currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-        updateUI();
-    });
-    document.getElementById("btn-next-month").addEventListener("click", () => {
-        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-        updateUI();
-    });
-    document.getElementById("btn-toggle-search").addEventListener("click", () => {
-        const panel = document.getElementById("calendar-filter-panel");
-        const isCollapsed = panel.classList.contains("collapsed");
-        if (isCollapsed) {
-            panel.classList.remove("collapsed");
-            panel.style.maxHeight = "120px";
-            panel.style.opacity = "1";
-            panel.style.marginBottom = "16px";
-        } else {
-            panel.classList.add("collapsed");
-            panel.style.maxHeight = "0";
-            panel.style.opacity = "0";
-            panel.style.marginBottom = "0";
-        }
-    });
+    const btnPrevMonth = document.getElementById("btn-prev-month");
+    if (btnPrevMonth) {
+        btnPrevMonth.addEventListener("click", () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            updateUI();
+        });
+    }
+    const btnNextMonth = document.getElementById("btn-next-month");
+    if (btnNextMonth) {
+        btnNextMonth.addEventListener("click", () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            updateUI();
+        });
+    }
+    const btnToggleSearch = document.getElementById("btn-toggle-search");
+    if (btnToggleSearch) {
+        btnToggleSearch.addEventListener("click", () => {
+            const panel = document.getElementById("calendar-filter-panel");
+            if (!panel) return;
+            const isCollapsed = panel.classList.contains("collapsed");
+            if (isCollapsed) {
+                panel.classList.remove("collapsed");
+                panel.style.maxHeight = "120px";
+                panel.style.opacity = "1";
+                panel.style.marginBottom = "16px";
+            } else {
+                panel.classList.add("collapsed");
+                panel.style.maxHeight = "0";
+                panel.style.opacity = "0";
+                panel.style.marginBottom = "0";
+            }
+        });
+    }
 
     setTodayInDateInput();
 }
@@ -1602,12 +1672,7 @@ function importData(e) {
 }
 
 // --- 7. SETTINGS MODAL & GOOGLE LINK LOGIC ---
-let userSettingsState = {
-    email: '',
-    googleId: null,
-    reminderTime: '',
-    emailNotifications: 0
-};
+// userSettingsState is initialized at top state
 
 // Toggle Settings Dropdown & Load Data
 function toggleSettingsDropdown() {
@@ -1836,3 +1901,6 @@ function handleClearAllData() {
 window.editTransaction = editTransaction;
 window.selectCalendarDay = selectCalendarDay;
 window.openTransactionModalForDate = openTransactionModalForDate;
+window.openTransactionModal = openTransactionModal;
+window.closeTransactionModal = closeTransactionModal;
+window.closeSettingsDropdown = closeSettingsDropdown;

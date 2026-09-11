@@ -6,6 +6,7 @@ local_dev_data.json
 spendmind_local.db
 local_demo_server.py
 .agents/
+scratch/
 
 # Cloudflare Tunnel temporary link and executable
 cloudflare_link.txt

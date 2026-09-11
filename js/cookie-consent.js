@@ -45,7 +45,7 @@
     pointer-events: none !important;
     font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Montserrat', sans-serif !important;
     box-sizing: border-box !important;
-    display: none;
+    display: none !important;
 }
 .spendmind-cookie-banner.show {
     display: block !important;
@@ -158,7 +158,8 @@
     background: rgba(0, 0, 0, 0.72) !important;
     backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
-    display: none;
+    display: none !important;
+    pointer-events: none !important;
     align-items: center !important;
     justify-content: center !important;
     padding: 16px !important;
@@ -170,6 +171,7 @@
 }
 .spendmind-cookie-modal-overlay.show {
     display: flex !important;
+    pointer-events: auto !important;
     opacity: 1 !important;
     visibility: visible !important;
 }
@@ -413,6 +415,7 @@
             banner.id = 'spendmind-cookie-banner';
             banner.className = 'spendmind-cookie-banner';
             banner.style.display = 'none';
+            banner.style.pointerEvents = 'none';
             banner.setAttribute('role', 'region');
             banner.setAttribute('aria-label', 'Thông báo cookie');
             banner.innerHTML = `
@@ -443,6 +446,7 @@
             overlay.id = 'spendmind-cookie-modal-overlay';
             overlay.className = 'spendmind-cookie-modal-overlay';
             overlay.style.display = 'none';
+            overlay.style.pointerEvents = 'none';
             overlay.setAttribute('role', 'dialog');
             overlay.setAttribute('aria-modal', 'true');
             overlay.setAttribute('aria-labelledby', 'cookie-modal-title');
@@ -543,6 +547,7 @@
         const banner = document.getElementById('spendmind-cookie-banner');
         if (banner) {
             banner.style.display = 'block';
+            banner.style.pointerEvents = 'auto';
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     banner.classList.add('show');
@@ -555,6 +560,7 @@
         const banner = document.getElementById('spendmind-cookie-banner');
         if (banner) {
             banner.classList.remove('show');
+            banner.style.pointerEvents = 'none';
             setTimeout(() => {
                 banner.style.display = 'none';
             }, 350);
@@ -574,6 +580,7 @@
         const targetOverlay = document.getElementById('spendmind-cookie-modal-overlay');
         if (targetOverlay) {
             targetOverlay.style.display = 'flex';
+            targetOverlay.style.pointerEvents = 'auto';
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     targetOverlay.classList.add('show');
@@ -588,6 +595,7 @@
         const overlay = document.getElementById('spendmind-cookie-modal-overlay');
         if (overlay) {
             overlay.classList.remove('show');
+            overlay.style.pointerEvents = 'none';
             setTimeout(() => {
                 overlay.style.display = 'none';
             }, 250);
