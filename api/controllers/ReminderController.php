@@ -1,9 +1,10 @@
 <?php
 /* ==========================================================================
    SPENDMINDAI - REMINDER CONTROLLER
-   Notification settings, Lazy Cron and System Cron scheduling
+   Notification settings, Zalo API reminders, Lazy Cron and System Cron scheduling
    ========================================================================== */
 
+require_once __DIR__ . '/../services/ZaloService.php';
 require_once __DIR__ . '/../services/MailerService.php';
 
 class ReminderController {
@@ -16,7 +17,33 @@ class ReminderController {
     }
 
     /**
-     * Get user notification & reminder settings.
+     * Self-healing migration: dynamically ensure Zalo columns exist on MySQL users table.
+     */
+    private function ensureZaloColumns(): void {
+        if (!$this->pdo) return;
+        static $ensured = false;
+        if ($ensured) return;
+
+        try {
+            $stmt = $this->pdo->query("SHOW COLUMNS FROM users LIKE 'zalo_phone'");
+            $cols = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (empty($cols)) {
+                $this->pdo->exec("
+                    ALTER TABLE users 
+                    ADD COLUMN zalo_phone VARCHAR(20) NULL DEFAULT NULL AFTER email_notifications,
+                    ADD COLUMN zalo_user_id VARCHAR(50) NULL DEFAULT NULL AFTER zalo_phone,
+                    ADD COLUMN zalo_notifications TINYINT(1) DEFAULT 0 AFTER zalo_user_id
+                ");
+            }
+            $ensured = true;
+        } catch (Throwable $e) {
+            // Already added or non-fatal DDL permission limit
+            $ensured = true;
+        }
+    }
+
+    /**
+     * Get user notification & reminder settings (Zalo & Email).
      */
     public function getSettings(int $userId): void {
         if (!$this->pdo) {
@@ -24,8 +51,14 @@ class ReminderController {
             return;
         }
 
+        $this->ensureZaloColumns();
+
         try {
-            $stmt = $this->pdo->prepare("SELECT email, google_id, reminder_time, email_notifications, avatar_url FROM users WHERE id = :id");
+            $stmt = $this->pdo->prepare("
+                SELECT email, google_id, reminder_time, email_notifications, 
+                       zalo_phone, zalo_user_id, zalo_notifications, avatar_url 
+                FROM users WHERE id = :id
+            ");
             $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -40,6 +73,9 @@ class ReminderController {
                 "google_id" => $user['google_id'],
                 "reminder_time" => $user['reminder_time'] ? substr($user['reminder_time'], 0, 5) : '',
                 "email_notifications" => intval($user['email_notifications']),
+                "zalo_phone" => $user['zalo_phone'] ?? '',
+                "zalo_user_id" => $user['zalo_user_id'] ?? '',
+                "zalo_notifications" => intval($user['zalo_notifications'] ?? 0),
                 "avatar_url" => $user['avatar_url']
             ]);
         } catch (Throwable $e) {
@@ -49,7 +85,7 @@ class ReminderController {
     }
 
     /**
-     * Save user notification & reminder settings.
+     * Save user notification & reminder settings with Zalo phone validation.
      */
     public function saveSettings(int $userId, array $input): void {
         if (!$this->pdo) {
@@ -57,18 +93,34 @@ class ReminderController {
             return;
         }
 
-        if (empty($input['email'])) {
-            sendError("Email không được để trống", 400);
-            return;
-        }
+        $this->ensureZaloColumns();
 
-        $email = trim((string)$input['email']);
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        // 1. Validate Email (preserved for profile integrity)
+        $email = isset($input['email']) ? trim((string)$input['email']) : '';
+        if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             sendError("Địa chỉ email không hợp lệ", 400);
             return;
         }
 
+        // 2. Validate Zalo Phone & Notifications
+        $zaloPhone = isset($input['zalo_phone']) ? trim((string)$input['zalo_phone']) : '';
+        $zaloUserId = isset($input['zalo_user_id']) ? trim((string)$input['zalo_user_id']) : '';
+        $zaloNotifications = !empty($input['zalo_notifications']) ? 1 : 0;
         $emailNotifications = !empty($input['email_notifications']) ? 1 : 0;
+
+        if ($zaloNotifications === 1 && empty($zaloPhone) && empty($zaloUserId)) {
+            sendError("Vui lòng nhập Số điện thoại Zalo để nhận tin nhắn nhắc nhở", 400);
+            return;
+        }
+
+        if (!empty($zaloPhone)) {
+            if (!ZaloService::isValidVietnamesePhone($zaloPhone)) {
+                sendError("Số điện thoại Zalo không hợp lệ. Vui lòng nhập số điện thoại Việt Nam 10 chữ số (VD: 0912345678)", 400);
+                return;
+            }
+        }
+
+        // 3. Validate Reminder Time (HH:MM)
         $reminderTime = null;
         if (!empty($input['reminder_time'])) {
             $rawTime = trim((string)$input['reminder_time']);
@@ -88,29 +140,96 @@ class ReminderController {
         }
 
         try {
-            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = :email AND id != :id");
-            $stmt->execute([':email' => $email, ':id' => $userId]);
-            if ($stmt->fetch()) {
-                sendError("Địa chỉ email này đã được sử dụng bởi tài khoản khác", 409);
-                return;
+            // Check unique email constraint if email changed
+            if (!empty($email)) {
+                $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = :email AND id != :id");
+                $stmt->execute([':email' => $email, ':id' => $userId]);
+                if ($stmt->fetch()) {
+                    sendError("Địa chỉ email này đã được sử dụng bởi tài khoản khác", 409);
+                    return;
+                }
             }
 
-            $stmt = $this->pdo->prepare("
+            // Update user record
+            $sql = "
                 UPDATE users 
-                SET email = :email, reminder_time = :rtime, email_notifications = :enotif, last_reminder_sent = NULL 
-                WHERE id = :id
-            ");
-            $stmt->execute([
-                ':email' => $email,
+                SET reminder_time = :rtime, 
+                    zalo_phone = :zphone, 
+                    zalo_user_id = :zuid, 
+                    zalo_notifications = :znotif, 
+                    email_notifications = :enotif, 
+                    last_reminder_sent = NULL 
+            ";
+            $params = [
                 ':rtime' => $reminderTime,
+                ':zphone' => !empty($zaloPhone) ? $zaloPhone : null,
+                ':zuid' => !empty($zaloUserId) ? $zaloUserId : null,
+                ':znotif' => $zaloNotifications,
                 ':enotif' => $emailNotifications,
                 ':id' => $userId
-            ]);
+            ];
 
-            sendJson(["success" => true, "message" => "Cấu hình nhắc nhở đã được lưu thành công"]);
+            if (!empty($email)) {
+                $sql .= ", email = :email";
+                $params[':email'] = $email;
+            }
+            $sql .= " WHERE id = :id";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+
+            sendJson([
+                "success" => true, 
+                "message" => "Cài đặt nhắc nhở qua Zalo đã được lưu thành công"
+            ]);
         } catch (Throwable $e) {
             error_log("saveSettings error: " . $e->getMessage());
             sendError("Lỗi lưu cấu hình nhắc nhở", 500);
+        }
+    }
+
+    /**
+     * Dispatch an immediate test reminder message via Zalo to verify customer setup.
+     */
+    public function testZaloReminder(int $userId): void {
+        if (!$this->pdo) {
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
+        }
+
+        $this->ensureZaloColumns();
+
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT username, reminder_time, zalo_phone, zalo_user_id 
+                FROM users WHERE id = :id
+            ");
+            $stmt->execute([':id' => $userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$user) {
+                sendError("Không tìm thấy người dùng", 404);
+                return;
+            }
+
+            $target = !empty($user['zalo_phone']) ? $user['zalo_phone'] : ($user['zalo_user_id'] ?? '');
+            if (empty($target)) {
+                sendError("Bạn chưa nhập Số điện thoại Zalo. Vui lòng điền số điện thoại và lưu cài đặt trước.", 400);
+                return;
+            }
+
+            $reminderTime = !empty($user['reminder_time']) ? substr($user['reminder_time'], 0, 5) : date('H:i');
+            $result = ZaloService::sendReminder($target, $user['username'], $reminderTime, $this->appUrl, true);
+
+            sendJson([
+                "success" => $result['success'],
+                "simulated" => $result['simulated'] ?? false,
+                "message" => $result['message'],
+                "detail" => $result['detail'] ?? null
+            ]);
+        } catch (Throwable $e) {
+            error_log("testZaloReminder error: " . $e->getMessage());
+            sendError("Lỗi gửi tin nhắn Zalo thử nghiệm", 500);
         }
     }
 
@@ -123,12 +242,22 @@ class ReminderController {
             return;
         }
 
+        $this->ensureZaloColumns();
+
         try {
-            $stmt = $this->pdo->prepare("SELECT id, username, email, reminder_time, email_notifications, last_reminder_sent FROM users WHERE id = :id");
+            $stmt = $this->pdo->prepare("
+                SELECT id, username, email, reminder_time, 
+                       zalo_phone, zalo_user_id, zalo_notifications, 
+                       email_notifications, last_reminder_sent 
+                FROM users WHERE id = :id
+            ");
             $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($user && $user['email_notifications'] && !empty($user['reminder_time'])) {
+            $isZaloActive = (!empty($user['zalo_notifications']) && (!empty($user['zalo_phone']) || !empty($user['zalo_user_id'])));
+            $isEmailActive = (!empty($user['email_notifications']) && !empty($user['email']));
+
+            if (($isZaloActive || $isEmailActive) && !empty($user['reminder_time'])) {
                 $today = date('Y-m-d');
 
                 if ($user['last_reminder_sent'] !== $today) {
@@ -142,19 +271,37 @@ class ReminderController {
                     } else {
                         $currentTime = date('H:i:s');
                         if ($currentTime >= $user['reminder_time']) {
-                            $template = MailerService::buildDailyReminder($user['username'], $user['reminder_time'], $this->appUrl);
-                            $mailResult = MailerService::send($user['email'], $template['subject'], $template['body']);
+                            $sentSuccess = false;
+                            $messageOutput = "";
+                            $isSimulated = false;
 
-                            if ($mailResult['success']) {
+                            // 1. Send via Zalo (Primary)
+                            if ($isZaloActive) {
+                                $target = !empty($user['zalo_phone']) ? $user['zalo_phone'] : $user['zalo_user_id'];
+                                $zaloRes = ZaloService::sendReminder($target, $user['username'], $user['reminder_time'], $this->appUrl);
+                                $sentSuccess = $zaloRes['success'];
+                                $messageOutput = $zaloRes['message'];
+                                $isSimulated = $zaloRes['simulated'] ?? false;
+                            } 
+                            // 2. Fallback to Email if Zalo not enabled
+                            elseif ($isEmailActive) {
+                                $template = MailerService::buildDailyReminder($user['username'], $user['reminder_time'], $this->appUrl);
+                                $mailResult = MailerService::send($user['email'], $template['subject'], $template['body']);
+                                $sentSuccess = $mailResult['success'];
+                                $messageOutput = $mailResult['message'];
+                                $isSimulated = $mailResult['simulated'] ?? false;
+                            }
+
+                            if ($sentSuccess) {
                                 $updateStmt = $this->pdo->prepare("UPDATE users SET last_reminder_sent = :today WHERE id = :id");
                                 $updateStmt->execute([':today' => $today, ':id' => $userId]);
                             }
 
                             sendJson([
-                                "success" => $mailResult['success'],
-                                "sent" => $mailResult['success'],
-                                "simulated" => $mailResult['simulated'] ?? false,
-                                "message" => $mailResult['message']
+                                "success" => $sentSuccess,
+                                "sent" => $sentSuccess,
+                                "simulated" => $isSimulated,
+                                "message" => $messageOutput ?: "Đã kích hoạt gửi nhắc nhở thành công"
                             ]);
                             return;
                         }
@@ -174,7 +321,7 @@ class ReminderController {
     }
 
     /**
-     * System Cron batch execution: optimized single-batch query eliminating N+1 loop.
+     * System Cron batch execution: optimized query with Zalo priority dispatch.
      */
     public function executeSystemCron(): array {
         if (!$this->pdo) {
@@ -187,6 +334,8 @@ class ReminderController {
             ];
         }
 
+        $this->ensureZaloColumns();
+
         $today = date('Y-m-d');
         $currentTime = date('H:i:s');
         $startTime = microtime(true);
@@ -196,7 +345,7 @@ class ReminderController {
             $skipStmt = $this->pdo->prepare("
                 UPDATE users u
                 SET u.last_reminder_sent = :today
-                WHERE u.email_notifications = 1 
+                WHERE (u.zalo_notifications = 1 OR u.email_notifications = 1) 
                   AND u.reminder_time IS NOT NULL 
                   AND (u.last_reminder_sent IS NULL OR u.last_reminder_sent != :today_check)
                   AND :current_time >= u.reminder_time
@@ -213,11 +362,12 @@ class ReminderController {
             ]);
             $skippedCount = $skipStmt->rowCount();
 
-            // 2. Fetch only users who need reminders (no transactions entered today), bounded by LIMIT 15
+            // 2. Fetch users who need reminders (no transactions entered today), bounded by LIMIT 20
             $dueStmt = $this->pdo->prepare("
-                SELECT u.id, u.username, u.email, u.reminder_time 
+                SELECT u.id, u.username, u.email, u.reminder_time, 
+                       u.zalo_phone, u.zalo_user_id, u.zalo_notifications, u.email_notifications 
                 FROM users u
-                WHERE u.email_notifications = 1 
+                WHERE (u.zalo_notifications = 1 OR u.email_notifications = 1) 
                   AND u.reminder_time IS NOT NULL 
                   AND (u.last_reminder_sent IS NULL OR u.last_reminder_sent != :today)
                   AND :current_time >= u.reminder_time
@@ -225,7 +375,7 @@ class ReminderController {
                       SELECT 1 FROM transactions t 
                       WHERE t.user_id = u.id AND t.date = :today_tx
                   )
-                LIMIT 15
+                LIMIT 20
             ");
             $dueStmt->execute([
                 ':today' => $today,
@@ -246,15 +396,25 @@ class ReminderController {
                     break;
                 }
 
-                $template = MailerService::buildDailyReminder($user['username'], $user['reminder_time'], $this->appUrl);
-                $mailResult = MailerService::send($user['email'], $template['subject'], $template['body']);
+                $sent = false;
+                // Dispatch Zalo if active
+                if (!empty($user['zalo_notifications']) && (!empty($user['zalo_phone']) || !empty($user['zalo_user_id']))) {
+                    $target = !empty($user['zalo_phone']) ? $user['zalo_phone'] : $user['zalo_user_id'];
+                    $res = ZaloService::sendReminder($target, $user['username'], $user['reminder_time'], $this->appUrl);
+                    $sent = $res['success'];
+                } 
+                // Otherwise fallback to email if email active
+                elseif (!empty($user['email_notifications']) && !empty($user['email'])) {
+                    $template = MailerService::buildDailyReminder($user['username'], $user['reminder_time'], $this->appUrl);
+                    $mailResult = MailerService::send($user['email'], $template['subject'], $template['body']);
+                    $sent = $mailResult['success'];
+                }
 
-                if ($mailResult['success']) {
+                if ($sent) {
                     $updateStmt->execute([':today' => $today, ':id' => $user['id']]);
                     $sentCount++;
                 } else {
                     $failedCount++;
-                    error_log("Failed cron reminder to " . $user['email'] . ": " . $mailResult['message']);
                 }
             }
 

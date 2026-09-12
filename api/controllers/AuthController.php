@@ -21,7 +21,7 @@ class AuthController {
         $userId = self::getLoggedInUserId();
         if ($userId && $this->pdo) {
             try {
-                $stmt = $this->pdo->prepare("SELECT username, email, google_id, reminder_time, email_notifications, avatar_url FROM users WHERE id = :id");
+                $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = :id");
                 $stmt->execute([':id' => $userId]);
                 $u = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($u) {
@@ -31,7 +31,10 @@ class AuthController {
                         "email" => $u['email'],
                         "google_id" => $u['google_id'],
                         "reminder_time" => $u['reminder_time'] ? substr($u['reminder_time'], 0, 5) : '',
-                        "email_notifications" => intval($u['email_notifications']),
+                        "email_notifications" => intval($u['email_notifications'] ?? 0),
+                        "zalo_phone" => $u['zalo_phone'] ?? '',
+                        "zalo_user_id" => $u['zalo_user_id'] ?? '',
+                        "zalo_notifications" => intval($u['zalo_notifications'] ?? 0),
                         "avatar_url" => $u['avatar_url'],
                         "userId" => $userId,
                         "db_connected" => true

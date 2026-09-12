@@ -356,11 +356,11 @@
             <div class="dropdown-body" style="display: flex; flex-direction: column; gap: 4px;">
 
 
-                <!-- Gmail reminder row -->
+                <!-- Zalo reminder row -->
                 <div class="settings-list-item" id="menu-item-reminder" role="button" tabindex="0">
                     <div class="item-left">
-                        <i data-lucide="bell"></i>
-                        <span>Nhắc nhở qua Gmail</span>
+                        <span class="zalo-icon-badge" style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; background: #0068ff; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: -0.5px; flex-shrink: 0;">Z</span>
+                        <span>Nhắc nhở qua Zalo</span>
                     </div>
                     <div class="item-right" style="display: flex; align-items: center; gap: 8px;">
                         <span id="badge-reminder-status">Tắt</span>
@@ -415,14 +415,15 @@
             </div>
         </div>
 
-        <!-- PANEL 3: EMAIL REMINDER SUB-PANEL -->
+        <!-- PANEL 3: ZALO REMINDER SUB-PANEL -->
         <div class="settings-panel sub-panel hidden" id="settings-reminder-panel">
             <div class="dropdown-header">
-                <div style="display: flex; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 6px;">
                     <button type="button" class="btn-back-settings" data-target="reminder" title="Quay lại">
                         <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
                     </button>
-                    <h3>Nhắc nhở qua Gmail</h3>
+                    <span class="zalo-icon-badge" style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; background: #0068ff; color: #fff; font-size: 9px; font-weight: 800;">Z</span>
+                    <h3>Nhắc nhở qua Zalo</h3>
                 </div>
                 <button type="button" class="btn-close-dropdown" id="btn-close-reminder-sub" title="Đóng">
                     <i data-lucide="x" style="width: 14px; height: 14px;"></i>
@@ -431,26 +432,40 @@
             <div class="dropdown-body">
                 <form id="settings-notification-form" style="display: flex; flex-direction: column; gap: 10px;">
                     <div class="form-group">
-                        <label for="settings-email" style="font-size: 0.75rem; font-weight: 500; display: block; margin-bottom: 2px;">Địa chỉ Email nhận nhắc nhở</label>
-                        <input type="email" id="settings-email" readonly
-                            style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--border-color); color: var(--text-secondary); border: 1px solid var(--input-border); cursor: not-allowed;"
-                            title="Địa chỉ email đã đăng ký của bạn.">
-                        <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 4px;">Email nhận nhắc nhở mặc định là email tài khoản của bạn.</span>
+                        <label for="settings-zalo-phone" style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 2px;">Số điện thoại Zalo</label>
+                        <input type="tel" id="settings-zalo-phone" placeholder="0912 345 678"
+                            style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);"
+                            autocomplete="tel">
+                        <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 4px;">Số điện thoại Zalo của bạn để nhận tin nhắn nhắc hẹn thu chi hàng ngày.</span>
                     </div>
                     <div class="form-row" style="display: flex; gap: 8px;">
                         <div class="form-group" style="flex: 1;">
-                            <label for="settings-reminder-time" style="font-size: 0.75rem; font-weight: 500; display: block; margin-bottom: 2px;">Giờ nhắc hàng ngày</label>
+                            <label for="settings-reminder-time" style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 2px;">Giờ nhắc hàng ngày</label>
                             <input type="time" id="settings-reminder-time"
                                 style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);">
                         </div>
                     </div>
                     <div class="form-checkbox-group" style="display: flex; align-items: center; gap: 6px;">
-                        <input type="checkbox" id="settings-email-notifications" value="1" style="accent-color: var(--accent-color); cursor: pointer;">
-                        <label for="settings-email-notifications" style="font-size: 0.75rem; color: var(--text-secondary); user-select: none; cursor: pointer;">Kích hoạt nhắc nhở</label>
+                        <input type="checkbox" id="settings-zalo-notifications" value="1" style="accent-color: #0068ff; cursor: pointer;">
+                        <label for="settings-zalo-notifications" style="font-size: 0.75rem; color: var(--text-primary); font-weight: 500; user-select: none; cursor: pointer;">Kích hoạt nhắc nhở qua Zalo</label>
                     </div>
-                    <button type="submit" class="btn btn-sm btn-primary w-full" style="padding: 8px 12px; font-size: 0.8rem; margin-top: 4px;">
-                        <i data-lucide="save" style="width: 14px; height: 14px;"></i> Lưu cài đặt
-                    </button>
+
+                    <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+                        <button type="submit" class="btn btn-sm btn-primary w-full" style="padding: 8px 12px; font-size: 0.8rem; background: #0068ff; border-color: #0068ff;">
+                            <i data-lucide="save" style="width: 14px; height: 14px;"></i> Lưu cài đặt Zalo
+                        </button>
+                        <button type="button" id="btn-test-zalo" class="btn btn-sm w-full" 
+                            style="padding: 7px 12px; font-size: 0.78rem; border: 1px solid #0068ff; color: #0068ff; background: transparent; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+                            <i data-lucide="send" style="width: 13px; height: 13px;"></i> Gửi tin nhắn thử nghiệm
+                        </button>
+                    </div>
+
+                    <div class="zalo-tip-card" style="margin-top: 6px; padding: 10px; border-radius: 8px; background: rgba(0, 104, 255, 0.08); border: 1px solid rgba(0, 104, 255, 0.2); font-size: 0.72rem; line-height: 1.45; color: var(--text-secondary);">
+                        <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 4px; color: #0068ff; font-weight: 600;">
+                            <i data-lucide="info" style="width: 12px; height: 12px;"></i> Lời nhắc thông minh
+                        </div>
+                        Hệ thống sẽ gửi tin nhắn Zalo nhắc bạn ghi sổ vào giờ đã chọn nếu trong ngày hôm đó bạn chưa phát sinh bất kỳ giao dịch nào.
+                    </div>
                 </form>
             </div>
         </div>

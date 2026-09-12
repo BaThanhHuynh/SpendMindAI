@@ -38,7 +38,10 @@ let userSettingsState = {
     email: '',
     googleId: null,
     reminderTime: '',
-    emailNotifications: 0
+    emailNotifications: 0,
+    zaloPhone: '',
+    zaloUserId: '',
+    zaloNotifications: 0
 };
 
 // Chart.js Instances
@@ -114,6 +117,9 @@ function checkAuthSession() {
                 if (data.google_id) userSettingsState.googleId = data.google_id;
                 if (data.reminder_time) userSettingsState.reminderTime = data.reminder_time;
                 if (data.email_notifications !== undefined) userSettingsState.emailNotifications = Number(data.email_notifications);
+                if (data.zalo_phone) userSettingsState.zaloPhone = data.zalo_phone;
+                if (data.zalo_user_id) userSettingsState.zaloUserId = data.zalo_user_id;
+                if (data.zalo_notifications !== undefined) userSettingsState.zaloNotifications = Number(data.zalo_notifications);
                 updateSettingsStatusBadges();
                 
                 // If combined state returned in 1 round-trip, initialize directly
@@ -505,13 +511,16 @@ function initEventListeners() {
         });
         reminderToggle.addEventListener("change", (e) => {
             const isChecked = e.target.checked;
-            const emailNotifications = isChecked ? 1 : 0;
-            const email = userSettingsState.email || "";
-            const reminderTime = userSettingsState.reminderTime || "18:00";
+            const zaloNotifications = isChecked ? 1 : 0;
+            const zaloPhone = userSettingsState.zaloPhone || "";
+            const reminderTime = userSettingsState.reminderTime || "20:00";
 
-            if (!email) {
-                showToast("Không tìm thấy email người dùng. Hãy cài đặt trong chi tiết.", "error");
-                e.target.checked = !isChecked;
+            if (isChecked && !zaloPhone) {
+                showToast("Vui lòng nhập Số điện thoại Zalo của bạn trước khi kích hoạt.", "info");
+                e.target.checked = false;
+                openSubPanel("reminder");
+                const phoneInput = document.getElementById("settings-zalo-phone");
+                if (phoneInput) phoneInput.focus();
                 return;
             }
 
@@ -519,9 +528,10 @@ function initEventListeners() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    email: email,
+                    zalo_phone: zaloPhone,
                     reminder_time: reminderTime,
-                    email_notifications: emailNotifications
+                    zalo_notifications: zaloNotifications,
+                    email: userSettingsState.email || ""
                 })
             })
             .then(res => {
@@ -533,11 +543,10 @@ function initEventListeners() {
             .then(data => {
                 if (data.success) {
                     showToast(data.message, "success");
-                    userSettingsState.emailNotifications = emailNotifications;
+                    userSettingsState.zaloNotifications = zaloNotifications;
                     userSettingsState.reminderTime = reminderTime;
-                    userSettingsState.email = email;
 
-                    const subPanelCheckbox = document.getElementById("settings-email-notifications");
+                    const subPanelCheckbox = document.getElementById("settings-zalo-notifications");
                     if (subPanelCheckbox) {
                         subPanelCheckbox.checked = isChecked;
                     }
@@ -553,6 +562,11 @@ function initEventListeners() {
                 e.target.checked = !isChecked;
             });
         });
+    }
+
+    const btnTestZalo = document.getElementById("btn-test-zalo");
+    if (btnTestZalo) {
+        btnTestZalo.addEventListener("click", handleTestZaloClick);
     }
 
     const menuItemTheme = document.getElementById("menu-item-theme");
@@ -1768,19 +1782,19 @@ function toggleSettingsDropdown() {
         closeSubPanels();
         
         // Instant sync of form inputs from in-memory userSettingsState
-        const emailInput = document.getElementById("settings-email");
-        if (emailInput) emailInput.value = userSettingsState.email || '';
+        const zaloPhoneInput = document.getElementById("settings-zalo-phone");
+        if (zaloPhoneInput) zaloPhoneInput.value = userSettingsState.zaloPhone || '';
         
         const timeInput = document.getElementById("settings-reminder-time");
-        if (timeInput) timeInput.value = userSettingsState.reminderTime || '';
+        if (timeInput) timeInput.value = userSettingsState.reminderTime ? userSettingsState.reminderTime.substring(0, 5) : '';
         
-        const notifCheck = document.getElementById("settings-email-notifications");
-        if (notifCheck) notifCheck.checked = userSettingsState.emailNotifications === 1;
+        const notifCheck = document.getElementById("settings-zalo-notifications");
+        if (notifCheck) notifCheck.checked = (userSettingsState.zaloNotifications === 1 || userSettingsState.emailNotifications === 1);
         
         // Populate main panel toggle switch
         const mainToggle = document.getElementById("settings-reminder-toggle");
         if (mainToggle) {
-            mainToggle.checked = userSettingsState.emailNotifications === 1;
+            mainToggle.checked = (userSettingsState.zaloNotifications === 1 || userSettingsState.emailNotifications === 1);
         }
         
         // Update sub UI checkmarks and main row status badges immediately
@@ -1850,22 +1864,25 @@ function refreshNotificationSettingsFromServer() {
                 userSettingsState.googleId = data.google_id || null;
                 userSettingsState.reminderTime = data.reminder_time || '';
                 userSettingsState.emailNotifications = data.email_notifications || 0;
+                userSettingsState.zaloPhone = data.zalo_phone || '';
+                userSettingsState.zaloUserId = data.zalo_user_id || '';
+                userSettingsState.zaloNotifications = data.zalo_notifications !== undefined ? Number(data.zalo_notifications) : 0;
                 
-                const emailInput = document.getElementById("settings-email");
-                if (emailInput && !emailInput.matches(':focus')) {
-                    emailInput.value = userSettingsState.email;
+                const zaloPhoneInput = document.getElementById("settings-zalo-phone");
+                if (zaloPhoneInput && !zaloPhoneInput.matches(':focus')) {
+                    zaloPhoneInput.value = userSettingsState.zaloPhone;
                 }
                 const timeInput = document.getElementById("settings-reminder-time");
                 if (timeInput && !timeInput.matches(':focus')) {
-                    timeInput.value = userSettingsState.reminderTime;
+                    timeInput.value = userSettingsState.reminderTime ? userSettingsState.reminderTime.substring(0, 5) : '';
                 }
-                const notifCheck = document.getElementById("settings-email-notifications");
+                const notifCheck = document.getElementById("settings-zalo-notifications");
                 if (notifCheck) {
-                    notifCheck.checked = userSettingsState.emailNotifications === 1;
+                    notifCheck.checked = (userSettingsState.zaloNotifications === 1 || userSettingsState.emailNotifications === 1);
                 }
                 const mainToggle = document.getElementById("settings-reminder-toggle");
                 if (mainToggle) {
-                    mainToggle.checked = userSettingsState.emailNotifications === 1;
+                    mainToggle.checked = (userSettingsState.zaloNotifications === 1 || userSettingsState.emailNotifications === 1);
                 }
                 
                 updateThemeSubPanelUI();
@@ -1907,7 +1924,8 @@ function closeSubPanels() {
 function updateSettingsStatusBadges() {
     const badgeReminder = document.getElementById("badge-reminder-status");
     if (badgeReminder) {
-        badgeReminder.textContent = userSettingsState.emailNotifications === 1 ? userSettingsState.reminderTime : "Tắt";
+        const isActive = (userSettingsState.zaloNotifications === 1 || userSettingsState.emailNotifications === 1);
+        badgeReminder.textContent = isActive ? (userSettingsState.reminderTime ? userSettingsState.reminderTime.substring(0, 5) : "Bật") : "Tắt";
     }
 
     const badgeTheme = document.getElementById("badge-theme-status");
@@ -1945,21 +1963,77 @@ function updateThemeSubPanelUI() {
 
 
 
+// Handle test Zalo reminder click
+function handleTestZaloClick() {
+    const btn = document.getElementById("btn-test-zalo");
+    const phoneInput = document.getElementById("settings-zalo-phone");
+    const phoneVal = phoneInput ? phoneInput.value.trim() : (userSettingsState.zaloPhone || "");
+
+    if (!phoneVal) {
+        showToast("Vui lòng nhập Số điện thoại Zalo trước khi gửi thử.", "error");
+        if (phoneInput) phoneInput.focus();
+        return;
+    }
+
+    const originalContent = btn ? btn.innerHTML : "";
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span style="display:inline-block;animation:spin 1s linear infinite;">⏳</span> Đang gửi tin...`;
+    }
+
+    fetch(`${API_URL}?action=test_zalo_reminder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ zalo_phone: phoneVal })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message || "Đã gửi tin nhắn Zalo thử nghiệm thành công!", "success");
+        } else {
+            showToast("Lỗi gửi tin: " + (data.message || "Thất bại"), "error");
+        }
+    })
+    .catch(err => {
+        showToast("Lỗi kết nối máy chủ: " + err.message, "error");
+    })
+    .finally(() => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    });
+}
+
 // Handle notification settings form save
 function handleSettingsSubmit(e) {
     e.preventDefault();
     
-    const email = document.getElementById("settings-email").value.trim();
-    const reminderTime = document.getElementById("settings-reminder-time").value;
-    const emailNotifications = document.getElementById("settings-email-notifications").checked ? 1 : 0;
+    const zaloPhone = document.getElementById("settings-zalo-phone") ? document.getElementById("settings-zalo-phone").value.trim() : '';
+    const reminderTime = document.getElementById("settings-reminder-time") ? document.getElementById("settings-reminder-time").value : '';
+    const zaloNotifications = (document.getElementById("settings-zalo-notifications") && document.getElementById("settings-zalo-notifications").checked) ? 1 : 0;
+    
+    if (zaloNotifications === 1 && !zaloPhone) {
+        showToast("Vui lòng nhập Số điện thoại Zalo để nhận nhắc nhở", "error");
+        const phoneInput = document.getElementById("settings-zalo-phone");
+        if (phoneInput) phoneInput.focus();
+        return;
+    }
+
+    if (zaloPhone && !/^(\+84|0)(3[2-9]|5[25689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/.test(zaloPhone.replace(/\s+/g, ''))) {
+        showToast("Số điện thoại Zalo không hợp lệ (Vui lòng nhập 10 số, VD: 0912345678)", "error");
+        return;
+    }
     
     fetch(`${API_URL}?action=save_notification_settings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            email: email,
+            zalo_phone: zaloPhone.replace(/\s+/g, ''),
             reminder_time: reminderTime,
-            email_notifications: emailNotifications
+            zalo_notifications: zaloNotifications,
+            email: userSettingsState.email || ''
         })
     })
     .then(res => {
@@ -1973,22 +2047,18 @@ function handleSettingsSubmit(e) {
             showToast(data.message, "success");
             
             // Update values and status text on main list
-            userSettingsState.emailNotifications = emailNotifications;
+            userSettingsState.zaloNotifications = zaloNotifications;
+            userSettingsState.zaloPhone = zaloPhone.replace(/\s+/g, '');
             userSettingsState.reminderTime = reminderTime;
-            userSettingsState.email = email;
             
             // Sync main panel toggle switch
             const mainToggle = document.getElementById("settings-reminder-toggle");
             if (mainToggle) {
-                mainToggle.checked = emailNotifications === 1;
+                mainToggle.checked = (zaloNotifications === 1);
             }
             
             updateSettingsStatusBadges();
-            
-            // Return back to main panel
             closeSubPanels();
-            
-            // Re-trigger lazy cron check immediately in case the new time is already overdue
             triggerLazyCronReminderCheck();
         }
     })

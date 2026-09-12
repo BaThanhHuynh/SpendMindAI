@@ -3882,6 +3882,31 @@ html[data-theme="light"] .google-link-status {
     background: rgba(0, 0, 0, 0.02);
 }
 
+/* Zalo Branding and Reminder Elements */
+.zalo-icon-badge {
+    box-shadow: 0 1px 3px rgba(0, 104, 255, 0.3);
+    user-select: none;
+}
+
+#btn-test-zalo:hover {
+    background: rgba(0, 104, 255, 0.1) !important;
+    border-color: #0052cc !important;
+    color: #0052cc !important;
+}
+
+#btn-test-zalo:active {
+    transform: scale(0.98);
+}
+
+.zalo-tip-card {
+    transition: background var(--transition-fast);
+}
+
+html[data-theme="light"] .zalo-tip-card {
+    background: rgba(0, 104, 255, 0.05) !important;
+    border-color: rgba(0, 104, 255, 0.15) !important;
+}
+
 /* Sub-panel and Desktop Dropdown Positioning */
 @media (min-width: 769px) {
     .settings-backdrop {

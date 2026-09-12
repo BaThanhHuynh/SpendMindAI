@@ -124,6 +124,10 @@ if ($action === 'save_notification_settings' && $method === 'POST') {
     $reminderCtrl->saveSettings($userId, $input);
     exit();
 }
+if ($action === 'test_zalo_reminder' && $method === 'POST') {
+    $reminderCtrl->testZaloReminder($userId);
+    exit();
+}
 if ($action === 'check_and_send_reminder') {
     $reminderCtrl->checkAndSend($userId);
     exit();

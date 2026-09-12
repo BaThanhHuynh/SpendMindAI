@@ -23,7 +23,7 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-PORT = 8080
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8080
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(ROOT_DIR, "local_dev_data.json")
 
@@ -35,7 +35,10 @@ DEFAULT_DATA = {
         "email": "demo@spendmindai.com",
         "userId": 1,
         "reminder_time": "20:00",
-        "email_notifications": 1,
+        "email_notifications": 0,
+        "zalo_phone": "0912345678",
+        "zalo_user_id": "",
+        "zalo_notifications": 1,
         "avatar_url": None,
         "db_connected": True
     },
@@ -195,7 +198,10 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                     "success": True,
                     "email": u.get("email", ""),
                     "reminder_time": u.get("reminder_time", "20:00"),
-                    "email_notifications": u.get("email_notifications", 1),
+                    "email_notifications": u.get("email_notifications", 0),
+                    "zalo_phone": u.get("zalo_phone", "0912345678"),
+                    "zalo_user_id": u.get("zalo_user_id", ""),
+                    "zalo_notifications": u.get("zalo_notifications", 1),
                     "avatar_url": u.get("avatar_url", None)
                 })
 
@@ -298,8 +304,22 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                     db["user"]["reminder_time"] = payload["reminder_time"]
                 if "email_notifications" in payload:
                     db["user"]["email_notifications"] = int(payload["email_notifications"])
+                if "zalo_phone" in payload:
+                    db["user"]["zalo_phone"] = payload["zalo_phone"]
+                if "zalo_user_id" in payload:
+                    db["user"]["zalo_user_id"] = payload["zalo_user_id"]
+                if "zalo_notifications" in payload:
+                    db["user"]["zalo_notifications"] = int(payload["zalo_notifications"])
                 save_data(db)
-                return self.send_json({"success": True, "message": "Đã lưu cấu hình nhắc nhở thành công"})
+                return self.send_json({"success": True, "message": "Đã lưu cài đặt nhắc nhở qua Zalo thành công"})
+
+            if action == "test_zalo_reminder":
+                phone = db["user"].get("zalo_phone") or payload.get("zalo_phone", "0912345678")
+                return self.send_json({
+                    "success": True,
+                    "simulated": True,
+                    "message": f"Đã gửi tin nhắn Zalo thử nghiệm thành công tới {phone} (Chế độ mô phỏng local)!"
+                })
 
             if action == "chat":
                 msg = payload.get("message", "").strip()
