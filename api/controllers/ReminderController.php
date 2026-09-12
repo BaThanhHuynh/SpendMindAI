@@ -24,22 +24,25 @@ class ReminderController {
         static $ensured = false;
         if ($ensured) return;
 
-        try {
-            $stmt = $this->pdo->query("SHOW COLUMNS FROM users LIKE 'zalo_phone'");
-            $cols = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if (empty($cols)) {
-                $this->pdo->exec("
-                    ALTER TABLE users 
-                    ADD COLUMN zalo_phone VARCHAR(20) NULL DEFAULT NULL AFTER email_notifications,
-                    ADD COLUMN zalo_user_id VARCHAR(50) NULL DEFAULT NULL AFTER zalo_phone,
-                    ADD COLUMN zalo_notifications TINYINT(1) DEFAULT 0 AFTER zalo_user_id
-                ");
+        $columnsToAdd = [
+            'zalo_phone' => "ALTER TABLE `users` ADD COLUMN `zalo_phone` VARCHAR(20) NULL DEFAULT NULL",
+            'zalo_user_id' => "ALTER TABLE `users` ADD COLUMN `zalo_user_id` VARCHAR(50) NULL DEFAULT NULL",
+            'zalo_notifications' => "ALTER TABLE `users` ADD COLUMN `zalo_notifications` TINYINT(1) DEFAULT 0"
+        ];
+
+        foreach ($columnsToAdd as $colName => $alterSql) {
+            try {
+                $check = $this->pdo->query("SHOW COLUMNS FROM `users` LIKE '{$colName}'");
+                $existing = $check ? $check->fetchAll(PDO::FETCH_ASSOC) : [];
+                if (empty($existing)) {
+                    $this->pdo->exec($alterSql);
+                }
+            } catch (Throwable $e) {
+                // Non-fatal permission limitation or already added
+                error_log("ensureZaloColumns notice for {$colName}: " . $e->getMessage());
             }
-            $ensured = true;
-        } catch (Throwable $e) {
-            // Already added or non-fatal DDL permission limit
-            $ensured = true;
         }
+        $ensured = true;
     }
 
     /**
@@ -54,11 +57,7 @@ class ReminderController {
         $this->ensureZaloColumns();
 
         try {
-            $stmt = $this->pdo->prepare("
-                SELECT email, google_id, reminder_time, email_notifications, 
-                       zalo_phone, zalo_user_id, zalo_notifications, avatar_url 
-                FROM users WHERE id = :id
-            ");
+            $stmt = $this->pdo->prepare("SELECT * FROM `users` WHERE id = :id");
             $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -69,18 +68,18 @@ class ReminderController {
 
             sendJson([
                 "success" => true,
-                "email" => $user['email'],
-                "google_id" => $user['google_id'],
-                "reminder_time" => $user['reminder_time'] ? substr($user['reminder_time'], 0, 5) : '',
-                "email_notifications" => intval($user['email_notifications']),
+                "email" => $user['email'] ?? '',
+                "google_id" => $user['google_id'] ?? null,
+                "reminder_time" => !empty($user['reminder_time']) ? substr($user['reminder_time'], 0, 5) : '',
+                "email_notifications" => intval($user['email_notifications'] ?? 0),
                 "zalo_phone" => $user['zalo_phone'] ?? '',
                 "zalo_user_id" => $user['zalo_user_id'] ?? '',
                 "zalo_notifications" => intval($user['zalo_notifications'] ?? 0),
-                "avatar_url" => $user['avatar_url']
+                "avatar_url" => $user['avatar_url'] ?? null
             ]);
         } catch (Throwable $e) {
             error_log("getSettings error: " . $e->getMessage());
-            sendError("Lỗi hệ thống khi tải cài đặt nhắc nhở", 500);
+            sendError("Lỗi hệ thống khi tải cài đặt nhắc nhở: " . $e->getMessage(), 500);
         }
     }
 
@@ -142,7 +141,7 @@ class ReminderController {
         try {
             // Check unique email constraint if email changed
             if (!empty($email)) {
-                $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = :email AND id != :id");
+                $stmt = $this->pdo->prepare("SELECT id FROM `users` WHERE email = :email AND id != :id");
                 $stmt->execute([':email' => $email, ':id' => $userId]);
                 if ($stmt->fetch()) {
                     sendError("Địa chỉ email này đã được sử dụng bởi tài khoản khác", 409);
@@ -150,31 +149,41 @@ class ReminderController {
                 }
             }
 
-            // Update user record
-            $sql = "
-                UPDATE users 
-                SET reminder_time = :rtime, 
-                    zalo_phone = :zphone, 
-                    zalo_user_id = :zuid, 
-                    zalo_notifications = :znotif, 
-                    email_notifications = :enotif, 
-                    last_reminder_sent = NULL 
-            ";
+            // Detect existing table columns dynamically for maximum database resilience
+            $colsStmt = $this->pdo->query("SHOW COLUMNS FROM `users`");
+            $tableCols = $colsStmt ? $colsStmt->fetchAll(PDO::FETCH_COLUMN) : [];
+
+            $setClauses = [
+                "reminder_time = :rtime",
+                "last_reminder_sent = NULL"
+            ];
             $params = [
                 ':rtime' => $reminderTime,
-                ':zphone' => !empty($zaloPhone) ? $zaloPhone : null,
-                ':zuid' => !empty($zaloUserId) ? $zaloUserId : null,
-                ':znotif' => $zaloNotifications,
-                ':enotif' => $emailNotifications,
                 ':id' => $userId
             ];
 
+            if (in_array('zalo_phone', $tableCols)) {
+                $setClauses[] = "zalo_phone = :zphone";
+                $params[':zphone'] = !empty($zaloPhone) ? $zaloPhone : null;
+            }
+            if (in_array('zalo_user_id', $tableCols)) {
+                $setClauses[] = "zalo_user_id = :zuid";
+                $params[':zuid'] = !empty($zaloUserId) ? $zaloUserId : null;
+            }
+            if (in_array('zalo_notifications', $tableCols)) {
+                $setClauses[] = "zalo_notifications = :znotif";
+                $params[':znotif'] = $zaloNotifications;
+            }
+            if (in_array('email_notifications', $tableCols)) {
+                $setClauses[] = "email_notifications = :enotif";
+                $params[':enotif'] = $emailNotifications;
+            }
             if (!empty($email)) {
-                $sql .= ", email = :email";
+                $setClauses[] = "email = :email";
                 $params[':email'] = $email;
             }
-            $sql .= " WHERE id = :id";
 
+            $sql = "UPDATE `users` SET " . implode(", ", $setClauses) . " WHERE id = :id";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
 
@@ -184,14 +193,14 @@ class ReminderController {
             ]);
         } catch (Throwable $e) {
             error_log("saveSettings error: " . $e->getMessage());
-            sendError("Lỗi lưu cấu hình nhắc nhở", 500);
+            sendError("Lỗi lưu cấu hình nhắc nhở: " . $e->getMessage(), 500);
         }
     }
 
     /**
      * Dispatch an immediate test reminder message via Zalo to verify customer setup.
      */
-    public function testZaloReminder(int $userId): void {
+    public function testZaloReminder(int $userId, array $input = []): void {
         if (!$this->pdo) {
             sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
             return;
@@ -200,10 +209,7 @@ class ReminderController {
         $this->ensureZaloColumns();
 
         try {
-            $stmt = $this->pdo->prepare("
-                SELECT username, reminder_time, zalo_phone, zalo_user_id 
-                FROM users WHERE id = :id
-            ");
+            $stmt = $this->pdo->prepare("SELECT * FROM `users` WHERE id = :id");
             $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -212,9 +218,23 @@ class ReminderController {
                 return;
             }
 
-            $target = !empty($user['zalo_phone']) ? $user['zalo_phone'] : ($user['zalo_user_id'] ?? '');
+            // Priority: target phone from request input, fallback to saved DB record
+            $target = '';
+            if (!empty($input['zalo_phone'])) {
+                $target = trim((string)$input['zalo_phone']);
+            } elseif (!empty($user['zalo_phone'])) {
+                $target = trim((string)$user['zalo_phone']);
+            } elseif (!empty($user['zalo_user_id'])) {
+                $target = trim((string)$user['zalo_user_id']);
+            }
+
             if (empty($target)) {
-                sendError("Bạn chưa nhập Số điện thoại Zalo. Vui lòng điền số điện thoại và lưu cài đặt trước.", 400);
+                sendError("Vui lòng nhập Số điện thoại Zalo trước khi gửi thử nghiệm.", 400);
+                return;
+            }
+
+            if (!ZaloService::isValidVietnamesePhone($target)) {
+                sendError("Số điện thoại Zalo không hợp lệ. Vui lòng nhập số điện thoại Việt Nam 10 chữ số (VD: 0912345678)", 400);
                 return;
             }
 
@@ -224,12 +244,14 @@ class ReminderController {
             sendJson([
                 "success" => $result['success'],
                 "simulated" => $result['simulated'] ?? false,
+                "channel" => $result['channel'] ?? 'personal',
+                "zalo_link" => $result['zalo_link'] ?? ("https://zalo.me/" . ZaloService::normalizePhoneNumber($target)),
                 "message" => $result['message'],
                 "detail" => $result['detail'] ?? null
             ]);
         } catch (Throwable $e) {
             error_log("testZaloReminder error: " . $e->getMessage());
-            sendError("Lỗi gửi tin nhắn Zalo thử nghiệm", 500);
+            sendError("Lỗi gửi tin nhắn Zalo thử nghiệm: " . $e->getMessage(), 500);
         }
     }
 
@@ -245,14 +267,14 @@ class ReminderController {
         $this->ensureZaloColumns();
 
         try {
-            $stmt = $this->pdo->prepare("
-                SELECT id, username, email, reminder_time, 
-                       zalo_phone, zalo_user_id, zalo_notifications, 
-                       email_notifications, last_reminder_sent 
-                FROM users WHERE id = :id
-            ");
+            $stmt = $this->pdo->prepare("SELECT * FROM `users` WHERE id = :id");
             $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$user) {
+                sendJson(["success" => true, "sent" => false, "message" => "Không tìm thấy người dùng"]);
+                return;
+            }
 
             $isZaloActive = (!empty($user['zalo_notifications']) && (!empty($user['zalo_phone']) || !empty($user['zalo_user_id'])));
             $isEmailActive = (!empty($user['email_notifications']) && !empty($user['email']));
@@ -260,7 +282,7 @@ class ReminderController {
             if (($isZaloActive || $isEmailActive) && !empty($user['reminder_time'])) {
                 $today = date('Y-m-d');
 
-                if ($user['last_reminder_sent'] !== $today) {
+                if (($user['last_reminder_sent'] ?? null) !== $today) {
                     $txCheck = $this->pdo->prepare("SELECT 1 FROM transactions WHERE user_id = :uid AND date = :today LIMIT 1");
                     $txCheck->execute([':uid' => $userId, ':today' => $today]);
                     $hasTxToday = ($txCheck->fetch() !== false);
@@ -316,7 +338,7 @@ class ReminderController {
             ]);
         } catch (Throwable $e) {
             error_log("checkAndSend error: " . $e->getMessage());
-            sendError("Lỗi kiểm tra nhắc nhở", 500);
+            sendError("Lỗi kiểm tra nhắc nhở: " . $e->getMessage(), 500);
         }
     }
 
@@ -341,11 +363,19 @@ class ReminderController {
         $startTime = microtime(true);
 
         try {
+            // Check if zalo_notifications column exists in table
+            $colsStmt = $this->pdo->query("SHOW COLUMNS FROM `users` LIKE 'zalo_notifications'");
+            $hasZalo = ($colsStmt && !empty($colsStmt->fetchAll()));
+
+            $condition = $hasZalo 
+                ? "(u.zalo_notifications = 1 OR u.email_notifications = 1)" 
+                : "u.email_notifications = 1";
+
             // 1. Bulk mark users who already logged transactions today as skipped in a single query
             $skipStmt = $this->pdo->prepare("
                 UPDATE users u
                 SET u.last_reminder_sent = :today
-                WHERE (u.zalo_notifications = 1 OR u.email_notifications = 1) 
+                WHERE {$condition}
                   AND u.reminder_time IS NOT NULL 
                   AND (u.last_reminder_sent IS NULL OR u.last_reminder_sent != :today_check)
                   AND :current_time >= u.reminder_time
@@ -364,10 +394,9 @@ class ReminderController {
 
             // 2. Fetch users who need reminders (no transactions entered today), bounded by LIMIT 20
             $dueStmt = $this->pdo->prepare("
-                SELECT u.id, u.username, u.email, u.reminder_time, 
-                       u.zalo_phone, u.zalo_user_id, u.zalo_notifications, u.email_notifications 
+                SELECT u.*
                 FROM users u
-                WHERE (u.zalo_notifications = 1 OR u.email_notifications = 1) 
+                WHERE {$condition}
                   AND u.reminder_time IS NOT NULL 
                   AND (u.last_reminder_sent IS NULL OR u.last_reminder_sent != :today)
                   AND :current_time >= u.reminder_time
