@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS `transactions` (
     `description` TEXT,
     PRIMARY KEY (`id`),
     INDEX `idx_user_date` (`user_id`, `date`, `id`),
-    INDEX (`user_id`),
     INDEX (`date`),
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

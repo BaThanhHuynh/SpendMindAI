@@ -39,6 +39,7 @@ class Database {
         $pdoOptions = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_TIMEOUT => 5, // Explicit connection timeout in seconds
         ];
 
         // Automatic SSL for Remote Hosts (TiDB Cloud, AWS, Aiven, PlanetScale)

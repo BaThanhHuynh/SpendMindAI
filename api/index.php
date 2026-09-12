@@ -35,6 +35,37 @@ $chatbotCtrl = new ChatbotController();
 
 // 5. Public Authentication Endpoints (Works even if Database is not yet configured)
 switch ($action) {
+    case 'health':
+    case 'healthz':
+        sendJson([
+            "status" => "ok",
+            "service" => "SpendMindAI API",
+            "timestamp" => time(),
+            "environment" => getenv('APP_ENV') ?: 'production'
+        ]);
+        exit();
+
+    case 'readyz':
+        $dbOk = false;
+        if ($pdo) {
+            try {
+                $check = $pdo->query("SELECT 1");
+                $dbOk = ($check !== false);
+            } catch (Throwable $e) {
+                $dbOk = false;
+            }
+        }
+        if ($dbOk) {
+            sendJson([
+                "status" => "ready",
+                "database" => "connected",
+                "timestamp" => time()
+            ]);
+        } else {
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503, "NOT_READY");
+        }
+        exit();
+
     case 'check_session':
         $includeState = !empty($_GET['include_state']) && $_GET['include_state'] == '1';
         $authCtrl->checkSession($includeState);

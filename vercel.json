@@ -83,6 +83,14 @@
       "destination": "/api/cron.php"
     },
     {
+      "source": "/healthz",
+      "destination": "/api/index.php?action=healthz"
+    },
+    {
+      "source": "/readyz",
+      "destination": "/api/index.php?action=readyz"
+    },
+    {
       "source": "/api",
       "destination": "/api/index.php"
     },

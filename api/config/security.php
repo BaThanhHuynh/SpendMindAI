@@ -73,13 +73,25 @@ if (!function_exists('sendJson')) {
 
 if (!function_exists('sendError')) {
     function sendError(string $message, int $statusCode = 400, ?string $code = null): void {
+        $errorCode = $code ?? match ($statusCode) {
+            400 => "BAD_REQUEST",
+            401 => "UNAUTHORIZED",
+            403 => "FORBIDDEN",
+            404 => "NOT_FOUND",
+            409 => "CONFLICT",
+            500 => "INTERNAL_SERVER_ERROR",
+            502 => "BAD_GATEWAY",
+            503 => "SERVICE_UNAVAILABLE",
+            default => "ERROR"
+        };
         $payload = [
             "success" => false,
-            "message" => $message
+            "message" => $message,
+            "error" => [
+                "code" => $errorCode,
+                "message" => $message
+            ]
         ];
-        if ($code !== null) {
-            $payload["code"] = $code;
-        }
         sendJson($payload, $statusCode);
     }
 }
@@ -151,6 +163,12 @@ header("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Content-Type: application/json; charset=UTF-8");
 
+// Standard HTTP Security Headers (Defence in Depth for all environments)
+header("X-Content-Type-Options: nosniff");
+header("X-Frame-Options: SAMEORIGIN");
+header("X-XSS-Protection: 1; mode=block");
+header("Referrer-Policy: strict-origin-when-cross-origin");
+
 // Handle preflight OPTIONS request
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -161,6 +179,16 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS
 $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
             (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
             (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+
+// Hardened Session Cookie Configuration
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.cookie_httponly', '1');
+    if ($isSecure) {
+        ini_set('session.cookie_secure', '1');
+    }
+    ini_set('session.cookie_samesite', 'Lax');
+}
 
 // Dynamic App URL resolution
 $appUrl = getEnvVar('APP_URL');

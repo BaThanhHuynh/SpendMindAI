@@ -147,6 +147,17 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
         qs = parse_qs(parsed.query)
         action = qs.get("action", [""])[0]
 
+        # 0. Health & Readiness endpoints
+        if path in ("/healthz", "/readyz") or (path in ("/api", "/api.php", "/api/index.php") and action in ("health", "healthz", "readyz")):
+            is_ready = path == "/readyz" or action == "readyz"
+            return self.send_json({
+                "status": "ready" if is_ready else "ok",
+                "service": "SpendMindAI Local Dev Server",
+                "database": "mock_json_db",
+                "timestamp": int(time.time()),
+                "environment": "development"
+            })
+
         # Handle API routes
         if path in ("/api", "/api.php", "/api/index.php"):
             db = load_data()

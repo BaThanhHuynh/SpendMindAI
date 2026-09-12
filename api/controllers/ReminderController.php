@@ -69,7 +69,23 @@ class ReminderController {
         }
 
         $emailNotifications = !empty($input['email_notifications']) ? 1 : 0;
-        $reminderTime = !empty($input['reminder_time']) ? trim((string)$input['reminder_time']) . ":00" : null;
+        $reminderTime = null;
+        if (!empty($input['reminder_time'])) {
+            $rawTime = trim((string)$input['reminder_time']);
+            if (preg_match('/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/', $rawTime, $matches)) {
+                $hours = intval($matches[1]);
+                $minutes = intval($matches[2]);
+                if ($hours >= 0 && $hours <= 23 && $minutes >= 0 && $minutes <= 59) {
+                    $reminderTime = sprintf('%02d:%02d:00', $hours, $minutes);
+                } else {
+                    sendError("Thời gian nhắc nhở không hợp lệ (Giờ 00-23, Phút 00-59)", 400);
+                    return;
+                }
+            } else {
+                sendError("Định dạng giờ nhắc nhở không hợp lệ (HH:MM)", 400);
+                return;
+            }
+        }
 
         try {
             $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = :email AND id != :id");
