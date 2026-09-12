@@ -356,7 +356,21 @@
                 </button>
             </div>
             <div class="dropdown-body" style="display: flex; flex-direction: column; gap: 4px;">
-
+                <!-- App notification row -->
+                <div class="settings-list-item" id="menu-item-app-notifications" role="button" tabindex="0">
+                    <div class="item-left">
+                        <i data-lucide="bell" style="color: var(--accent-color);"></i>
+                        <span>Thông báo ứng dụng</span>
+                    </div>
+                    <div class="item-right" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="badge-app-notif-status">20:00</span>
+                        <label class="switch">
+                            <input type="checkbox" id="settings-app-notif-toggle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
+                    </div>
+                </div>
 
                 <!-- Zalo reminder row -->
                 <div class="settings-list-item" id="menu-item-reminder" role="button" tabindex="0">
@@ -488,6 +502,64 @@
             </div>
         </div>
 
+        <!-- PANEL: APP NOTIFICATION SUB-PANEL -->
+        <div class="settings-panel sub-panel hidden" id="settings-app-notifications-panel">
+            <div class="dropdown-header">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <button type="button" class="btn-back-settings" data-target="app-notifications" title="Quay lại">
+                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                    </button>
+                    <i data-lucide="bell" style="width: 16px; height: 16px; color: var(--accent-color);"></i>
+                    <h3>Thông Báo Ứng Dụng</h3>
+                </div>
+                <button type="button" class="btn-close-dropdown" id="btn-close-app-notif-sub" title="Đóng">
+                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                </button>
+            </div>
+            <div class="dropdown-body">
+                <form id="form-app-notification-settings" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="notif-permission-box">
+                        <div class="perm-info-row" style="display: flex; align-items: center; justify-content: space-between;">
+                            <span class="perm-title" style="font-size: 0.76rem; color: var(--text-secondary); font-weight: 500;">Quyền thông báo trên máy:</span>
+                            <span id="badge-app-notif-perm" class="notif-perm-badge default">Chưa cấp quyền</span>
+                        </div>
+                        <button type="button" id="btn-request-app-notif-perm" class="btn btn-xs btn-outline-primary" style="margin-top: 6px; display: none; font-size: 0.72rem; padding: 4px 10px;">
+                            <i data-lucide="shield-alert" style="width: 12px; height: 12px;"></i> Cấp quyền thông báo
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="settings-app-notif-time" style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 2px;">Giờ nhắc hàng ngày</label>
+                        <input type="time" id="settings-app-notif-time" value="20:00"
+                            style="width: 100%; padding: 8px 10px; font-size: 0.85rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);">
+                        <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 4px;">Ứng dụng sẽ tự động gửi thông báo nhắc bạn ghi lại các khoản chi tiêu vào giờ này.</span>
+                    </div>
+
+                    <div class="form-checkbox-group" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="settings-app-notif-active" value="1" checked style="accent-color: var(--accent-color); cursor: pointer; width: 16px; height: 16px;">
+                        <label for="settings-app-notif-active" style="font-size: 0.78rem; color: var(--text-primary); font-weight: 500; user-select: none; cursor: pointer;">Kích hoạt nhắc nhở từ ứng dụng</label>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+                        <button type="submit" class="btn btn-sm btn-primary w-full" style="padding: 8px 12px; font-size: 0.8rem;">
+                            <i data-lucide="save" style="width: 14px; height: 14px;"></i> Lưu cài đặt thông báo
+                        </button>
+                        <button type="button" id="btn-test-app-notification" class="btn btn-sm w-full btn-outline-accent" 
+                            style="padding: 7px 12px; font-size: 0.78rem; border: 1px solid var(--accent-color); color: var(--accent-color); background: transparent; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+                            <i data-lucide="bell-ring" style="width: 13px; height: 13px;"></i> Thử thông báo ngay trên máy
+                        </button>
+                    </div>
+
+                    <div class="app-notif-tip-card" style="padding: 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.72rem; line-height: 1.45; color: var(--text-secondary);">
+                        <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 4px; color: var(--accent-color); font-weight: 600;">
+                            <i data-lucide="sparkles" style="width: 12px; height: 12px;"></i> Nhắc nhở thông minh
+                        </div>
+                        Nếu trong ngày bạn đã ghi chép chi tiêu đầy đủ rồi, ứng dụng sẽ tự động không làm phiền bạn nữa.
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- PANEL 4: THEME SELECTION SUB-PANEL -->
         <div class="settings-panel sub-panel hidden" id="settings-theme-panel">
             <div class="dropdown-header">
@@ -613,6 +685,8 @@
     <script src="js/cookie-consent.js?v=20260912_v3"></script>
     <!-- PWA Install Manager (Android & iOS) -->
     <script src="js/pwa-install.js?v=20260912_v3"></script>
+    <!-- In-App Device Notifications & Scheduled Reminders -->
+    <script src="js/app-notification.js?v=20260912_v4"></script>
 
     <!-- Service Worker Registration for PWA & Offline Support -->
     <script>

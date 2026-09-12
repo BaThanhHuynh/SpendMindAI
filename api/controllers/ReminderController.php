@@ -27,7 +27,9 @@ class ReminderController {
         $columnsToAdd = [
             'zalo_phone' => "ALTER TABLE `users` ADD COLUMN `zalo_phone` VARCHAR(20) NULL DEFAULT NULL",
             'zalo_user_id' => "ALTER TABLE `users` ADD COLUMN `zalo_user_id` VARCHAR(50) NULL DEFAULT NULL",
-            'zalo_notifications' => "ALTER TABLE `users` ADD COLUMN `zalo_notifications` TINYINT(1) DEFAULT 0"
+            'zalo_notifications' => "ALTER TABLE `users` ADD COLUMN `zalo_notifications` TINYINT(1) DEFAULT 0",
+            'app_notifications' => "ALTER TABLE `users` ADD COLUMN `app_notifications` TINYINT(1) DEFAULT 1",
+            'last_app_reminder_sent' => "ALTER TABLE `users` ADD COLUMN `last_app_reminder_sent` DATE NULL DEFAULT NULL"
         ];
 
         foreach ($columnsToAdd as $colName => $alterSql) {
@@ -46,7 +48,7 @@ class ReminderController {
     }
 
     /**
-     * Get user notification & reminder settings (Zalo & Email).
+     * Get user notification & reminder settings (Zalo, App & Email).
      */
     public function getSettings(int $userId): void {
         if (!$this->pdo) {
@@ -75,6 +77,7 @@ class ReminderController {
                 "zalo_phone" => $user['zalo_phone'] ?? '',
                 "zalo_user_id" => $user['zalo_user_id'] ?? '',
                 "zalo_notifications" => intval($user['zalo_notifications'] ?? 0),
+                "app_notifications" => intval($user['app_notifications'] ?? 1),
                 "avatar_url" => $user['avatar_url'] ?? null
             ]);
         } catch (Throwable $e) {
@@ -106,6 +109,7 @@ class ReminderController {
         $zaloUserId = isset($input['zalo_user_id']) ? trim((string)$input['zalo_user_id']) : '';
         $zaloNotifications = !empty($input['zalo_notifications']) ? 1 : 0;
         $emailNotifications = !empty($input['email_notifications']) ? 1 : 0;
+        $appNotifications = isset($input['app_notifications']) ? (!empty($input['app_notifications']) ? 1 : 0) : null;
 
         if ($zaloNotifications === 1 && empty($zaloPhone) && empty($zaloUserId)) {
             sendError("Vui lòng nhập Số điện thoại Zalo để nhận tin nhắn nhắc nhở", 400);
@@ -173,6 +177,10 @@ class ReminderController {
             if (in_array('zalo_notifications', $tableCols)) {
                 $setClauses[] = "zalo_notifications = :znotif";
                 $params[':znotif'] = $zaloNotifications;
+            }
+            if ($appNotifications !== null && in_array('app_notifications', $tableCols)) {
+                $setClauses[] = "app_notifications = :appnotif";
+                $params[':appnotif'] = $appNotifications;
             }
             if (in_array('email_notifications', $tableCols)) {
                 $setClauses[] = "email_notifications = :enotif";

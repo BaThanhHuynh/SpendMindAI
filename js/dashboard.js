@@ -41,8 +41,11 @@ let userSettingsState = {
     emailNotifications: 0,
     zaloPhone: '',
     zaloUserId: '',
-    zaloNotifications: 0
+    zaloNotifications: 0,
+    appNotifications: 1
 };
+window.state = state;
+window.userSettingsState = userSettingsState;
 
 // Chart.js Instances
 let categoryChartInstance = null;
@@ -1824,6 +1827,16 @@ function toggleSettingsDropdown() {
         if (mainToggle) {
             mainToggle.checked = (userSettingsState.zaloNotifications === 1 || userSettingsState.emailNotifications === 1);
         }
+
+        // Populate app notification inputs
+        const appNotifTimeInput = document.getElementById("settings-app-notif-time");
+        if (appNotifTimeInput) appNotifTimeInput.value = userSettingsState.reminderTime ? userSettingsState.reminderTime.substring(0, 5) : '20:00';
+        
+        const appNotifToggle = document.getElementById("settings-app-notif-toggle");
+        if (appNotifToggle) appNotifToggle.checked = (userSettingsState.appNotifications === 1);
+
+        const appNotifActive = document.getElementById("settings-app-notif-active");
+        if (appNotifActive) appNotifActive.checked = (userSettingsState.appNotifications === 1);
         
         // Update sub UI checkmarks and main row status badges immediately
         updateThemeSubPanelUI();
@@ -1895,6 +1908,7 @@ function refreshNotificationSettingsFromServer() {
                 userSettingsState.zaloPhone = data.zalo_phone || '';
                 userSettingsState.zaloUserId = data.zalo_user_id || '';
                 userSettingsState.zaloNotifications = data.zalo_notifications !== undefined ? Number(data.zalo_notifications) : 0;
+                userSettingsState.appNotifications = data.app_notifications !== undefined ? Number(data.app_notifications) : 1;
                 
                 const zaloPhoneInput = document.getElementById("settings-zalo-phone");
                 if (zaloPhoneInput && !zaloPhoneInput.matches(':focus')) {
@@ -1911,6 +1925,26 @@ function refreshNotificationSettingsFromServer() {
                 const mainToggle = document.getElementById("settings-reminder-toggle");
                 if (mainToggle) {
                     mainToggle.checked = (userSettingsState.zaloNotifications === 1 || userSettingsState.emailNotifications === 1);
+                }
+
+                // Sync app notification inputs
+                const appNotifTimeInput = document.getElementById("settings-app-notif-time");
+                if (appNotifTimeInput && !appNotifTimeInput.matches(':focus')) {
+                    appNotifTimeInput.value = userSettingsState.reminderTime ? userSettingsState.reminderTime.substring(0, 5) : '20:00';
+                }
+                const appNotifToggle = document.getElementById("settings-app-notif-toggle");
+                if (appNotifToggle) {
+                    appNotifToggle.checked = (userSettingsState.appNotifications === 1);
+                }
+                const appNotifActive = document.getElementById("settings-app-notif-active");
+                if (appNotifActive) {
+                    appNotifActive.checked = (userSettingsState.appNotifications === 1);
+                }
+                if (window.SpendMindAppNotification) {
+                    window.SpendMindAppNotification.updateSettings({
+                        enabled: userSettingsState.appNotifications === 1,
+                        time: userSettingsState.reminderTime ? userSettingsState.reminderTime.substring(0, 5) : '20:00'
+                    });
                 }
                 
                 updateThemeSubPanelUI();
@@ -1954,6 +1988,13 @@ function updateSettingsStatusBadges() {
     if (badgeReminder) {
         const isActive = (userSettingsState.zaloNotifications === 1 || userSettingsState.emailNotifications === 1);
         badgeReminder.textContent = isActive ? (userSettingsState.reminderTime ? userSettingsState.reminderTime.substring(0, 5) : "Bật") : "Tắt";
+    }
+
+    const badgeAppNotif = document.getElementById("badge-app-notif-status");
+    if (badgeAppNotif) {
+        const isAppActive = (userSettingsState.appNotifications === 1);
+        badgeAppNotif.textContent = isAppActive ? (userSettingsState.reminderTime ? userSettingsState.reminderTime.substring(0, 5) : "20:00") : "Tắt";
+        badgeAppNotif.style.color = isAppActive ? "var(--accent-color)" : "var(--text-secondary)";
     }
 
     const badgeTheme = document.getElementById("badge-theme-status");

@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS `users` (
     `zalo_phone` VARCHAR(20) NULL DEFAULT NULL,
     `zalo_user_id` VARCHAR(50) NULL DEFAULT NULL,
     `zalo_notifications` TINYINT(1) DEFAULT 0,
+    `app_notifications` TINYINT(1) DEFAULT 1,
     `last_reminder_sent` DATE NULL DEFAULT NULL,
+    `last_app_reminder_sent` DATE NULL DEFAULT NULL,
     `avatar_url` TEXT NULL DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

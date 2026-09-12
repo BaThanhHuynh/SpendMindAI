@@ -5854,3 +5854,49 @@ html[data-theme="light"] .ios-icon-box {
 .ios-sheet-footer {
     padding-top: 8px;
 }
+
+/* ==========================================================================
+   APP NOTIFICATION SETTINGS & PERMISSION BADGES
+   ========================================================================== */
+.notif-permission-box {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    border: 1px solid var(--calendar-border);
+}
+
+.notif-perm-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.2px;
+}
+
+.notif-perm-badge.granted {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+.notif-perm-badge.denied {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.notif-perm-badge.default {
+    background: rgba(0, 104, 255, 0.15);
+    color: #0068ff;
+}
+
+.spinner-inline {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+

@@ -39,6 +39,7 @@ DEFAULT_DATA = {
         "zalo_phone": "0912345678",
         "zalo_user_id": "",
         "zalo_notifications": 1,
+        "app_notifications": 1,
         "avatar_url": None,
         "db_connected": True
     },
@@ -162,7 +163,7 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
             })
 
         # Handle API routes
-        if path in ("/api", "/api.php", "/api/index.php"):
+        if path in ("/api", "/api/", "/api.php", "/api/index.php"):
             db = load_data()
             if action == "check_session":
                 res = dict(db["user"])
@@ -202,6 +203,7 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                     "zalo_phone": u.get("zalo_phone", "0912345678"),
                     "zalo_user_id": u.get("zalo_user_id", ""),
                     "zalo_notifications": u.get("zalo_notifications", 1),
+                    "app_notifications": u.get("app_notifications", 1),
                     "avatar_url": u.get("avatar_url", None)
                 })
 
@@ -233,7 +235,7 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
         qs = parse_qs(parsed.query)
         action = qs.get("action", [""])[0]
 
-        if path in ("/api", "/api.php", "/api/index.php"):
+        if path in ("/api", "/api/", "/api.php", "/api/index.php"):
             content_length = int(self.headers.get("Content-Length", 0))
             body_bytes = self.rfile.read(content_length)
             try:
@@ -310,8 +312,10 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                     db["user"]["zalo_user_id"] = payload["zalo_user_id"]
                 if "zalo_notifications" in payload:
                     db["user"]["zalo_notifications"] = int(payload["zalo_notifications"])
+                if "app_notifications" in payload:
+                    db["user"]["app_notifications"] = int(payload["app_notifications"])
                 save_data(db)
-                return self.send_json({"success": True, "message": "Đã lưu cài đặt nhắc nhở qua Zalo thành công"})
+                return self.send_json({"success": True, "message": "Đã lưu cài đặt thông báo & nhắc nhở thành công"})
 
             if action == "test_zalo_reminder":
                 phone = db["user"].get("zalo_phone") or payload.get("zalo_phone", "0912345678")
