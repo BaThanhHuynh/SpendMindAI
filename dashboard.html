@@ -31,6 +31,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SpendMindAI">
+    <link rel="apple-touch-icon" sizes="192x192" href="images/logoapp-192.png?v=20260912_v3">
+    <link rel="apple-touch-icon" sizes="512x512" href="images/logoapp-512.png?v=20260912_v3">
     <link rel="apple-touch-icon" href="images/logoapp.png?v=20260911_v8">
 
     <!-- Stylesheets -->
@@ -396,6 +398,18 @@
                     </div>
                 </button>
 
+                <!-- Install App row -->
+                <button type="button" class="settings-list-item" id="menu-item-install-pwa">
+                    <div class="item-left">
+                        <i data-lucide="smartphone"></i>
+                        <span>Cài đặt ứng dụng</span>
+                    </div>
+                    <div class="item-right">
+                        <span id="badge-pwa-install" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; background: rgba(0, 104, 255, 0.15); color: #0068ff; font-weight: 600;">Cài ngay</span>
+                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
+                    </div>
+                </button>
+
                 <hr class="settings-divider">
 
                 <!-- Danger operations -->
@@ -597,6 +611,8 @@
     <script src="js/dashboard.js?v=20260912_v3"></script>
     <!-- Cookie Consent & Preferences System -->
     <script src="js/cookie-consent.js?v=20260912_v3"></script>
+    <!-- PWA Install Manager (Android & iOS) -->
+    <script src="js/pwa-install.js?v=20260912_v3"></script>
 
     <!-- Service Worker Registration for PWA & Offline Support -->
     <script>
