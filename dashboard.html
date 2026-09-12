@@ -10,7 +10,7 @@
     <link rel="shortcut icon" href="favicon.ico?v=20260911_v8">
 
     <!-- Preload critical CSS & Fonts -->
-    <link rel="preload" href="css/styles.css?v=20260911_v8" as="style">
+    <link rel="preload" href="css/styles.css?v=20260912_v1" as="style">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" as="style">
 
     <!-- Google Fonts: Montserrat -->
@@ -25,7 +25,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 
     <!-- PWA & Mobile Web App Meta -->
-    <link rel="manifest" href="manifest.json?v=20260911_v8">
+    <link rel="manifest" href="manifest.json?v=20260912_v1">
     <meta name="theme-color" content="#10b981">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -34,8 +34,8 @@
     <link rel="apple-touch-icon" href="images/logoapp.png?v=20260911_v8">
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/styles.css?v=20260911_v8">
-    <link rel="stylesheet" href="css/mobile.css?v=20260911_v8">
+    <link rel="stylesheet" href="css/styles.css?v=20260912_v1">
+    <link rel="stylesheet" href="css/mobile.css?v=20260912_v1">
     
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -549,21 +549,18 @@
         </div>
     </div>
 
-    <!-- Mobile Bottom Navigation Bar (Hidden on desktop) -->
-    <nav class="mobile-nav-bar" id="mobile-nav-bar">
-        <button type="button" class="mobile-nav-item active" id="nav-btn-home" data-target="dashboard" title="Tổng quan">
+    <!-- MOBILE BOTTOM NAVIGATION (Native iOS & Android App Bar - Hidden on desktop) -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Điều hướng di động">
+        <button type="button" class="mobile-nav-item active" id="nav-btn-overview" data-target="overview" title="Tổng quan tài chính">
             <i data-lucide="layout-dashboard"></i>
             <span>Tổng quan</span>
         </button>
-        <button type="button" class="mobile-nav-item" id="nav-btn-transactions" data-target="transactions" title="Lịch sử giao dịch">
-            <i data-lucide="receipt"></i>
-            <span>Lịch sử</span>
+        <button type="button" class="mobile-nav-item" id="nav-btn-calendar" data-target="calendar" title="Lịch thu chi">
+            <i data-lucide="calendar"></i>
+            <span>Lịch</span>
         </button>
-        <button type="button" class="mobile-nav-item mobile-add-btn" id="nav-btn-add" data-target="add" title="Thêm giao dịch mới">
-            <div class="mobile-add-circle">
-                <i data-lucide="plus"></i>
-            </div>
-            <span>Thêm</span>
+        <button type="button" class="mobile-nav-item nav-add-btn" id="nav-btn-add" title="Thêm giao dịch mới">
+            <i data-lucide="plus"></i>
         </button>
         <button type="button" class="mobile-nav-item" id="nav-btn-chatbot" data-target="chatbot" title="Trợ lý ảo AI">
             <i data-lucide="bot"></i>
@@ -576,10 +573,10 @@
     </nav>
 
     <!-- Main Dashboard script -->
-    <script src="js/chatbot.js?v=20260911_v8"></script>
-    <script src="js/dashboard.js?v=20260911_v8"></script>
+    <script src="js/chatbot.js?v=20260912_v1"></script>
+    <script src="js/dashboard.js?v=20260912_v1"></script>
     <!-- Cookie Consent & Preferences System -->
-    <script src="js/cookie-consent.js?v=20260911_v8"></script>
+    <script src="js/cookie-consent.js?v=20260912_v1"></script>
 
     <!-- Service Worker Registration for PWA & Offline Support -->
     <script>

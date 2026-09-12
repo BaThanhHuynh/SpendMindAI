@@ -625,8 +625,8 @@ function initEventListeners() {
     });
 
     // Mobile Bottom Navigation Handlers (Touch-Optimized)
-    const navBtnOverview = document.getElementById("nav-btn-overview");
-    const navBtnCalendar = document.getElementById("nav-btn-calendar");
+    const navBtnOverview = document.getElementById("nav-btn-overview") || document.getElementById("nav-btn-home");
+    const navBtnCalendar = document.getElementById("nav-btn-calendar") || document.getElementById("nav-btn-transactions");
     const navBtnAdd = document.getElementById("nav-btn-add");
     const navBtnChatbot = document.getElementById("nav-btn-chatbot");
     const navBtnSettings = document.getElementById("nav-btn-settings");

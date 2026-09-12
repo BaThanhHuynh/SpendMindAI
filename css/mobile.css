@@ -4,8 +4,11 @@
    ========================================================================== */
 
 /* 1. Mobile Bottom Navigation Bar (App Bar) */
-.mobile-bottom-nav {
-    display: none;
+.mobile-bottom-nav,
+.mobile-nav-bar,
+#mobile-bottom-nav,
+#mobile-nav-bar {
+    display: none !important;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -22,7 +25,10 @@
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
 }
 
-[data-theme="light"] .mobile-bottom-nav {
+[data-theme="light"] .mobile-bottom-nav,
+[data-theme="light"] .mobile-nav-bar,
+[data-theme="light"] #mobile-bottom-nav,
+[data-theme="light"] #mobile-nav-bar {
     background: rgba(255, 255, 255, 0.94);
     border-top: 1px solid rgba(0, 0, 0, 0.08);
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
@@ -67,7 +73,8 @@
 }
 
 /* Center Floating Add Button (+) */
-.mobile-nav-item.nav-add-btn {
+.mobile-nav-item.nav-add-btn,
+.mobile-nav-item.mobile-add-btn {
     position: relative;
     top: -14px;
     background: linear-gradient(135deg, #10b981, #059669);
@@ -86,24 +93,30 @@
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
 }
 
-[data-theme="light"] .mobile-nav-item.nav-add-btn {
+[data-theme="light"] .mobile-nav-item.nav-add-btn,
+[data-theme="light"] .mobile-nav-item.mobile-add-btn {
     border-color: #ffffff;
 }
 
-.mobile-nav-item.nav-add-btn:active {
+.mobile-nav-item.nav-add-btn:active,
+.mobile-nav-item.mobile-add-btn:active {
     transform: scale(0.9) translateY(2px);
     box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
 }
 
-.mobile-nav-item.nav-add-btn i {
+.mobile-nav-item.nav-add-btn i,
+.mobile-nav-item.mobile-add-btn i {
     width: 26px;
     height: 26px;
 }
 
 /* 2. Responsive Mobile Layout Adaptations */
 @media (max-width: 768px) {
-    .mobile-bottom-nav {
-        display: flex;
+    .mobile-bottom-nav,
+    .mobile-nav-bar,
+    #mobile-bottom-nav,
+    #mobile-nav-bar {
+        display: flex !important;
     }
 
     /* Add bottom padding to dashboard so content is not obscured by bottom bar */

@@ -5561,4 +5561,12 @@ html, body {
     }
 }
 
-
+/* Mobile Bottom Navigation: Strictly hidden on Desktop screens (> 768px) */
+@media (min-width: 769px) {
+    .mobile-bottom-nav,
+    .mobile-nav-bar,
+    #mobile-bottom-nav,
+    #mobile-nav-bar {
+        display: none !important;
+    }
+}
