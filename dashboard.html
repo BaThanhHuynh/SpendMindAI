@@ -25,7 +25,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 
     <!-- PWA & Mobile Web App Meta -->
-    <link rel="manifest" href="manifest.json?v=20260912_v2">
+    <link rel="manifest" href="manifest.json?v=20260912_v3">
     <meta name="theme-color" content="#10b981">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -34,8 +34,8 @@
     <link rel="apple-touch-icon" href="images/logoapp.png?v=20260911_v8">
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/styles.css?v=20260912_v2">
-    <link rel="stylesheet" href="css/mobile.css?v=20260912_v2">
+    <link rel="stylesheet" href="css/styles.css?v=20260912_v3">
+    <link rel="stylesheet" href="css/mobile.css?v=20260912_v3">
     
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -75,169 +75,11 @@
                 </div>
 
 
-                <!-- Settings Container (Dropdown Popup) -->
+                <!-- Settings Container (Dropdown Popup Trigger) -->
                 <div class="settings-menu-container">
                     <button id="btn-settings" class="theme-toggle-btn" title="Cấu hình hệ thống">
                         <i data-lucide="settings" style="width: 20px; height: 20px; color: var(--text-primary);"></i>
                     </button>
-                    
-                    <!-- Settings Backdrop for mobile modal overlay -->
-                    <div id="settings-backdrop" class="settings-backdrop hidden"></div>
-
-                    <!-- Small Dropdown Layout for Settings -->
-                    <div id="settings-dropdown" class="settings-dropdown-menu hidden animate-scale-up">
-                        <!-- PANEL 1: MAIN SETTINGS MENU -->
-                        <div class="settings-panel" id="settings-main-panel">
-                            <div class="dropdown-header">
-                                <h3>Cài đặt hệ thống</h3>
-                                <button type="button" class="btn-close-dropdown" id="btn-close-settings-dropdown" title="Đóng">
-                                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
-                                </button>
-                            </div>
-                            <div class="dropdown-body" style="display: flex; flex-direction: column; gap: 4px;">
-
-
-                                <!-- Gmail reminder row -->
-                                <div class="settings-list-item" id="menu-item-reminder" role="button" tabindex="0">
-                                    <div class="item-left">
-                                        <i data-lucide="bell"></i>
-                                        <span>Nhắc nhở qua Gmail</span>
-                                    </div>
-                                    <div class="item-right" style="display: flex; align-items: center; gap: 8px;">
-                                        <span id="badge-reminder-status">Tắt</span>
-                                        <label class="switch">
-                                            <input type="checkbox" id="settings-reminder-toggle">
-                                            <span class="slider round"></span>
-                                        </label>
-                                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
-                                    </div>
-                                </div>
-
-                                <!-- Theme settings row -->
-                                <button type="button" class="settings-list-item" id="menu-item-theme">
-                                    <div class="item-left">
-                                        <i data-lucide="palette"></i>
-                                        <span>Giao diện</span>
-                                    </div>
-                                    <div class="item-right">
-                                        <span id="badge-theme-status">Tối</span>
-                                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
-                                    </div>
-                                </button>
-
-                                <!-- Cookie preferences row -->
-                                <button type="button" class="settings-list-item" id="menu-item-cookies">
-                                    <div class="item-left">
-                                        <i data-lucide="cookie"></i>
-                                        <span>Tùy chọn Cookie</span>
-                                    </div>
-                                    <div class="item-right">
-                                        <span id="badge-cookie-status" style="font-size: 0.75rem; color: var(--text-secondary);">Quản lý</span>
-                                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
-                                    </div>
-                                </button>
-
-                                <hr class="settings-divider">
-
-                                <!-- Danger operations -->
-                                <button type="button" id="btn-clear-all-data" class="settings-list-item danger-item">
-                                    <div class="item-left">
-                                        <i data-lucide="alert-triangle"></i>
-                                        <span>Xóa toàn bộ dữ liệu</span>
-                                    </div>
-                                </button>
-
-                                <button type="button" id="btn-logout" class="settings-list-item logout-item">
-                                    <div class="item-left">
-                                        <i data-lucide="log-out"></i>
-                                        <span>Đăng xuất tài khoản</span>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-
-
-
-                        <!-- PANEL 3: EMAIL REMINDER SUB-PANEL -->
-                        <div class="settings-panel sub-panel hidden" id="settings-reminder-panel">
-                            <div class="dropdown-header">
-                                <div style="display: flex; align-items: center;">
-                                    <button type="button" class="btn-back-settings" data-target="reminder" title="Quay lại">
-                                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
-                                    </button>
-                                    <h3>Nhắc nhở qua Gmail</h3>
-                                </div>
-                                <button type="button" class="btn-close-dropdown" id="btn-close-reminder-sub" title="Đóng">
-                                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
-                                </button>
-                            </div>
-                            <div class="dropdown-body">
-                                <form id="settings-notification-form" style="display: flex; flex-direction: column; gap: 10px;">
-                                    <div class="form-group">
-                                        <label for="settings-email" style="font-size: 0.75rem; font-weight: 500; display: block; margin-bottom: 2px;">Địa chỉ Email nhận nhắc nhở</label>
-                                        <input type="email" id="settings-email" readonly
-                                            style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--border-color); color: var(--text-secondary); border: 1px solid var(--input-border); cursor: not-allowed;"
-                                            title="Địa chỉ email đã đăng ký của bạn.">
-                                        <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 4px;">Email nhận nhắc nhở mặc định là email tài khoản của bạn.</span>
-                                    </div>
-                                    <div class="form-row" style="display: flex; gap: 8px;">
-                                        <div class="form-group" style="flex: 1;">
-                                            <label for="settings-reminder-time" style="font-size: 0.75rem; font-weight: 500; display: block; margin-bottom: 2px;">Giờ nhắc hàng ngày</label>
-                                            <input type="time" id="settings-reminder-time"
-                                                style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);">
-                                        </div>
-                                    </div>
-                                    <div class="form-checkbox-group" style="display: flex; align-items: center; gap: 6px;">
-                                        <input type="checkbox" id="settings-email-notifications" value="1" style="accent-color: var(--accent-color); cursor: pointer;">
-                                        <label for="settings-email-notifications" style="font-size: 0.75rem; color: var(--text-secondary); user-select: none; cursor: pointer;">Kích hoạt nhắc nhở</label>
-                                    </div>
-                                    <button type="submit" class="btn btn-sm btn-primary w-full" style="padding: 8px 12px; font-size: 0.8rem; margin-top: 4px;">
-                                        <i data-lucide="save" style="width: 14px; height: 14px;"></i> Lưu cài đặt
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <!-- PANEL 4: THEME SELECTION SUB-PANEL -->
-                        <div class="settings-panel sub-panel hidden" id="settings-theme-panel">
-                            <div class="dropdown-header">
-                                <div style="display: flex; align-items: center;">
-                                    <button type="button" class="btn-back-settings" data-target="theme" title="Quay lại">
-                                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
-                                    </button>
-                                    <h3>Giao diện</h3>
-                                </div>
-                                <button type="button" class="btn-close-dropdown" id="btn-close-theme-sub" title="Đóng">
-                                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
-                                </button>
-                            </div>
-                            <div class="dropdown-body">
-                                <div class="theme-option-list" style="display: flex; flex-direction: column; gap: 4px;">
-                                    <div class="theme-option-item" id="opt-theme-light">
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <i data-lucide="sun"></i>
-                                            <span style="font-size: 0.8rem; font-weight: 500;">Giao diện Sáng</span>
-                                        </div>
-                                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
-                                    </div>
-                                    <div class="theme-option-item" id="opt-theme-dark">
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <i data-lucide="moon"></i>
-                                            <span style="font-size: 0.8rem; font-weight: 500;">Giao diện Tối</span>
-                                        </div>
-                                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
-                                    </div>
-                                    <div class="theme-option-item" id="opt-theme-system">
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <i data-lucide="monitor"></i>
-                                            <span style="font-size: 0.8rem; font-weight: 500;">Tự động (Hệ thống)</span>
-                                        </div>
-                                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </header>
@@ -498,7 +340,163 @@
                 </div>
             </form>
         </div>
-    </div>    <!-- Notification Toast -->
+    </div>
+
+    <!-- SETTINGS MODAL BACKDROP & DIALOG (Root level DOM to prevent stacking context & clipping) -->
+    <div id="settings-backdrop" class="settings-backdrop hidden"></div>
+    <div id="settings-dropdown" class="settings-dropdown-menu hidden animate-scale-up">
+        <!-- PANEL 1: MAIN SETTINGS MENU -->
+        <div class="settings-panel" id="settings-main-panel">
+            <div class="dropdown-header">
+                <h3>Cài đặt hệ thống</h3>
+                <button type="button" class="btn-close-dropdown" id="btn-close-settings-dropdown" title="Đóng">
+                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                </button>
+            </div>
+            <div class="dropdown-body" style="display: flex; flex-direction: column; gap: 4px;">
+
+
+                <!-- Gmail reminder row -->
+                <div class="settings-list-item" id="menu-item-reminder" role="button" tabindex="0">
+                    <div class="item-left">
+                        <i data-lucide="bell"></i>
+                        <span>Nhắc nhở qua Gmail</span>
+                    </div>
+                    <div class="item-right" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="badge-reminder-status">Tắt</span>
+                        <label class="switch">
+                            <input type="checkbox" id="settings-reminder-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
+                    </div>
+                </div>
+
+                <!-- Theme settings row -->
+                <button type="button" class="settings-list-item" id="menu-item-theme">
+                    <div class="item-left">
+                        <i data-lucide="palette"></i>
+                        <span>Giao diện</span>
+                    </div>
+                    <div class="item-right">
+                        <span id="badge-theme-status">Tối</span>
+                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
+                    </div>
+                </button>
+
+                <!-- Cookie preferences row -->
+                <button type="button" class="settings-list-item" id="menu-item-cookies">
+                    <div class="item-left">
+                        <i data-lucide="cookie"></i>
+                        <span>Tùy chọn Cookie</span>
+                    </div>
+                    <div class="item-right">
+                        <span id="badge-cookie-status" style="font-size: 0.75rem; color: var(--text-secondary);">Quản lý</span>
+                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
+                    </div>
+                </button>
+
+                <hr class="settings-divider">
+
+                <!-- Danger operations -->
+                <button type="button" id="btn-clear-all-data" class="settings-list-item danger-item">
+                    <div class="item-left">
+                        <i data-lucide="alert-triangle"></i>
+                        <span>Xóa toàn bộ dữ liệu</span>
+                    </div>
+                </button>
+
+                <button type="button" id="btn-logout" class="settings-list-item logout-item">
+                    <div class="item-left">
+                        <i data-lucide="log-out"></i>
+                        <span>Đăng xuất tài khoản</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- PANEL 3: EMAIL REMINDER SUB-PANEL -->
+        <div class="settings-panel sub-panel hidden" id="settings-reminder-panel">
+            <div class="dropdown-header">
+                <div style="display: flex; align-items: center;">
+                    <button type="button" class="btn-back-settings" data-target="reminder" title="Quay lại">
+                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                    </button>
+                    <h3>Nhắc nhở qua Gmail</h3>
+                </div>
+                <button type="button" class="btn-close-dropdown" id="btn-close-reminder-sub" title="Đóng">
+                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                </button>
+            </div>
+            <div class="dropdown-body">
+                <form id="settings-notification-form" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="form-group">
+                        <label for="settings-email" style="font-size: 0.75rem; font-weight: 500; display: block; margin-bottom: 2px;">Địa chỉ Email nhận nhắc nhở</label>
+                        <input type="email" id="settings-email" readonly
+                            style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--border-color); color: var(--text-secondary); border: 1px solid var(--input-border); cursor: not-allowed;"
+                            title="Địa chỉ email đã đăng ký của bạn.">
+                        <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 4px;">Email nhận nhắc nhở mặc định là email tài khoản của bạn.</span>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 8px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="settings-reminder-time" style="font-size: 0.75rem; font-weight: 500; display: block; margin-bottom: 2px;">Giờ nhắc hàng ngày</label>
+                            <input type="time" id="settings-reminder-time"
+                                style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);">
+                        </div>
+                    </div>
+                    <div class="form-checkbox-group" style="display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" id="settings-email-notifications" value="1" style="accent-color: var(--accent-color); cursor: pointer;">
+                        <label for="settings-email-notifications" style="font-size: 0.75rem; color: var(--text-secondary); user-select: none; cursor: pointer;">Kích hoạt nhắc nhở</label>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-full" style="padding: 8px 12px; font-size: 0.8rem; margin-top: 4px;">
+                        <i data-lucide="save" style="width: 14px; height: 14px;"></i> Lưu cài đặt
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- PANEL 4: THEME SELECTION SUB-PANEL -->
+        <div class="settings-panel sub-panel hidden" id="settings-theme-panel">
+            <div class="dropdown-header">
+                <div style="display: flex; align-items: center;">
+                    <button type="button" class="btn-back-settings" data-target="theme" title="Quay lại">
+                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                    </button>
+                    <h3>Giao diện</h3>
+                </div>
+                <button type="button" class="btn-close-dropdown" id="btn-close-theme-sub" title="Đóng">
+                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                </button>
+            </div>
+            <div class="dropdown-body">
+                <div class="theme-option-list" style="display: flex; flex-direction: column; gap: 4px;">
+                    <div class="theme-option-item" id="opt-theme-light">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i data-lucide="sun"></i>
+                            <span style="font-size: 0.8rem; font-weight: 500;">Giao diện Sáng</span>
+                        </div>
+                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
+                    </div>
+                    <div class="theme-option-item" id="opt-theme-dark">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i data-lucide="moon"></i>
+                            <span style="font-size: 0.8rem; font-weight: 500;">Giao diện Tối</span>
+                        </div>
+                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
+                    </div>
+                    <div class="theme-option-item" id="opt-theme-system">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i data-lucide="monitor"></i>
+                            <span style="font-size: 0.8rem; font-weight: 500;">Tự động (Hệ thống)</span>
+                        </div>
+                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
     <div id="toast" class="toast">
         <i id="toast-icon" data-lucide="info"></i>
         <span id="toast-message">Thông báo</span>
@@ -576,10 +574,10 @@
     </nav>
 
     <!-- Main Dashboard script -->
-    <script src="js/chatbot.js?v=20260912_v2"></script>
-    <script src="js/dashboard.js?v=20260912_v2"></script>
+    <script src="js/chatbot.js?v=20260912_v3"></script>
+    <script src="js/dashboard.js?v=20260912_v3"></script>
     <!-- Cookie Consent & Preferences System -->
-    <script src="js/cookie-consent.js?v=20260912_v2"></script>
+    <script src="js/cookie-consent.js?v=20260912_v3"></script>
 
     <!-- Service Worker Registration for PWA & Offline Support -->
     <script>

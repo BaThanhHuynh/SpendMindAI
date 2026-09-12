@@ -1224,21 +1224,6 @@ body {
         flex-wrap: wrap;
         gap: 16px;
     }
-
-    .settings-dropdown-menu {
-        position: fixed !important;
-        right: auto !important;
-        left: 50% !important;
-        top: auto;
-        transform: translateX(-50%) !important;
-        transform-origin: top center;
-        width: calc(100vw - 32px) !important;
-        max-width: 320px !important;
-    }
-    
-    .settings-dropdown-menu.animate-scale-up {
-        animation: scale-up-centered 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-    }
     
     .btn-icon-label span {
         display: none; /* Hide labels for import/export icons on tiny screen */
@@ -3700,30 +3685,28 @@ html[data-theme="light"] .daily-item:hover {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    z-index: 10000;
+    z-index: 10001 !important;
     opacity: 1;
     visibility: visible;
     transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .settings-backdrop.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }
 
 .settings-dropdown-menu {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 12px);
-    z-index: 1000;
+    position: fixed;
+    z-index: 10002 !important;
     display: flex;
     gap: 8px;
     pointer-events: auto;
-    transition: all var(--transition-normal);
+    transition: opacity var(--transition-normal), transform var(--transition-normal);
 }
 
 .settings-dropdown-menu.hidden {
@@ -3899,17 +3882,31 @@ html[data-theme="light"] .google-link-status {
     background: rgba(0, 0, 0, 0.02);
 }
 
-/* Sub-panel positioning */
-@media (min-width: 601px) {
+/* Sub-panel and Desktop Dropdown Positioning */
+@media (min-width: 769px) {
+    .settings-backdrop {
+        display: none !important;
+    }
+
     .settings-dropdown-menu {
+        position: fixed !important;
         overflow: visible !important;
         background: transparent !important;
         box-shadow: none !important;
         padding: 0 !important;
         max-height: none !important;
         width: auto !important;
+        z-index: 10002 !important;
     }
     
+    .settings-panel {
+        width: 320px;
+        background: var(--bg-elevated);
+        box-shadow: var(--shadow-lg);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--card-border);
+    }
+
     .settings-panel.sub-panel {
         position: absolute;
         right: calc(100% + 8px);
@@ -3945,16 +3942,16 @@ html[data-theme="light"] .google-link-status {
         bottom: auto !important;
         transform: translate(-50%, -50%) !important;
         width: calc(100vw - 32px) !important;
-        max-width: 340px !important;
+        max-width: 360px !important;
         max-height: 85vh !important;
         background: var(--bg-elevated);
-        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75) !important;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85) !important;
         border: 1px solid var(--card-border);
         border-radius: var(--radius-lg) !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
         padding: 0 !important;
-        z-index: 10001 !important;
+        z-index: 10002 !important;
     }
     
     .settings-dropdown-menu.animate-scale-up {

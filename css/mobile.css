@@ -173,14 +173,12 @@
         }
     }
 
-    /* Hide bottom nav and chatbot when any modal or settings is open */
+    /* Hide bottom nav and chatbot when transaction modal is open */
     body.modal-open .mobile-bottom-nav,
     body.modal-open .mobile-nav-bar,
     body.modal-open #mobile-bottom-nav,
     body.modal-open #mobile-nav-bar,
     body.modal-open .chatbot-widget,
-    body.settings-open .mobile-bottom-nav,
-    body.settings-open .chatbot-widget,
     body:has(.modal-overlay:not(.hidden)) .mobile-bottom-nav,
     body:has(.modal-overlay:not(.hidden)) .chatbot-widget {
         opacity: 0 !important;
@@ -188,6 +186,12 @@
         visibility: hidden !important;
         transform: translateY(24px) !important;
         transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    /* Prevent background body scroll when modal or settings is open */
+    body.modal-open,
+    body.settings-open {
+        overflow: hidden !important;
     }
 
     /* Chatbot repositioning above bottom nav */

@@ -72,6 +72,9 @@ document.addEventListener("DOMContentLoaded", () => {
     checkAuthSession(); // Session guard (Redirects to login.html if guest)
     populateCategorySelectors();
     initEventListeners();
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 });
 
 // Secure Session Guard Check
@@ -460,10 +463,20 @@ function initEventListeners() {
     }
 
     const btnCloseSettings = document.getElementById("btn-close-settings-dropdown");
-    if (btnCloseSettings) btnCloseSettings.addEventListener("click", closeSettingsDropdown);
+    if (btnCloseSettings) {
+        btnCloseSettings.addEventListener("click", (e) => {
+            e.stopPropagation();
+            closeSettingsDropdown();
+        });
+    }
 
     const settingsBackdrop = document.getElementById("settings-backdrop");
-    if (settingsBackdrop) settingsBackdrop.addEventListener("click", closeSettingsDropdown);
+    if (settingsBackdrop) {
+        settingsBackdrop.addEventListener("click", (e) => {
+            e.stopPropagation();
+            closeSettingsDropdown();
+        });
+    }
 
     const settingsForm = document.getElementById("settings-notification-form");
     if (settingsForm) settingsForm.addEventListener("submit", handleSettingsSubmit);
@@ -638,6 +651,26 @@ function initEventListeners() {
         }
     });
 
+    // Close on Escape key
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            const dropdown = document.getElementById("settings-dropdown");
+            if (dropdown && !dropdown.classList.contains("hidden")) {
+                closeSettingsDropdown();
+            }
+        }
+    });
+
+    // Dynamic repositioning on window resize and scroll
+    window.addEventListener("resize", () => {
+        positionSettingsDropdown();
+    });
+    window.addEventListener("scroll", () => {
+        if (window.innerWidth > 768) {
+            positionSettingsDropdown();
+        }
+    }, { passive: true });
+
     // Mobile Bottom Navigation Handlers (Touch-Optimized)
     const navBtnOverview = document.getElementById("nav-btn-overview") || document.getElementById("nav-btn-home");
     const navBtnCalendar = document.getElementById("nav-btn-calendar") || document.getElementById("nav-btn-transactions");
@@ -649,6 +682,7 @@ function initEventListeners() {
         navBtnOverview.addEventListener("click", () => {
             document.querySelectorAll(".mobile-nav-item").forEach(b => b.classList.remove("active"));
             navBtnOverview.classList.add("active");
+            closeSettingsDropdown();
             const target = document.querySelector(".dashboard-section");
             if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
         });
@@ -658,6 +692,7 @@ function initEventListeners() {
         navBtnCalendar.addEventListener("click", () => {
             document.querySelectorAll(".mobile-nav-item").forEach(b => b.classList.remove("active"));
             navBtnCalendar.classList.add("active");
+            closeSettingsDropdown();
             const target = document.querySelector(".calendar-section");
             if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
         });
@@ -1694,6 +1729,32 @@ function importData(e) {
 // --- 7. SETTINGS MODAL & GOOGLE LINK LOGIC ---
 // userSettingsState is initialized at top state
 
+// Function to dynamically position settings dropdown on desktop
+function positionSettingsDropdown() {
+    const dropdown = document.getElementById("settings-dropdown");
+    const btnSettings = document.getElementById("btn-settings");
+    if (!dropdown || dropdown.classList.contains("hidden")) return;
+    
+    if (window.innerWidth > 768) {
+        if (btnSettings) {
+            const rect = btnSettings.getBoundingClientRect();
+            dropdown.style.position = "fixed";
+            dropdown.style.top = Math.round(rect.bottom + 8) + "px";
+            dropdown.style.right = Math.max(16, Math.round(window.innerWidth - rect.right)) + "px";
+            dropdown.style.left = "auto";
+            dropdown.style.bottom = "auto";
+            dropdown.style.transform = "none";
+        }
+    } else {
+        dropdown.style.position = "";
+        dropdown.style.top = "";
+        dropdown.style.left = "";
+        dropdown.style.right = "";
+        dropdown.style.bottom = "";
+        dropdown.style.transform = "";
+    }
+}
+
 // Toggle Settings Dropdown & Load Data (Instant 0ms response like Chatbot AI)
 function toggleSettingsDropdown() {
     const dropdown = document.getElementById("settings-dropdown");
@@ -1726,22 +1787,23 @@ function toggleSettingsDropdown() {
         updateThemeSubPanelUI();
         updateSettingsStatusBadges();
         
-        // Clean inline style on mobile so CSS centered layout is used
-        dropdown.style.top = "";
-        dropdown.style.left = "";
-        dropdown.style.right = "";
-        dropdown.style.bottom = "";
-        dropdown.style.transform = "";
-        
         if (window.innerWidth <= 768) {
             if (backdrop) backdrop.classList.remove("hidden");
             document.body.classList.add("settings-open");
+        } else {
+            if (backdrop) backdrop.classList.add("hidden");
         }
         
         // Display settings dropdown INSTANTLY (0ms latency, matching AI Chatbot)
         dropdown.classList.remove("hidden");
         if (btnSettings) btnSettings.classList.add("active");
         if (navBtnSettings) navBtnSettings.classList.add("active");
+        
+        positionSettingsDropdown();
+        
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
         
         // Asynchronously refresh in background without blocking UI
         refreshNotificationSettingsFromServer();
@@ -1756,6 +1818,7 @@ function closeSettingsDropdown() {
     const backdrop = document.getElementById("settings-backdrop");
     if (dropdown) {
         dropdown.classList.add("hidden");
+        dropdown.style.position = "";
         dropdown.style.top = "";
         dropdown.style.left = "";
         dropdown.style.right = "";
@@ -1979,3 +2042,5 @@ window.openTransactionModalForDate = openTransactionModalForDate;
 window.openTransactionModal = openTransactionModal;
 window.closeTransactionModal = closeTransactionModal;
 window.closeSettingsDropdown = closeSettingsDropdown;
+window.toggleSettingsDropdown = toggleSettingsDropdown;
+window.positionSettingsDropdown = positionSettingsDropdown;
