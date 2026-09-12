@@ -7,3 +7,4 @@
 - [x] **Error Handling:** Chuẩn hóa cấu trúc JSON lỗi theo tiêu chuẩn `{ success: false, message: "...", error: { code: "...", message: "..." } }`.
 - [x] **Build & Bundle:** Build thành công, không có warning nghiêm trọng; dung lượng bundle tối ưu; đồng bộ nạp Lucide Icons qua `cdn.jsdelivr.net` và cache query `?v=20260912_v3`.
 - [x] **Testing:** Bộ kiểm thử tự động toàn diện kiểm tra logic regex thời gian, headers, health checks, và trạng thái HTTP 200 pass 100%.
+- [x] **Zalo Notification Integration:** Đã thay thế Gmail bằng Zalo API (OpenAPI v3 & ZNS), chuẩn hóa và xác thực số điện thoại Việt Nam, hỗ trợ gửi tin nhắn kiểm thử trực tiếp từ Dashboard, mock outbox an toàn cho môi trường phát triển.
