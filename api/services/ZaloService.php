@@ -96,17 +96,47 @@ class ZaloService {
         $apiType = strtolower(function_exists('getEnvVar') ? getEnvVar('ZALO_API_TYPE', 'oa') : (getenv('ZALO_API_TYPE') ?: 'oa'));
         $templateId = function_exists('getEnvVar') ? getEnvVar('ZALO_TEMPLATE_ID', '') : (getenv('ZALO_TEMPLATE_ID') ?: '');
 
-        // --- MOCK SIMULATION MODE ---
-        // If not enabled or no access token is configured, safely simulate and write to outbox log.
-        if (!$zaloEnabled || empty($accessToken)) {
+        $webhookUrl = function_exists('getEnvVar') ? getEnvVar('ZALO_WEBHOOK_URL', '') : (getenv('ZALO_WEBHOOK_URL') ?: '');
+        $cleanPhone = self::normalizePhoneNumber($target);
+        $localPhone = str_starts_with($cleanPhone, '84') ? ('0' . substr($cleanPhone, 2)) : $cleanPhone;
+        $zaloChatUrl = "https://zalo.me/" . $localPhone;
+
+        // --- PERSONAL ZALO WEBHOOK GATEWAY ---
+        if (!empty($webhookUrl)) {
+            try {
+                $webhookPayload = [
+                    "phone" => $localPhone,
+                    "target" => $target,
+                    "customer_name" => $customerName,
+                    "reminder_time" => $reminderTime,
+                    "message" => $messagePayload['text'],
+                    "is_test" => $isTest
+                ];
+                $resp = self::executeHttpRequest($webhookUrl, $webhookPayload, ["Content-Type: application/json"]);
+                return [
+                    "success" => true,
+                    "simulated" => false,
+                    "channel" => "webhook",
+                    "zalo_link" => $zaloChatUrl,
+                    "message" => "Đã gửi tin nhắn Zalo thành công qua Webhook gateway đến {$localPhone}!",
+                    "detail" => json_decode($resp, true) ?: $resp
+                ];
+            } catch (Throwable $e) {
+                error_log("Zalo webhook gateway error: " . $e->getMessage());
+            }
+        }
+
+        // --- PERSONAL ZALO / MOCK SIMULATION MODE ---
+        // If not using enterprise OA or no access token is configured, safely use personal Zalo deep link & outbox log.
+        if (!$zaloEnabled || empty($accessToken) || $apiType === 'personal') {
             $logDir = sys_get_temp_dir();
             $logFile = $logDir . '/spendmind_zalo_outbox.log';
             $timeStr = date('Y-m-d H:i:s');
             
             $logContent = "==================================================\n";
             $logContent .= "TIN NHẮN ZALO GỬI LÚC: {$timeStr}\n";
-            $logContent .= "ĐẾN: {$target} (" . ($isTest ? "Thử nghiệm" : "Tự động") . ")\n";
-            $logContent .= "CHẾ ĐỘ: Giả lập (Mock Simulation - ZALO_NOTIFICATION_ENABLED=false)\n";
+            $logContent .= "ĐẾN (ZALO CÁ NHÂN): {$localPhone} (" . ($isTest ? "Thử nghiệm" : "Tự động") . ")\n";
+            $logContent .= "LINK ZALO TRỰC TIẾP: {$zaloChatUrl}\n";
             $logContent .= "NỘI DUNG:\n{$messagePayload['text']}\n";
             $logContent .= "==================================================\n\n";
 
@@ -116,7 +146,10 @@ class ZaloService {
             return [
                 "success" => true,
                 "simulated" => true,
-                "message" => "Đã ghi nhận gửi tin Zalo {$modeText} thành công đến {$target} (Chế độ mô phỏng an toàn)."
+                "channel" => "personal",
+                "zalo_link" => $zaloChatUrl,
+                "phone" => $localPhone,
+                "message" => "Đã tạo tin nhắn Zalo {$modeText} cho số {$localPhone}!"
             ];
         }
 

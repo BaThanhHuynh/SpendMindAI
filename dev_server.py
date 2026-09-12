@@ -318,7 +318,8 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                 return self.send_json({
                     "success": True,
                     "simulated": True,
-                    "message": f"Đã gửi tin nhắn Zalo thử nghiệm thành công tới {phone} (Chế độ mô phỏng local)!"
+                    "zalo_link": f"https://zalo.me/{phone}",
+                    "message": f"Đã tạo tin nhắn nhắc nhở Zalo cá nhân cho số {phone}!"
                 })
 
             if action == "chat":

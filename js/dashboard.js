@@ -569,6 +569,23 @@ function initEventListeners() {
         btnTestZalo.addEventListener("click", handleTestZaloClick);
     }
 
+    const zaloPhoneInput = document.getElementById("settings-zalo-phone");
+    if (zaloPhoneInput) {
+        zaloPhoneInput.addEventListener("input", (e) => {
+            const openZaloBtn = document.getElementById("btn-open-zalo-direct");
+            if (openZaloBtn) {
+                const clean = e.target.value.replace(/\D/g, '');
+                if (clean.length >= 10) {
+                    openZaloBtn.href = `https://zalo.me/${clean}`;
+                    openZaloBtn.style.display = "flex";
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                } else {
+                    openZaloBtn.style.display = "none";
+                }
+            }
+        });
+    }
+
     const menuItemTheme = document.getElementById("menu-item-theme");
     if (menuItemTheme) {
         menuItemTheme.addEventListener("click", (e) => {
@@ -1783,7 +1800,18 @@ function toggleSettingsDropdown() {
         
         // Instant sync of form inputs from in-memory userSettingsState
         const zaloPhoneInput = document.getElementById("settings-zalo-phone");
-        if (zaloPhoneInput) zaloPhoneInput.value = userSettingsState.zaloPhone || '';
+        if (zaloPhoneInput) {
+            zaloPhoneInput.value = userSettingsState.zaloPhone || '';
+            const openZaloBtn = document.getElementById("btn-open-zalo-direct");
+            if (openZaloBtn) {
+                if (userSettingsState.zaloPhone) {
+                    openZaloBtn.href = `https://zalo.me/${userSettingsState.zaloPhone.replace(/\D/g, '')}`;
+                    openZaloBtn.style.display = "flex";
+                } else {
+                    openZaloBtn.style.display = "none";
+                }
+            }
+        }
         
         const timeInput = document.getElementById("settings-reminder-time");
         if (timeInput) timeInput.value = userSettingsState.reminderTime ? userSettingsState.reminderTime.substring(0, 5) : '';
@@ -1989,7 +2017,14 @@ function handleTestZaloClick() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showToast(data.message || "Đã gửi tin nhắn Zalo thử nghiệm thành công!", "success");
+            showToast(data.message || "Đã tạo tin nhắn Zalo thành công!", "success");
+            const openZaloBtn = document.getElementById("btn-open-zalo-direct");
+            if (openZaloBtn) {
+                const link = data.zalo_link || `https://zalo.me/${phoneVal.replace(/\D/g, '')}`;
+                openZaloBtn.href = link;
+                openZaloBtn.style.display = "flex";
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
         } else {
             showToast("Lỗi gửi tin: " + (data.message || "Thất bại"), "error");
         }
