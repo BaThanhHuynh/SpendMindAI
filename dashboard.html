@@ -10,7 +10,7 @@
     <link rel="shortcut icon" href="favicon.ico?v=20260911_v8">
 
     <!-- Preload critical CSS & Fonts -->
-    <link rel="preload" href="css/styles.css?v=20260912_v1" as="style">
+    <link rel="preload" href="css/styles.css?v=20260912_v2" as="style">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" as="style">
 
     <!-- Google Fonts: Montserrat -->
@@ -25,7 +25,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 
     <!-- PWA & Mobile Web App Meta -->
-    <link rel="manifest" href="manifest.json?v=20260912_v1">
+    <link rel="manifest" href="manifest.json?v=20260912_v2">
     <meta name="theme-color" content="#10b981">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -34,8 +34,8 @@
     <link rel="apple-touch-icon" href="images/logoapp.png?v=20260911_v8">
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/styles.css?v=20260912_v1">
-    <link rel="stylesheet" href="css/mobile.css?v=20260912_v1">
+    <link rel="stylesheet" href="css/styles.css?v=20260912_v2">
+    <link rel="stylesheet" href="css/mobile.css?v=20260912_v2">
     
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -81,6 +81,9 @@
                         <i data-lucide="settings" style="width: 20px; height: 20px; color: var(--text-primary);"></i>
                     </button>
                     
+                    <!-- Settings Backdrop for mobile modal overlay -->
+                    <div id="settings-backdrop" class="settings-backdrop hidden"></div>
+
                     <!-- Small Dropdown Layout for Settings -->
                     <div id="settings-dropdown" class="settings-dropdown-menu hidden animate-scale-up">
                         <!-- PANEL 1: MAIN SETTINGS MENU -->
@@ -573,10 +576,10 @@
     </nav>
 
     <!-- Main Dashboard script -->
-    <script src="js/chatbot.js?v=20260912_v1"></script>
-    <script src="js/dashboard.js?v=20260912_v1"></script>
+    <script src="js/chatbot.js?v=20260912_v2"></script>
+    <script src="js/dashboard.js?v=20260912_v2"></script>
     <!-- Cookie Consent & Preferences System -->
-    <script src="js/cookie-consent.js?v=20260912_v1"></script>
+    <script src="js/cookie-consent.js?v=20260912_v2"></script>
 
     <!-- Service Worker Registration for PWA & Offline Support -->
     <script>

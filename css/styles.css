@@ -3694,6 +3694,27 @@ html[data-theme="light"] .daily-item:hover {
     display: inline-block;
 }
 
+.settings-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.settings-backdrop.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
 .settings-dropdown-menu {
     position: absolute;
     right: 0;
@@ -3918,20 +3939,26 @@ html[data-theme="light"] .google-link-status {
 @media (max-width: 768px) {
     .settings-dropdown-menu {
         position: fixed !important;
-        right: auto !important;
+        top: 50% !important;
         left: 50% !important;
-        transform: translateX(-50%) !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: translate(-50%, -50%) !important;
         width: calc(100vw - 32px) !important;
-        max-width: 320px !important;
+        max-width: 340px !important;
+        max-height: 85vh !important;
         background: var(--bg-elevated);
-        box-shadow: var(--shadow-lg);
-        border-radius: var(--radius-md);
-        overflow: hidden;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75) !important;
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-lg) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
         padding: 0 !important;
+        z-index: 10001 !important;
     }
     
     .settings-dropdown-menu.animate-scale-up {
-        animation: scale-up-centered 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        animation: scale-up-centered 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     }
     
     .settings-panel {
@@ -4038,11 +4065,11 @@ html[data-theme="light"] .theme-option-item:hover {
 @keyframes scale-up-centered {
     from {
         opacity: 0;
-        transform: translateX(-50%) translateY(-10px) scale(0.97);
+        transform: translate(-50%, -50%) scale(0.95);
     }
     to {
         opacity: 1;
-        transform: translateX(-50%) translateY(0) scale(1);
+        transform: translate(-50%, -50%) scale(1);
     }
 }
 
@@ -5102,10 +5129,10 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    z-index: 1000;
+    z-index: 10000 !important;
     display: flex;
     justify-content: center;
     align-items: center;

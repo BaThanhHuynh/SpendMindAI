@@ -340,6 +340,7 @@ function openTransactionModal() {
     const modal = document.getElementById("transaction-modal");
     if (modal) {
         modal.classList.remove("hidden");
+        document.body.classList.add("modal-open");
     }
 }
 
@@ -347,6 +348,7 @@ function closeTransactionModal() {
     const modal = document.getElementById("transaction-modal");
     if (modal) {
         modal.classList.add("hidden");
+        document.body.classList.remove("modal-open");
         resetTransactionForm();
     }
 }
@@ -450,10 +452,18 @@ function initEventListeners() {
 
     // Settings Dropdown Event Listeners
     const btnSettings = document.getElementById("btn-settings");
-    if (btnSettings) btnSettings.addEventListener("click", toggleSettingsDropdown);
+    if (btnSettings) {
+        btnSettings.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleSettingsDropdown();
+        });
+    }
 
     const btnCloseSettings = document.getElementById("btn-close-settings-dropdown");
     if (btnCloseSettings) btnCloseSettings.addEventListener("click", closeSettingsDropdown);
+
+    const settingsBackdrop = document.getElementById("settings-backdrop");
+    if (settingsBackdrop) settingsBackdrop.addEventListener("click", closeSettingsDropdown);
 
     const settingsForm = document.getElementById("settings-notification-form");
     if (settingsForm) settingsForm.addEventListener("submit", handleSettingsSubmit);
@@ -617,8 +627,12 @@ function initEventListeners() {
     document.addEventListener("click", (e) => {
         const dropdown = document.getElementById("settings-dropdown");
         const btnSettingsEl = document.getElementById("btn-settings");
-        if (dropdown && btnSettingsEl && !dropdown.classList.contains("hidden")) {
-            if (!dropdown.contains(e.target) && !btnSettingsEl.contains(e.target)) {
+        const navBtnSettingsEl = document.getElementById("nav-btn-settings");
+        if (dropdown && !dropdown.classList.contains("hidden")) {
+            const isInside = dropdown.contains(e.target);
+            const isTopBtn = btnSettingsEl && btnSettingsEl.contains(e.target);
+            const isNavBtn = navBtnSettingsEl && navBtnSettingsEl.contains(e.target);
+            if (!isInside && !isTopBtn && !isNavBtn) {
                 closeSettingsDropdown();
             }
         }
@@ -663,7 +677,8 @@ function initEventListeners() {
     }
 
     if (navBtnSettings) {
-        navBtnSettings.addEventListener("click", () => {
+        navBtnSettings.addEventListener("click", (e) => {
+            e.stopPropagation();
             toggleSettingsDropdown();
         });
     }
@@ -1682,6 +1697,9 @@ function importData(e) {
 // Toggle Settings Dropdown & Load Data (Instant 0ms response like Chatbot AI)
 function toggleSettingsDropdown() {
     const dropdown = document.getElementById("settings-dropdown");
+    const backdrop = document.getElementById("settings-backdrop");
+    const navBtnSettings = document.getElementById("nav-btn-settings");
+    const btnSettings = document.getElementById("btn-settings");
     if (!dropdown) return;
     const isHidden = dropdown.classList.contains("hidden");
     if (isHidden) {
@@ -1708,22 +1726,22 @@ function toggleSettingsDropdown() {
         updateThemeSubPanelUI();
         updateSettingsStatusBadges();
         
-        // Position dropdown properly on mobile vs desktop
-        const btnSettings = document.getElementById("btn-settings");
-        if (btnSettings && window.innerWidth <= 768) {
-            const rect = btnSettings.getBoundingClientRect();
-            if (rect.bottom > 0 && rect.bottom < window.innerHeight - 200) {
-                dropdown.style.top = (rect.bottom + 8) + "px";
-            } else {
-                dropdown.style.top = "70px";
-            }
-        } else {
-            dropdown.style.top = "";
+        // Clean inline style on mobile so CSS centered layout is used
+        dropdown.style.top = "";
+        dropdown.style.left = "";
+        dropdown.style.right = "";
+        dropdown.style.bottom = "";
+        dropdown.style.transform = "";
+        
+        if (window.innerWidth <= 768) {
+            if (backdrop) backdrop.classList.remove("hidden");
+            document.body.classList.add("settings-open");
         }
         
         // Display settings dropdown INSTANTLY (0ms latency, matching AI Chatbot)
         dropdown.classList.remove("hidden");
         if (btnSettings) btnSettings.classList.add("active");
+        if (navBtnSettings) navBtnSettings.classList.add("active");
         
         // Asynchronously refresh in background without blocking UI
         refreshNotificationSettingsFromServer();
@@ -1735,13 +1753,26 @@ function toggleSettingsDropdown() {
 // Close Settings Dropdown
 function closeSettingsDropdown() {
     const dropdown = document.getElementById("settings-dropdown");
+    const backdrop = document.getElementById("settings-backdrop");
     if (dropdown) {
         dropdown.classList.add("hidden");
         dropdown.style.top = "";
+        dropdown.style.left = "";
+        dropdown.style.right = "";
+        dropdown.style.bottom = "";
+        dropdown.style.transform = "";
     }
+    if (backdrop) {
+        backdrop.classList.add("hidden");
+    }
+    document.body.classList.remove("settings-open");
     const btnSettings = document.getElementById("btn-settings");
     if (btnSettings) {
         btnSettings.classList.remove("active");
+    }
+    const navBtnSettings = document.getElementById("nav-btn-settings");
+    if (navBtnSettings) {
+        navBtnSettings.classList.remove("active");
     }
     closeSubPanels();
 }

@@ -134,18 +134,32 @@
     .modal-overlay {
         align-items: flex-end !important;
         padding: 0 !important;
+        z-index: 10000 !important;
     }
 
     .modal-content.form-card {
         max-width: 100% !important;
         width: 100% !important;
         border-radius: 24px 24px 0 0 !important;
-        max-height: 90vh !important;
+        max-height: 85vh !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
         margin: 0 !important;
         animation: slideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-        padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+        padding: 24px 20px calc(36px + env(safe-area-inset-bottom, 16px)) 20px !important;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8) !important;
+    }
+
+    .modal-content.form-card .form-actions {
+        margin-top: 24px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .modal-content.form-card #btn-submit {
+        min-height: 50px !important;
+        width: 100% !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
     }
 
     @keyframes slideUpMobile {
@@ -157,6 +171,23 @@
             transform: translateY(0);
             opacity: 1;
         }
+    }
+
+    /* Hide bottom nav and chatbot when any modal or settings is open */
+    body.modal-open .mobile-bottom-nav,
+    body.modal-open .mobile-nav-bar,
+    body.modal-open #mobile-bottom-nav,
+    body.modal-open #mobile-nav-bar,
+    body.modal-open .chatbot-widget,
+    body.settings-open .mobile-bottom-nav,
+    body.settings-open .chatbot-widget,
+    body:has(.modal-overlay:not(.hidden)) .mobile-bottom-nav,
+    body:has(.modal-overlay:not(.hidden)) .chatbot-widget {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+        transform: translateY(24px) !important;
+        transition: opacity 0.2s ease, transform 0.2s ease;
     }
 
     /* Chatbot repositioning above bottom nav */
@@ -179,6 +210,10 @@
         flex-wrap: wrap;
         gap: 12px;
         padding: 14px 16px;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+        transform: none !important;
+        filter: none !important;
     }
 
     .header-actions {
