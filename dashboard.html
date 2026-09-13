@@ -518,9 +518,17 @@
             </div>
             <div class="dropdown-body">
                 <form id="form-app-notification-settings" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- iOS PWA Home Screen Guidance -->
+                    <div id="ios-pwa-guidance-note" style="display: none; padding: 10px; border-radius: 8px; background: rgba(0, 104, 255, 0.1); border: 1px solid rgba(0, 104, 255, 0.25); font-size: 0.72rem; line-height: 1.45; color: var(--text-primary); margin-bottom: 4px;">
+                        <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 3px; color: #0068ff; font-weight: 600;">
+                            <i data-lucide="smartphone" style="width: 13px; height: 13px;"></i> Dành cho iPhone & iPad (iOS)
+                        </div>
+                        Để nhận thông báo khi <b>tắt màn hình hoặc thoát app</b>, bạn cần thêm app vào màn hình chính: Nhấn nút <b>Chia sẻ (Share) ⎋</b> trên Safari &rarr; chọn <b>"Thêm vào MH chính"</b>.
+                    </div>
+
                     <div class="notif-permission-box">
                         <div class="perm-info-row" style="display: flex; align-items: center; justify-content: space-between;">
-                            <span class="perm-title" style="font-size: 0.76rem; color: var(--text-secondary); font-weight: 500;">Quyền thông báo trên máy:</span>
+                            <span class="perm-title" style="font-size: 0.76rem; color: var(--text-secondary); font-weight: 500;">Quyền thông báo hệ thống:</span>
                             <span id="badge-app-notif-perm" class="notif-perm-badge default">Chưa cấp quyền</span>
                         </div>
                         <button type="button" id="btn-request-app-notif-perm" class="btn btn-xs btn-outline-primary" style="margin-top: 6px; display: none; font-size: 0.72rem; padding: 4px 10px;">
@@ -532,12 +540,12 @@
                         <label for="settings-app-notif-time" style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 2px;">Giờ nhắc hàng ngày</label>
                         <input type="time" id="settings-app-notif-time" value="20:00"
                             style="width: 100%; padding: 8px 10px; font-size: 0.85rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);">
-                        <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 4px;">Ứng dụng sẽ tự động gửi thông báo nhắc bạn ghi lại các khoản chi tiêu vào giờ này.</span>
+                        <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 4px;">Máy chủ sẽ gửi thông báo Web Push tới điện thoại vào giờ này kể cả khi bạn đã tắt màn hình hoặc đóng ứng dụng.</span>
                     </div>
 
                     <div class="form-checkbox-group" style="display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" id="settings-app-notif-active" value="1" checked style="accent-color: var(--accent-color); cursor: pointer; width: 16px; height: 16px;">
-                        <label for="settings-app-notif-active" style="font-size: 0.78rem; color: var(--text-primary); font-weight: 500; user-select: none; cursor: pointer;">Kích hoạt nhắc nhở từ ứng dụng</label>
+                        <label for="settings-app-notif-active" style="font-size: 0.78rem; color: var(--text-primary); font-weight: 500; user-select: none; cursor: pointer;">Kích hoạt nhắc nhở tự động (Web Push)</label>
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
@@ -546,15 +554,15 @@
                         </button>
                         <button type="button" id="btn-test-app-notification" class="btn btn-sm w-full btn-outline-accent" 
                             style="padding: 7px 12px; font-size: 0.78rem; border: 1px solid var(--accent-color); color: var(--accent-color); background: transparent; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
-                            <i data-lucide="bell-ring" style="width: 13px; height: 13px;"></i> Thử thông báo ngay trên máy
+                            <i data-lucide="bell-ring" style="width: 13px; height: 13px;"></i> Gửi thông báo đẩy thử nghiệm (Web Push)
                         </button>
                     </div>
 
                     <div class="app-notif-tip-card" style="padding: 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.72rem; line-height: 1.45; color: var(--text-secondary);">
                         <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 4px; color: var(--accent-color); font-weight: 600;">
-                            <i data-lucide="sparkles" style="width: 12px; height: 12px;"></i> Nhắc nhở thông minh
+                            <i data-lucide="sparkles" style="width: 12px; height: 12px;"></i> Nhắc nhở thông minh & Không làm phiền
                         </div>
-                        Nếu trong ngày bạn đã ghi chép chi tiêu đầy đủ rồi, ứng dụng sẽ tự động không làm phiền bạn nữa.
+                        Nếu trong ngày bạn đã ghi chép chi tiêu đầy đủ rồi, ứng dụng sẽ tự động không gửi thông báo làm phiền bạn nữa.
                     </div>
                 </form>
             </div>

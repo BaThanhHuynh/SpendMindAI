@@ -57,4 +57,19 @@ CREATE TABLE IF NOT EXISTS `sessions` (
     INDEX (`expiry`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 5. Bảng lưu trữ thiết bị đăng ký Web Push Notification (Android & iOS PWA)
+CREATE TABLE IF NOT EXISTS `push_subscriptions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `endpoint` VARCHAR(500) NOT NULL UNIQUE,
+    `p256dh` VARCHAR(255) NOT NULL,
+    `auth` VARCHAR(100) NOT NULL,
+    `user_agent` VARCHAR(255) NULL DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_push_user` (`user_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
+

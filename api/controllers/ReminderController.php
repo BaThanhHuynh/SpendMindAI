@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/../services/ZaloService.php';
 require_once __DIR__ . '/../services/MailerService.php';
+require_once __DIR__ . '/../services/WebPushService.php';
 
 class ReminderController {
     private ?PDO $pdo;
@@ -17,7 +18,7 @@ class ReminderController {
     }
 
     /**
-     * Self-healing migration: dynamically ensure Zalo columns exist on MySQL users table.
+     * Self-healing migration: dynamically ensure columns and tables exist on MySQL.
      */
     private function ensureZaloColumns(): void {
         if (!$this->pdo) return;
@@ -44,6 +45,27 @@ class ReminderController {
                 error_log("ensureZaloColumns notice for {$colName}: " . $e->getMessage());
             }
         }
+
+        // Ensure push_subscriptions table exists for Web Push notifications
+        try {
+            $this->pdo->exec("
+                CREATE TABLE IF NOT EXISTS `push_subscriptions` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `user_id` INT NOT NULL,
+                    `endpoint` VARCHAR(500) NOT NULL UNIQUE,
+                    `p256dh` VARCHAR(255) NOT NULL,
+                    `auth` VARCHAR(100) NOT NULL,
+                    `user_agent` VARCHAR(255) NULL DEFAULT NULL,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX `idx_push_user` (`user_id`),
+                    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+        } catch (Throwable $e) {
+            error_log("ensurePushSubscriptionsTable notice: " . $e->getMessage());
+        }
+
         $ensured = true;
     }
 
@@ -264,6 +286,220 @@ class ReminderController {
     }
 
     /**
+     * Get VAPID Public Key for Web Push subscription.
+     */
+    public function getVapidPublicKey(): void {
+        sendJson([
+            "success" => true,
+            "publicKey" => WebPushService::getPublicKey()
+        ]);
+    }
+
+    /**
+     * Save or update Web Push subscription endpoint for user device.
+     */
+    public function savePushSubscription(int $userId, array $input): void {
+        if (!$this->pdo) {
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
+        }
+
+        $this->ensureZaloColumns();
+
+        $endpoint = isset($input['endpoint']) ? trim((string)$input['endpoint']) : '';
+        $p256dh = isset($input['p256dh']) ? trim((string)$input['p256dh']) : '';
+        $auth = isset($input['auth']) ? trim((string)$input['auth']) : '';
+        $userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? substr($_SERVER['HTTP_USER_AGENT'], 0, 255) : null;
+
+        if (empty($endpoint) || !filter_var($endpoint, FILTER_VALIDATE_URL)) {
+            sendError("Endpoint Web Push không hợp lệ", 400);
+            return;
+        }
+
+        if (empty($p256dh) || empty($auth)) {
+            sendError("Khóa bảo mật Push (p256dh hoặc auth) không hợp lệ", 400);
+            return;
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO `push_subscriptions` (`user_id`, `endpoint`, `p256dh`, `auth`, `user_agent`)
+                VALUES (:uid, :endpoint, :p256dh, :auth, :ua)
+                ON DUPLICATE KEY UPDATE 
+                    `user_id` = VALUES(`user_id`),
+                    `p256dh` = VALUES(`p256dh`),
+                    `auth` = VALUES(`auth`),
+                    `user_agent` = VALUES(`user_agent`),
+                    `updated_at` = CURRENT_TIMESTAMP
+            ");
+            $stmt->execute([
+                ':uid' => $userId,
+                ':endpoint' => $endpoint,
+                ':p256dh' => $p256dh,
+                ':auth' => $auth,
+                ':ua' => $userAgent
+            ]);
+
+            // Ensure app_notifications is enabled for this user
+            $this->pdo->prepare("UPDATE `users` SET app_notifications = 1 WHERE id = :uid")->execute([':uid' => $userId]);
+
+            sendJson([
+                "success" => true,
+                "message" => "Thiết bị đã đăng ký nhận thông báo đẩy thành công"
+            ]);
+        } catch (Throwable $e) {
+            error_log("savePushSubscription error: " . $e->getMessage());
+            sendError("Lỗi lưu cấu hình thông báo đẩy: " . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Remove Web Push subscription when user disables notifications or device unregisters.
+     */
+    public function removePushSubscription(int $userId, array $input): void {
+        if (!$this->pdo) {
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
+        }
+
+        $this->ensureZaloColumns();
+
+        $endpoint = isset($input['endpoint']) ? trim((string)$input['endpoint']) : '';
+
+        try {
+            if (!empty($endpoint)) {
+                $stmt = $this->pdo->prepare("DELETE FROM `push_subscriptions` WHERE user_id = :uid AND endpoint = :endpoint");
+                $stmt->execute([':uid' => $userId, ':endpoint' => $endpoint]);
+            } else {
+                $stmt = $this->pdo->prepare("DELETE FROM `push_subscriptions` WHERE user_id = :uid");
+                $stmt->execute([':uid' => $userId]);
+            }
+
+            sendJson([
+                "success" => true,
+                "message" => "Đã xóa đăng ký thông báo đẩy của thiết bị"
+            ]);
+        } catch (Throwable $e) {
+            error_log("removePushSubscription error: " . $e->getMessage());
+            sendError("Lỗi hủy thông báo đẩy: " . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Send immediate test Web Push notification to user devices.
+     */
+    public function testAppPushNotification(int $userId, array $input = []): void {
+        if (!$this->pdo) {
+            sendError("Cơ sở dữ liệu chưa sẵn sàng", 503);
+            return;
+        }
+
+        $this->ensureZaloColumns();
+
+        try {
+            $stmt = $this->pdo->prepare("SELECT * FROM `users` WHERE id = :id");
+            $stmt->execute([':id' => $userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$user) {
+                sendError("Không tìm thấy người dùng", 404);
+                return;
+            }
+
+            $subStmt = $this->pdo->prepare("SELECT * FROM `push_subscriptions` WHERE user_id = :uid");
+            $subStmt->execute([':uid' => $userId]);
+            $subs = $subStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($subs)) {
+                sendError("Thiết bị này chưa đăng ký nhận thông báo đẩy trên máy chủ. Vui lòng cấp quyền thông báo và thêm app vào màn hình chính (trên iOS).", 400);
+                return;
+            }
+
+            $timeStr = date('H:i');
+            $payload = [
+                'title' => 'SpendMindAI - Thông báo thử nghiệm ✨',
+                'body' => "Đã kích hoạt lúc {$timeStr}! Web Push hoạt động ổn định khi bạn tắt màn hình hoặc thoát ứng dụng.",
+                'icon' => '/images/logoapp-192.png',
+                'badge' => '/images/logoapp-192.png',
+                'tag' => 'spendmind-test-reminder',
+                'data' => [
+                    'url' => '/dashboard.html?action=add_transaction'
+                ]
+            ];
+
+            $sentCount = 0;
+            $failedCount = 0;
+            foreach ($subs as $sub) {
+                $res = WebPushService::send($sub['endpoint'], $sub['p256dh'], $sub['auth'], $payload);
+                if ($res['success']) {
+                    $sentCount++;
+                } else {
+                    $failedCount++;
+                    if ($res['expired']) {
+                        $this->pdo->prepare("DELETE FROM `push_subscriptions` WHERE id = :id")->execute([':id' => $sub['id']]);
+                    }
+                }
+            }
+
+            if ($sentCount > 0) {
+                sendJson([
+                    "success" => true,
+                    "sent" => $sentCount,
+                    "message" => "Đã gửi thông báo đẩy thử nghiệm tới {$sentCount} thiết bị thành công! Hãy khóa màn hình hoặc thoát app để kiểm tra."
+                ]);
+            } else {
+                sendError("Không thể gửi thông báo đẩy tới thiết bị. Vui lòng cấp lại quyền thông báo trên trình duyệt.", 500);
+            }
+        } catch (Throwable $e) {
+            error_log("testAppPushNotification error: " . $e->getMessage());
+            sendError("Lỗi gửi thông báo đẩy thử nghiệm: " . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Helper to dispatch Web Push reminders to all registered devices of a user.
+     */
+    public function sendUserPushReminders(int $userId, string $username, ?string $reminderTime = null): bool {
+        if (!$this->pdo) return false;
+        $this->ensureZaloColumns();
+
+        try {
+            $stmt = $this->pdo->prepare("SELECT * FROM `push_subscriptions` WHERE user_id = :uid");
+            $stmt->execute([':uid' => $userId]);
+            $subs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($subs)) {
+                return false;
+            }
+
+            $payload = [
+                'title' => 'SpendMindAI - Nhắc nhở chi tiêu 🔔',
+                'body' => "{$username} ơi, bạn chưa ghi chép chi tiêu hôm nay. Hãy dành 30 giây ghi lại để kiểm soát tài chính nhé!",
+                'icon' => '/images/logoapp-192.png',
+                'badge' => '/images/logoapp-192.png',
+                'tag' => 'spendmind-daily-reminder-' . date('Y-m-d'),
+                'data' => [
+                    'url' => '/dashboard.html?action=add_transaction'
+                ]
+            ];
+
+            $anySent = false;
+            foreach ($subs as $sub) {
+                $res = WebPushService::send($sub['endpoint'], $sub['p256dh'], $sub['auth'], $payload);
+                if ($res['success']) {
+                    $anySent = true;
+                } elseif ($res['expired']) {
+                    $this->pdo->prepare("DELETE FROM `push_subscriptions` WHERE id = :id")->execute([':id' => $sub['id']]);
+                }
+            }
+            return $anySent;
+        } catch (Throwable $e) {
+            error_log("sendUserPushReminders error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Lazy Cron trigger executed from frontend client.
      */
     public function checkAndSend(int $userId): void {
@@ -286,8 +522,9 @@ class ReminderController {
 
             $isZaloActive = (!empty($user['zalo_notifications']) && (!empty($user['zalo_phone']) || !empty($user['zalo_user_id'])));
             $isEmailActive = (!empty($user['email_notifications']) && !empty($user['email']));
+            $isAppActive = (!empty($user['app_notifications']));
 
-            if (($isZaloActive || $isEmailActive) && !empty($user['reminder_time'])) {
+            if (($isZaloActive || $isEmailActive || $isAppActive) && !empty($user['reminder_time'])) {
                 $today = date('Y-m-d');
 
                 if (($user['last_reminder_sent'] ?? null) !== $today) {
@@ -296,8 +533,8 @@ class ReminderController {
                     $hasTxToday = ($txCheck->fetch() !== false);
 
                     if ($hasTxToday) {
-                        $updateStmt = $this->pdo->prepare("UPDATE users SET last_reminder_sent = :today WHERE id = :id");
-                        $updateStmt->execute([':today' => $today, ':id' => $userId]);
+                        $updateStmt = $this->pdo->prepare("UPDATE users SET last_reminder_sent = :today, last_app_reminder_sent = :today_app WHERE id = :id");
+                        $updateStmt->execute([':today' => $today, ':today_app' => $today, ':id' => $userId]);
                     } else {
                         $currentTime = date('H:i:s');
                         if ($currentTime >= $user['reminder_time']) {
@@ -305,26 +542,39 @@ class ReminderController {
                             $messageOutput = "";
                             $isSimulated = false;
 
-                            // 1. Send via Zalo (Primary)
+                            // 1. Send Web Push to devices if enabled
+                            if ($isAppActive) {
+                                $pushSent = $this->sendUserPushReminders($userId, $user['username'], $user['reminder_time']);
+                                if ($pushSent) {
+                                    $sentSuccess = true;
+                                    $messageOutput = "Đã gửi thông báo đẩy đến ứng dụng của bạn";
+                                }
+                            }
+
+                            // 2. Send via Zalo (Primary external channel)
                             if ($isZaloActive) {
                                 $target = !empty($user['zalo_phone']) ? $user['zalo_phone'] : $user['zalo_user_id'];
                                 $zaloRes = ZaloService::sendReminder($target, $user['username'], $user['reminder_time'], $this->appUrl);
-                                $sentSuccess = $zaloRes['success'];
-                                $messageOutput = $zaloRes['message'];
-                                $isSimulated = $zaloRes['simulated'] ?? false;
+                                if ($zaloRes['success']) {
+                                    $sentSuccess = true;
+                                    $messageOutput = $zaloRes['message'];
+                                    $isSimulated = $zaloRes['simulated'] ?? false;
+                                }
                             } 
-                            // 2. Fallback to Email if Zalo not enabled
-                            elseif ($isEmailActive) {
+                            // 3. Fallback to Email if Zalo not active and no push was sent
+                            elseif ($isEmailActive && !$sentSuccess) {
                                 $template = MailerService::buildDailyReminder($user['username'], $user['reminder_time'], $this->appUrl);
                                 $mailResult = MailerService::send($user['email'], $template['subject'], $template['body']);
-                                $sentSuccess = $mailResult['success'];
-                                $messageOutput = $mailResult['message'];
-                                $isSimulated = $mailResult['simulated'] ?? false;
+                                if ($mailResult['success']) {
+                                    $sentSuccess = true;
+                                    $messageOutput = $mailResult['message'];
+                                    $isSimulated = $mailResult['simulated'] ?? false;
+                                }
                             }
 
                             if ($sentSuccess) {
-                                $updateStmt = $this->pdo->prepare("UPDATE users SET last_reminder_sent = :today WHERE id = :id");
-                                $updateStmt->execute([':today' => $today, ':id' => $userId]);
+                                $updateStmt = $this->pdo->prepare("UPDATE users SET last_reminder_sent = :today, last_app_reminder_sent = :today_app WHERE id = :id");
+                                $updateStmt->execute([':today' => $today, ':today_app' => $today, ':id' => $userId]);
                             }
 
                             sendJson([
@@ -351,7 +601,7 @@ class ReminderController {
     }
 
     /**
-     * System Cron batch execution: optimized query with Zalo priority dispatch.
+     * System Cron batch execution: optimized query with Web Push, Zalo and Email dispatch.
      */
     public function executeSystemCron(): array {
         if (!$this->pdo) {
@@ -371,19 +621,25 @@ class ReminderController {
         $startTime = microtime(true);
 
         try {
-            // Check if zalo_notifications column exists in table
-            $colsStmt = $this->pdo->query("SHOW COLUMNS FROM `users` LIKE 'zalo_notifications'");
-            $hasZalo = ($colsStmt && !empty($colsStmt->fetchAll()));
+            $colsStmt = $this->pdo->query("SHOW COLUMNS FROM `users`");
+            $tableCols = $colsStmt ? $colsStmt->fetchAll(PDO::FETCH_COLUMN) : [];
 
-            $condition = $hasZalo 
-                ? "(u.zalo_notifications = 1 OR u.email_notifications = 1)" 
-                : "u.email_notifications = 1";
+            $conditions = ["u.email_notifications = 1"];
+            if (in_array('zalo_notifications', $tableCols)) {
+                $conditions[] = "u.zalo_notifications = 1";
+            }
+            if (in_array('app_notifications', $tableCols)) {
+                $conditions[] = "u.app_notifications = 1";
+            }
+
+            $conditionSql = "(" . implode(" OR ", $conditions) . ")";
 
             // 1. Bulk mark users who already logged transactions today as skipped in a single query
             $skipStmt = $this->pdo->prepare("
                 UPDATE users u
-                SET u.last_reminder_sent = :today
-                WHERE {$condition}
+                SET u.last_reminder_sent = :today,
+                    u.last_app_reminder_sent = :today_app
+                WHERE {$conditionSql}
                   AND u.reminder_time IS NOT NULL 
                   AND (u.last_reminder_sent IS NULL OR u.last_reminder_sent != :today_check)
                   AND :current_time >= u.reminder_time
@@ -394,17 +650,18 @@ class ReminderController {
             ");
             $skipStmt->execute([
                 ':today' => $today,
+                ':today_app' => $today,
                 ':today_check' => $today,
                 ':current_time' => $currentTime,
                 ':today_tx' => $today
             ]);
             $skippedCount = $skipStmt->rowCount();
 
-            // 2. Fetch users who need reminders (no transactions entered today), bounded by LIMIT 20
+            // 2. Fetch users who need reminders (no transactions entered today), bounded by LIMIT 25
             $dueStmt = $this->pdo->prepare("
                 SELECT u.*
                 FROM users u
-                WHERE {$condition}
+                WHERE {$conditionSql}
                   AND u.reminder_time IS NOT NULL 
                   AND (u.last_reminder_sent IS NULL OR u.last_reminder_sent != :today)
                   AND :current_time >= u.reminder_time
@@ -412,7 +669,7 @@ class ReminderController {
                       SELECT 1 FROM transactions t 
                       WHERE t.user_id = u.id AND t.date = :today_tx
                   )
-                LIMIT 20
+                LIMIT 25
             ");
             $dueStmt->execute([
                 ':today' => $today,
@@ -424,31 +681,44 @@ class ReminderController {
             $sentCount = 0;
             $failedCount = 0;
 
-            $updateStmt = $this->pdo->prepare("UPDATE users SET last_reminder_sent = :today WHERE id = :id");
+            $updateStmt = $this->pdo->prepare("UPDATE users SET last_reminder_sent = :today, last_app_reminder_sent = :today_app WHERE id = :id");
 
             foreach ($users as $user) {
-                // Safety guard: prevent exceeding serverless execution budget (10s threshold)
-                if ((microtime(true) - $startTime) > 10.0) {
-                    error_log("System cron time limit guard reached (10s). Stopping batch.");
+                // Safety guard: prevent exceeding serverless execution budget (12s threshold)
+                if ((microtime(true) - $startTime) > 12.0) {
+                    error_log("System cron time limit guard reached (12s). Stopping batch.");
                     break;
                 }
 
                 $sent = false;
-                // Dispatch Zalo if active
+
+                // 1. Dispatch Web Push to devices if user has app notifications enabled
+                if (!empty($user['app_notifications'])) {
+                    $pushSent = $this->sendUserPushReminders($user['id'], $user['username'], $user['reminder_time']);
+                    if ($pushSent) {
+                        $sent = true;
+                    }
+                }
+
+                // 2. Dispatch Zalo if active
                 if (!empty($user['zalo_notifications']) && (!empty($user['zalo_phone']) || !empty($user['zalo_user_id']))) {
                     $target = !empty($user['zalo_phone']) ? $user['zalo_phone'] : $user['zalo_user_id'];
                     $res = ZaloService::sendReminder($target, $user['username'], $user['reminder_time'], $this->appUrl);
-                    $sent = $res['success'];
+                    if ($res['success']) {
+                        $sent = true;
+                    }
                 } 
-                // Otherwise fallback to email if email active
-                elseif (!empty($user['email_notifications']) && !empty($user['email'])) {
+                // 3. Fallback to email if email active and no other channel succeeded
+                elseif (!empty($user['email_notifications']) && !empty($user['email']) && !$sent) {
                     $template = MailerService::buildDailyReminder($user['username'], $user['reminder_time'], $this->appUrl);
                     $mailResult = MailerService::send($user['email'], $template['subject'], $template['body']);
-                    $sent = $mailResult['success'];
+                    if ($mailResult['success']) {
+                        $sent = true;
+                    }
                 }
 
                 if ($sent) {
-                    $updateStmt->execute([':today' => $today, ':id' => $user['id']]);
+                    $updateStmt->execute([':today' => $today, ':today_app' => $today, ':id' => $user['id']]);
                     $sentCount++;
                 } else {
                     $failedCount++;

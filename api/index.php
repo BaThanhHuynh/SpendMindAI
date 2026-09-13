@@ -128,6 +128,22 @@ if ($action === 'test_zalo_reminder' && $method === 'POST') {
     $reminderCtrl->testZaloReminder($userId, $input);
     exit();
 }
+if ($action === 'get_vapid_public_key' && $method === 'GET') {
+    $reminderCtrl->getVapidPublicKey();
+    exit();
+}
+if ($action === 'save_push_subscription' && $method === 'POST') {
+    $reminderCtrl->savePushSubscription($userId, $input);
+    exit();
+}
+if ($action === 'remove_push_subscription' && $method === 'POST') {
+    $reminderCtrl->removePushSubscription($userId, $input);
+    exit();
+}
+if ($action === 'test_app_push_notification' && $method === 'POST') {
+    $reminderCtrl->testAppPushNotification($userId, $input);
+    exit();
+}
 if ($action === 'check_and_send_reminder') {
     $reminderCtrl->checkAndSend($userId);
     exit();

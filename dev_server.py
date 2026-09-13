@@ -207,6 +207,12 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                     "avatar_url": u.get("avatar_url", None)
                 })
 
+            if action == "get_vapid_public_key":
+                return self.send_json({
+                    "success": True,
+                    "publicKey": "BMQjBm-Q8HdsZtTjxqhCrRja2-vW0HG8D66eYM6eI8znAs3dWCzVzSBqUc8xlMEx2_ygHCc3ALNlO9virV5wzPo"
+                })
+
             if action == "check_and_send_reminder":
                 return self.send_json({
                     "success": True,
@@ -324,6 +330,33 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                     "simulated": True,
                     "zalo_link": f"https://zalo.me/{phone}",
                     "message": f"Đã tạo tin nhắn nhắc nhở Zalo cá nhân cho số {phone}!"
+                })
+
+            if action == "save_push_subscription":
+                if "push_subscriptions" not in db:
+                    db["push_subscriptions"] = []
+                endpoint = payload.get("endpoint", "")
+                db["push_subscriptions"] = [s for s in db["push_subscriptions"] if s.get("endpoint") != endpoint]
+                db["push_subscriptions"].append(payload)
+                db["user"]["app_notifications"] = 1
+                save_data(db)
+                return self.send_json({"success": True, "message": "Đã lưu đăng ký thông báo đẩy thành công (Local)"})
+
+            if action == "remove_push_subscription":
+                endpoint = payload.get("endpoint", "")
+                if "push_subscriptions" in db:
+                    if endpoint:
+                        db["push_subscriptions"] = [s for s in db["push_subscriptions"] if s.get("endpoint") != endpoint]
+                    else:
+                        db["push_subscriptions"] = []
+                    save_data(db)
+                return self.send_json({"success": True, "message": "Đã xóa đăng ký thông báo đẩy (Local)"})
+
+            if action == "test_app_push_notification":
+                return self.send_json({
+                    "success": True,
+                    "sent": 1,
+                    "message": "Đã gửi thông báo đẩy thử nghiệm (Local Simulation). Hãy khóa màn hình hoặc chuyển tab để kiểm tra."
                 })
 
             if action == "chat":

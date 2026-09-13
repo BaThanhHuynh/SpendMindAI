@@ -1,7 +1,7 @@
 /* ==========================================================================
    SPENDMINDAI - IN-APP & DEVICE NOTIFICATION MANAGER (ANDROID & IOS PWA)
-   Manages automated daily spending reminders from the app itself,
-   permission negotiation, real-time scheduling engine and notification actions.
+   Full Web Push Protocol (RFC 8292 VAPID) + Local In-App Notification Engine
+   Enables automated background notifications when screen is locked or app is closed.
    ========================================================================== */
 
 (function (window, document) {
@@ -9,6 +9,7 @@
 
     const STORAGE_KEY_SETTINGS = 'spendmind_app_notif_settings';
     const STORAGE_KEY_LAST_SENT = 'spendmind_last_app_notif_date';
+    const DEFAULT_VAPID_PUBLIC_KEY = 'BMQjBm-Q8HdsZtTjxqhCrRja2-vW0HG8D66eYM6eI8znAs3dWCzVzSBqUc8xlMEx2_ygHCc3ALNlO9virV5wzPo';
 
     // State cache
     const state = {
@@ -16,16 +17,36 @@
         time: '20:00',
         onlyIfNoExpenses: true,
         isStandalone: false,
+        isIOS: false,
+        isPushSubscribed: false,
         hasCheckedUrlAction: false
     };
 
-    // Initialize detection
+    // Helper: Convert VAPID base64url public key to Uint8Array for PushManager
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    // Initialize detection of device and environment
     function initDetection() {
+        // Detect standalone PWA mode (added to home screen)
         state.isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                              window.navigator.standalone === true ||
                              document.referrer.includes('android-app://');
 
-        // Load local cache
+        // Detect iOS (iPhone / iPad / iPod)
+        state.isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent || '') || 
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && 
+                      !window.MSStream;
+
+        // Load cached settings
         try {
             const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
             if (raw) {
@@ -41,7 +62,7 @@
 
     initDetection();
 
-    // Check permission status
+    // Check system permission status
     function getPermissionStatus() {
         if (!('Notification' in window)) {
             return 'unsupported';
@@ -58,13 +79,108 @@
             return 'unsupported';
         }
 
+        // Check iOS Safari limitation: iOS requires "Add to Home Screen" for Web Push
+        if (state.isIOS && !state.isStandalone) {
+            if (typeof showToast === 'function') {
+                showToast('Trên iPhone/iPad: Vui lòng nhấn nút Chia sẻ ⎋ -> "Thêm vào MH chính" để nhận thông báo khi tắt màn hình!', 'warning');
+            }
+        }
+
         try {
             const result = await Notification.requestPermission();
             updateUIStatus();
+
+            if (result === 'granted') {
+                await subscribeDevicePush();
+            }
             return result;
         } catch (err) {
             console.warn('Error requesting notification permission:', err);
             return 'denied';
+        }
+    }
+
+    // Fetch VAPID public key from backend
+    async function getVapidPublicKey() {
+        try {
+            const res = await fetch('/api/?action=get_vapid_public_key');
+            const data = await res.json();
+            if (data.success && data.publicKey) {
+                return data.publicKey;
+            }
+        } catch (err) {
+            console.warn('Could not fetch VAPID key from API, using default:', err);
+        }
+        return DEFAULT_VAPID_PUBLIC_KEY;
+    }
+
+    // Subscribe this device to Web Push (RFC 8292)
+    async function subscribeDevicePush() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            console.warn('PushManager is not supported in this browser context.');
+            return null;
+        }
+
+        try {
+            const reg = await navigator.serviceWorker.ready;
+            if (!reg || !reg.pushManager) return null;
+
+            let subscription = await reg.pushManager.getSubscription();
+
+            if (!subscription) {
+                const vapidKey = await getVapidPublicKey();
+                const convertedKey = urlBase64ToUint8Array(vapidKey);
+                subscription = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: convertedKey
+                });
+            }
+
+            if (subscription) {
+                const subJson = subscription.toJSON();
+                await fetch('/api/?action=save_push_subscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint: subscription.endpoint,
+                        p256dh: (subJson.keys && subJson.keys.p256dh) ? subJson.keys.p256dh : '',
+                        auth: (subJson.keys && subJson.keys.auth) ? subJson.keys.auth : ''
+                    })
+                });
+
+                state.isPushSubscribed = true;
+                updateUIStatus();
+                return subscription;
+            }
+        } catch (err) {
+            console.warn('Could not subscribe to device push notifications:', err);
+        }
+        return null;
+    }
+
+    // Unsubscribe this device from Web Push
+    async function unsubscribeDevicePush() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+        try {
+            const reg = await navigator.serviceWorker.ready;
+            if (!reg || !reg.pushManager) return;
+
+            const subscription = await reg.pushManager.getSubscription();
+            if (subscription) {
+                const endpoint = subscription.endpoint;
+                await subscription.unsubscribe();
+
+                await fetch('/api/?action=remove_push_subscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ endpoint })
+                });
+            }
+            state.isPushSubscribed = false;
+            updateUIStatus();
+        } catch (err) {
+            console.warn('Error unsubscribing device push:', err);
         }
     }
 
@@ -152,7 +268,7 @@
         return `${h}:${m}`;
     }
 
-    // Core scheduler checker: compares time and checks conditions
+    // Client-side scheduler check (for active foreground session)
     function checkScheduledReminder() {
         if (!state.enabled) return;
 
@@ -168,14 +284,11 @@
 
         // Trigger condition: current time is at or after reminder time
         if (currentTime >= targetTime) {
-            // If condition says "only if no expenses recorded today"
             if (state.onlyIfNoExpenses && hasExpensesRecordedToday()) {
-                // User already recorded spending today! Mark as done so we don't bother them
                 localStorage.setItem(STORAGE_KEY_LAST_SENT, todayStr);
                 return;
             }
 
-            // Dispatch notification
             if (getPermissionStatus() === 'granted') {
                 showNotification('SpendMindAI - Nhắc nhở chi tiêu 🔔', {
                     body: 'Bạn chưa ghi chép chi tiêu hôm nay. Hãy dành 30 giây ghi lại để không sót khoản nào nhé!',
@@ -186,7 +299,7 @@
         }
     }
 
-    // Trigger immediate test notification
+    // Trigger immediate test notification (sends via real Server Web Push + immediate client display)
     async function sendTestNotification() {
         const perm = getPermissionStatus();
         if (perm !== 'granted') {
@@ -199,17 +312,40 @@
             }
         }
 
+        // Ensure subscription exists before test
+        await subscribeDevicePush();
+
+        // 1. Show immediate local feedback notification
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
         await showNotification('SpendMindAI - Thông báo thử nghiệm ✨', {
-            body: `Đã kích hoạt thành công lúc ${timeStr}! Ứng dụng sẽ tự động nhắc nhở bạn theo giờ đã cài đặt.`,
+            body: `Đã kích hoạt lúc ${timeStr}! Khóa màn hình hoặc thoát app để kiểm tra thông báo đẩy tự động.`,
             tag: 'spendmind-test-reminder',
             data: { url: '/dashboard.html?action=add_transaction' }
         });
 
-        if (typeof showToast === 'function') {
-            showToast('Đã gửi thông báo thử nghiệm thành công lên thiết bị của bạn!', 'success');
+        // 2. Dispatch real server-side Web Push to verify background delivery
+        try {
+            const pushRes = await fetch('/api/?action=test_app_push_notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const pushData = await pushRes.json();
+            if (pushData.success) {
+                if (typeof showToast === 'function') {
+                    showToast(pushData.message || 'Đã gửi thông báo đẩy thử nghiệm tới thiết bị của bạn thành công!', 'success');
+                }
+            } else {
+                if (typeof showToast === 'function') {
+                    showToast(pushData.message || 'Đã kích hoạt thông báo cục bộ.', 'info');
+                }
+            }
+        } catch (err) {
+            console.warn('Server test push dispatch notice:', err);
+            if (typeof showToast === 'function') {
+                showToast('Đã kích hoạt thông báo thử nghiệm trên thiết bị!', 'success');
+            }
         }
     }
 
@@ -229,7 +365,6 @@
                 } else if (typeof window.openAddModal === 'function') {
                     window.openAddModal('expense');
                 }
-                // Clean URL without refresh
                 window.history.replaceState({}, document.title, window.location.pathname);
             }, 600);
         }
@@ -242,7 +377,7 @@
     }
 
     // Synchronize settings with server & local storage
-    function updateSettings(newSettings) {
+    async function updateSettings(newSettings) {
         if (typeof newSettings.enabled === 'boolean') state.enabled = newSettings.enabled;
         if (newSettings.time) state.time = newSettings.time;
         if (typeof newSettings.onlyIfNoExpenses === 'boolean') state.onlyIfNoExpenses = newSettings.onlyIfNoExpenses;
@@ -269,7 +404,7 @@
         const permReqBtn = document.getElementById('btn-request-app-notif-perm');
         if (permBadge) {
             if (perm === 'granted') {
-                permBadge.textContent = 'Đã cấp quyền hệ thống';
+                permBadge.textContent = state.isPushSubscribed ? 'Web Push & Thiết bị: Đã kích hoạt' : 'Đã cấp quyền hệ thống';
                 permBadge.className = 'notif-perm-badge granted';
                 if (permReqBtn) permReqBtn.style.display = 'none';
             } else if (perm === 'denied') {
@@ -286,6 +421,16 @@
                     permReqBtn.style.display = 'inline-flex';
                     permReqBtn.textContent = 'Cấp quyền thông báo';
                 }
+            }
+        }
+
+        // iOS Specific Home Screen Guidance in subpanel
+        const iosNote = document.getElementById('ios-pwa-guidance-note');
+        if (iosNote) {
+            if (state.isIOS && !state.isStandalone) {
+                iosNote.style.display = 'block';
+            } else {
+                iosNote.style.display = 'none';
             }
         }
 
@@ -312,12 +457,11 @@
 
     // Bind event listeners on dashboard elements
     function bindDOMEvents() {
-        // Menu item click opens sub-panel
         const menuItem = document.getElementById('menu-item-app-notifications');
         if (menuItem) {
             menuItem.addEventListener('click', (e) => {
                 if (e.target.closest('.switch') || e.target.id === 'settings-app-notif-toggle') {
-                    return; // Let toggle handler process
+                    return;
                 }
                 if (typeof window.openSubPanel === 'function') {
                     window.openSubPanel('app-notifications');
@@ -337,6 +481,13 @@
                         return;
                     }
                 }
+
+                if (willEnable) {
+                    await subscribeDevicePush();
+                } else {
+                    await unsubscribeDevicePush();
+                }
+
                 updateSettings({ enabled: willEnable });
                 syncSettingsToServer();
             });
@@ -370,13 +521,27 @@
         // Sub-panel form submit
         const form = document.getElementById('form-app-notification-settings');
         if (form) {
-            form.addEventListener('submit', (e) => {
+            form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const subToggle = document.getElementById('settings-app-notif-active');
                 const timeInput = document.getElementById('settings-app-notif-time');
 
                 const enabled = subToggle ? subToggle.checked : state.enabled;
                 const time = timeInput && timeInput.value ? timeInput.value : state.time;
+
+                if (enabled && getPermissionStatus() !== 'granted') {
+                    const res = await requestPermission();
+                    if (res !== 'granted') {
+                        if (subToggle) subToggle.checked = false;
+                        return;
+                    }
+                }
+
+                if (enabled) {
+                    await subscribeDevicePush();
+                } else {
+                    await unsubscribeDevicePush();
+                }
 
                 updateSettings({ enabled, time });
                 syncSettingsToServer(true);
@@ -412,18 +577,35 @@
         }
     }
 
+    // Verify existing subscription on startup
+    async function checkExistingSubscription() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        try {
+            const reg = await navigator.serviceWorker.ready;
+            if (reg && reg.pushManager) {
+                const sub = await reg.pushManager.getSubscription();
+                state.isPushSubscribed = !!sub;
+                updateUIStatus();
+
+                // If user has notification enabled and permission is granted, ensure backend is synced
+                if (state.enabled && Notification.permission === 'granted' && !sub) {
+                    await subscribeDevicePush();
+                }
+            }
+        } catch (e) {
+            console.warn('Check existing push subscription notice:', e);
+        }
+    }
+
     // Initialize scheduler loops
     function startScheduler() {
-        // Initial check
         checkScheduledReminder();
-
-        // High precision interval (runs every 30 seconds)
         setInterval(checkScheduledReminder, 30000);
 
-        // Resume triggers: when phone unlocks or user switches back to the app
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 checkScheduledReminder();
+                checkExistingSubscription();
             }
         });
         window.addEventListener('focus', checkScheduledReminder);
@@ -435,6 +617,7 @@
         bindDOMEvents();
         updateUIStatus();
         handleUrlActionCheck();
+        checkExistingSubscription();
         startScheduler();
     });
 
@@ -443,6 +626,8 @@
         getState: () => ({ ...state }),
         getPermissionStatus,
         requestPermission,
+        subscribeDevicePush,
+        unsubscribeDevicePush,
         sendTestNotification,
         updateSettings,
         updateUIStatus,

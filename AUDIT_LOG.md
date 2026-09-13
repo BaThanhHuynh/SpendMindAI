@@ -12,10 +12,10 @@
 | Severity | Total Detected | Resolved | Pending |
 |:---|:---:|:---:|:---:|
 | **Critical (P0)** | 0 | 0 | 0 |
-| **High (P1)** | 5 | 5 | 0 |
+| **High (P1)** | 6 | 6 | 0 |
 | **Medium (P2)** | 4 | 4 | 0 |
 | **Minor (P3)** | 2 | 2 | 0 |
-| **Total** | **11** | **11** | **0** |
+| **Total** | **12** | **12** | **0** |
 
 ---
 
@@ -52,43 +52,54 @@
    - **Giải pháp:** Triển khai `ZaloService` chuẩn Production hỗ trợ Zalo OA OpenAPI & ZNS, regex SĐT `84...`, self-healing migration trên bảng `users`, bổ sung endpoint `test_zalo_reminder` và giao diện Zalo đồng bộ design system.
    - **Trạng thái:** [x] RESOLVED.
 
+6. **[P1] Architecture/PWA - Thiếu hạ tầng Web Push Notification (RFC 8292 VAPID) khi đóng app / tắt màn hình (Android & iOS)**
+   - **File:** `api/services/WebPushService.php`, `api/controllers/ReminderController.php`, `js/app-notification.js`, `sw.js`, `dashboard.html`, `database.sql`, `.env`
+   - **Vấn đề:** Cơ chế thông báo cũ chỉ dựa vào `setInterval` JavaScript client-side trong `app-notification.js`. Khi người dùng thoát app hoặc tắt màn hình, hệ điều hành Android và iOS (WebKit) lập tức đóng băng (freeze/suspend) tiến trình JS, khiến người dùng hoàn toàn không nhận được thông báo nhắc nhở.
+   - **Giải pháp:**
+     - Xây dựng `WebPushService.php` thuần PHP OpenSSL chuẩn RFC 8030 / RFC 8291 / RFC 8292 VAPID (ký JWT ES256, mã hóa AES-128-GCM, kết nối trực tiếp Google FCM và Apple APNs).
+     - Bổ sung bảng `push_subscriptions` với self-healing migration lưu endpoint và khóa bảo mật (`p256dh`, `auth`) của từng thiết bị.
+     - Cập nhật `ReminderController.php` và `api/cron.php` tích hợp tự động quét và gửi Web Push tới các thiết bị người dùng đến giờ nhắc hẹn mà chưa ghi chi tiêu hôm nay.
+     - Nâng cấp `js/app-notification.js` tự động đăng ký `PushManager`, phát hiện iOS Safari chưa thêm vào màn hình chính để hiển thị hướng dẫn PWA ("Thêm vào MH chính" để nhận thông báo), và nút gửi thông báo đẩy thử nghiệm trực tiếp từ máy chủ.
+     - Đồng bộ API endpoints và mô phỏng hoàn chỉnh trong `dev_server.py`.
+   - **Trạng thái:** [x] RESOLVED.
+
 ---
 
 ### [P2 - Medium]
-6. **[P2] Observability - Thiếu Endpoints Kiểm Tra Sức Khỏe Hệ Thống (`/healthz`, `/readyz`)**
+7. **[P2] Observability - Thiếu Endpoints Kiểm Tra Sức Khỏe Hệ Thống (`/healthz`, `/readyz`)**
    - **File:** `api/index.php`, `vercel.json`, `dev_server.py`
    - **Vấn đề:** `PRODUCTION_STANDARDS.md` yêu cầu có endpoint `/healthz` và `/readyz`. Trước đây chỉ trả 404.
    - **Giải pháp:** Đã bổ sung endpoint `/healthz` (trả về trạng thái tiến trình) và `/readyz` (ping kiểm tra kết nối DB trực tiếp), đồng thời thêm route rewrite trong `vercel.json` và handler trong `dev_server.py`.
    - **Trạng thái:** [x] RESOLVED.
 
-7. **[P2] Performance/Database - Chỉ mục dư thừa (Redundant Index) trên bảng `transactions`**
+8. **[P2] Performance/Database - Chỉ mục dư thừa (Redundant Index) trên bảng `transactions`**
    - **File:** `database.sql` (dòng 34)
    - **Vấn đề:** Bảng `transactions` có `INDEX (user_id)` và `INDEX idx_user_date (user_id, date, id)`. Chỉ mục `(user_id)` dư thừa vì đã nằm ở tiền tố trái nhất của `idx_user_date`.
    - **Giải pháp:** Đã loại bỏ `INDEX (user_id)` khỏi `database.sql`.
    - **Trạng thái:** [x] RESOLVED.
 
-8. **[P2] UI/UX & Caching - Bất đồng bộ Cache Buster Version giữa các trang**
+9. **[P2] UI/UX & Caching - Bất đồng bộ Cache Buster Version giữa các trang**
    - **File:** `login.html`, `register.html`
    - **Vấn đề:** `dashboard.html` đã nâng cấp lên `?v=20260912_v3`, nhưng `login.html` và `register.html` vẫn gọi `?v=20260912_v1` và `?v=20260911_v8`.
    - **Giải pháp:** Đã đồng bộ toàn bộ tài nguyên sang phiên bản `?v=20260912_v3`.
    - **Trạng thái:** [x] RESOLVED.
 
-9. **[P2] Architecture - Chuẩn hóa Session Cookie Options cho PHP Session**
-   - **File:** `api/config/security.php` (dòng 185-193)
-   - **Vấn đề:** Cần cấu hình tường minh `session.cookie_httponly = 1`, `session.cookie_samesite = 'Lax'`, `session.use_strict_mode = 1`.
-   - **Giải pháp:** Đã thiết lập các tùy chọn cookie session an toàn trước khi gọi `session_start()`.
-   - **Trạng thái:** [x] RESOLVED.
+10. **[P2] Architecture - Chuẩn hóa Session Cookie Options cho PHP Session**
+    - **File:** `api/config/security.php` (dòng 185-193)
+    - **Vấn đề:** Cần cấu hình tường minh `session.cookie_httponly = 1`, `session.cookie_samesite = 'Lax'`, `session.use_strict_mode = 1`.
+    - **Giải pháp:** Đã thiết lập các tùy chọn cookie session an toàn trước khi gọi `session_start()`.
+    - **Trạng thái:** [x] RESOLVED.
 
 ---
 
 ### [P3 - Minor]
-10. **[P3] Cleanliness - Ghi log gỡ lỗi trong mã nguồn Production**
+11. **[P3] Cleanliness - Ghi log gỡ lỗi trong mã nguồn Production**
     - **File:** `dashboard.html` (dòng 587)
     - **Vấn đề:** Có câu lệnh `console.log('ServiceWorker registration error: ', err);`.
     - **Giải pháp:** Đã chuyển đổi sang `console.warn` chuẩn hóa.
     - **Trạng thái:** [x] RESOLVED.
 
-11. **[P3] Cleanliness - Đồng bộ nguồn nạp Lucide Icons**
+12. **[P3] Cleanliness - Đồng bộ nguồn nạp Lucide Icons**
     - **File:** `login.html`, `register.html`, `dashboard.html`
     - **Vấn đề:** Sử dụng lẫn lộn `unpkg.com` và `cdn.jsdelivr.net`.
     - **Giải pháp:** Đã đồng bộ tất cả các trang nạp từ `cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js`.
