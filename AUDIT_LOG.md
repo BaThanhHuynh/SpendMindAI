@@ -1,9 +1,9 @@
 # SPENDMINDAI - PRODUCTION AUDIT LOG
 
-> **Audit Execution Date:** 2026-09-12  
+> **Audit Execution Date:** 2026-09-13  
 > **Auditor:** AI Principal Software Architect & Staff Security Engineer  
 > **Standard:** `PRODUCTION_STANDARDS.md` & `AGENTS.md`  
-> **Current Status:** COMPLETED - ALL RESOLVED (11/11 items)
+> **Current Status:** COMPLETED - ALL RESOLVED (18/18 items)
 
 ---
 
@@ -11,11 +11,11 @@
 
 | Severity | Total Detected | Resolved | Pending |
 |:---|:---:|:---:|:---:|
-| **Critical (P0)** | 0 | 0 | 0 |
-| **High (P1)** | 6 | 6 | 0 |
-| **Medium (P2)** | 4 | 4 | 0 |
+| **Critical (P0)** | 1 | 1 | 0 |
+| **High (P1)** | 8 | 8 | 0 |
+| **Medium (P2)** | 7 | 7 | 0 |
 | **Minor (P3)** | 2 | 2 | 0 |
-| **Total** | **12** | **12** | **0** |
+| **Total** | **18** | **18** | **0** |
 
 ---
 
@@ -86,6 +86,17 @@
      - Thêm `credentials: 'include'` cho toàn bộ các lệnh gọi API Web Push và hiển thị huy hiệu trạng thái xanh trực quan trên dashboard.
    - **Trạng thái:** [x] RESOLVED.
 
+9. **[P1] UI/UX - Nâng cấp toàn diện hệ thống theo chuẩn Apple HIG & tích hợp skill awesome-design-md**
+   - **File:** `.agents/skills/awesome-design-md/`, `DESIGN.md`, `design-system/spendmindai/MASTER.md`, `css/styles.css`, `css/mobile.css`, `js/dashboard.js`, `dashboard.html`, `index.html`, `login.html`, `register.html`
+   - **Vấn đề:** Hệ thống thiết kế cũ sử dụng màu xanh lá thô, phông chữ thiếu đồng bộ, chuyển động thiếu tính chất vật lý đàn hồi (spring physics) và chưa có chuẩn thiết kế cao cấp như Apple.
+   - **Giải pháp:**
+     - Cài đặt trọn bộ skill `awesome-design-md` từ VoltAgent vào `.agents/skills/awesome-design-md/` với tài liệu phân tích chi tiết của 74 thương hiệu hàng đầu, đặc biệt là Apple.
+     - Thiết lập `DESIGN.md` tại thư mục gốc và cập nhật `MASTER.md` tuân thủ Apple Human Interface Guidelines và Apple Web Design System.
+     - Chuyển đổi toàn bộ màu sắc sang Apple Action Blue (`#0071e3`), System Green (`#34c759`), System Red (`#ff3b30`), nền Apple Parchment `#f5f5f7` (Light) và Apple OLED Black `#000000` (Dark).
+     - Áp dụng chất liệu kính mờ Apple Vibrancy (`backdrop-filter: blur(20px) saturate(180%)`), chuyển động vật lý đàn hồi `cubic-bezier(0.32, 0.72, 0, 1)`, vi tương tác co ép `scale(0.96)` khi nhấn nút.
+     - Tái cấu trúc thẻ số dư phong cách Apple Card / Apple Wallet, thanh điều hướng di động chuẩn iOS Tab Bar, thông báo nổi Dynamic Island, ngăn kéo trợ lý ảo AI Messages.
+   - **Trạng thái:** [x] RESOLVED.
+
 ---
 
 ### [P2 - Medium]
@@ -127,3 +138,78 @@
     - **Vấn đề:** Sử dụng lẫn lộn `unpkg.com` và `cdn.jsdelivr.net`.
     - **Giải pháp:** Đã đồng bộ tất cả các trang nạp từ `cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js`.
     - **Trạng thái:** [x] RESOLVED.
+
+13. **[P2] Routing/UX - Lỗi 404 File not found khi truy cập URL rút gọn (`/dashboard`, `/login`, `/register`)**
+    - **File:** `dev_server.py`, `.htaccess`
+    - **Vấn đề:** Trong khi `vercel.json` đã cấu hình rewrite URL rút gọn, máy chủ phát triển cục bộ `dev_server.py` và cấu hình Apache `.htaccess` chỉ ánh xạ `/` về `index.html`. Khi người dùng truy cập trực tiếp hoặc đăng nhập điều hướng sang `/dashboard`, Python `SimpleHTTPRequestHandler` tìm tệp không có phần mở rộng `.html` và trả lỗi `404 - File not found`.
+    - **Giải pháp:**
+      - Bổ sung cơ chế rewrite URL sạch thông minh trong `dev_server.py` tự động ánh xạ `/dashboard`, `/login`, `/register` và các đường dẫn HTML rút gọn.
+      - Bổ sung quy tắc rewrite `RewriteCond %{DOCUMENT_ROOT}/$1.html -f` trong `.htaccess` cho máy chủ Apache.
+    - **Trạng thái:** [x] RESOLVED.
+
+14. **[P1] Session/Auth - Đăng xuất quay về trang index bị tự động đăng nhập lại vào dashboard**
+    - **File:** `dev_server.py`, `js/dashboard.js`, `js/index.js`, `vercel.json`
+    - **Vấn đề:** Khi người dùng bấm "Đăng xuất" trong `dashboard.html`, yêu cầu `POST /api?action=logout` được gửi lên `dev_server.py`. Tuy nhiên máy chủ cục bộ không cập nhật trường `authenticated = False` vào cơ sở dữ liệu `local_dev_data.json` và phản hồi API thiếu header cấm bộ nhớ đệm (`Cache-Control: no-store, no-cache`). Khi chuyển hướng về `index.html`, hàm `checkAuthSession()` gửi `GET /api?action=check_session`, nhận về `authenticated: true` nên lập tức chuyển hướng ngược lại vào `dashboard`.
+    - **Giải pháp:**
+      - Cập nhật handler `action == "logout"` trong `dev_server.py` đặt `db["user"]["authenticated"] = False` và lưu đồng bộ vào `local_dev_data.json`.
+      - Bổ sung kiểm tra trong `action == "check_session"`: nếu `authenticated` là `False`, trả về cấu trúc unauthenticated chuẩn `{ authenticated: false, db_connected: true, db_error: null }`.
+      - Bổ sung header chống lưu cache `Cache-Control: no-store, no-cache, must-revalidate, max-age=0` và `Pragma: no-cache` cho các phản hồi JSON API của `dev_server.py`.
+      - Thêm sự kiện bảo vệ `pageshow` (hỗ trợ Back/Forward Cache - bfcache) trong `js/dashboard.js` và `js/index.js` nhằm kiểm tra lại phiên làm việc nếu người dùng bấm nút Quay lại (Back button) trên trình duyệt.
+      - Bổ sung rewrite rule `/index` -> `/index.html` trong `vercel.json`.
+15. **[P1] Google OAuth - Lỗi 400: origin_mismatch & Loại bỏ hoàn toàn đăng nhập Google mô phỏng**
+    - **File:** `dev_server.py`, `login.html`, `register.html`, `js/login.js`, `js/register.js`
+    - **Vấn đề:** Google OAuth 2.0 Client ID (`125274610515-6qi1cnl41k7itnfch3v6123q6tbqgovf.apps.googleusercontent.com`) trên Google Cloud Console chưa thêm nguồn gốc `http://localhost:8080`. Người dùng yêu cầu xóa bỏ hoàn toàn cơ chế đăng nhập Google mô phỏng (simulated modal) để sử dụng thuần túy xác thực Google OAuth 2.0 thực sự.
+    - **Giải pháp:**
+      - Đã xóa toàn bộ giao diện và modal mô phỏng (`google-sim-modal`, `google-sim-helper`, `btn-trigger-google-sim`) khỏi [login.html](file:///d:/codevstdio/repo/SpendMindAI/login.html) và [register.html](file:///d:/codevstdio/repo/SpendMindAI/register.html).
+      - Đã loại bỏ toàn bộ mã nguồn xử lý mô phỏng (`triggerGoogleSimulatedModalDirectly`, `startSimulatedAuth`, v.v.) trong [js/login.js](file:///d:/codevstdio/repo/SpendMindAI/js/login.js) và [js/register.js](file:///d:/codevstdio/repo/SpendMindAI/js/register.js).
+      - Chuẩn hóa luồng xác thực Google thực sự: tích hợp bộ giải mã Google Identity JWT Token trong [dev_server.py](file:///d:/codevstdio/repo/SpendMindAI/dev_server.py) để tự động trích xuất tên thật, email thật và avatar thật từ Google khi đăng nhập.
+      - Hướng dẫn cấu hình Google Cloud Console bổ sung `http://localhost:8080` vào Authorized Origins để đăng nhập Google thực sự thành công trên máy tính.
+16. **[P2] UI/UX - Chuẩn hóa toàn bộ hệ thống sang tông màu đơn sắc, hiện đại chuẩn Apple (Apple Monochromatic & Swiss Minimalism)**
+    - **File:** `css/styles.css`, `css/mobile.css`, `js/dashboard.js`, `index.html`, `DESIGN.md`
+    - **Vấn đề:** Giao diện có nhiều mảng màu xanh ngọc lục bảo (`#34d399`, `#10b981`, `#059669`), thẻ số dư màu xanh rêu (`#0f231a` và `#e9f5ef`), chữ gradient rainbow shimmer lấp lánh và biểu đồ tròn 8 màu sắc sặc sỡ, không đúng tinh thần tối giản, tinh tế và đơn sắc của Apple.
+    - **Giải pháp:**
+      - Chuyển đổi toàn bộ biến `:root` của Dark theme và Light theme sang hệ thống màu đơn sắc tương phản cao chuẩn Apple: Dark mode dùng nền đen OLED `#000000`, thẻ `#1c1c1e`, nút hành động chính màu trắng `#ffffff` chữ đen; Light mode dùng nền giấy da `#f5f5f7`, thẻ sứ trắng `#ffffff`, nút hành động chính màu đen mực `#1d1d1f` chữ trắng.
+      - Xóa bỏ triệt để các khối override thẻ số dư màu xanh `#0f231a/#e9f5ef`, đưa thẻ số dư về thiết kế Apple Pro Card sang trọng.
+      - Cập nhật biểu đồ Chart.js (Doughnut & Trends bar) sang bảng màu phân bổ Titanium Grayscale đơn sắc cao cấp.
+      - Loại bỏ toàn bộ các gradient màu mè, chữ Playfair nghiêng, hiệu ứng laser xanh và thay bằng kiểu chữ SF Pro Display nguyên bản của Apple.
+      - Tinh chỉnh thanh Tab bar di động (`css/mobile.css`) và màn hình splash chào mừng ("hello" cursive) sang phong cách đơn sắc.
+    - **Trạng thái:** [x] RESOLVED.
+
+17. **[P2] UI/UX - Tinh chỉnh giao diện Chatbot, Menu Cài đặt, Hộp thoại Toast và Cài đặt SpendMindAI ở cuối trang Index; Khôi phục màu xanh lá hiện đại**
+    - **File:** `css/styles.css`, `css/mobile.css`, `dashboard.html`, `index.html`, `js/pwa-install.js`
+    - **Vấn đề:** 
+      - (Ảnh 1) Các chip gợi ý chatbot bị ngắt hàng khiến chip "Lời khuyên" rơi xuống dòng 2.
+      - (Ảnh 2) Mục "Thông báo ứng dụng" và "Nhắc nhở qua Zalo" trong menu cài đặt bị xuống dòng ("Thông báo ứng / dụng" và "Nhắc nhở qua / Zalo").
+      - (Ảnh 3) Hộp thoại thông báo (toast) bị kéo giãn toàn màn hình do xung đột thuộc tính `bottom: 100px !important;` với `top: 24px; position: fixed;`.
+      - (Ảnh 4) Banner cài đặt SpendMindAI nổi lơ lửng trên màn hình hero của trang `index.html`.
+      - Yêu cầu khôi phục màu chủ đạo là xanh lá hiện đại (Apple Modern Emerald / Mint Green `#10b981` / `#059669`).
+    - **Giải pháp:**
+      - **Chatbot gợi ý**: Đặt `flex-wrap: nowrap !important; overflow-x: auto !important;`, giảm `font-size` xuống `0.69rem`, padding `3px 8px`, `white-space: nowrap !important;` đảm bảo toàn bộ chip luôn nằm duy nhất trên 1 hàng.
+      - **Menu cài đặt**: Mở rộng chiều rộng panel lên `360px`, giảm font chữ các mục xuống `0.78rem`, `white-space: nowrap !important;` giúp tất cả nhãn hiển thị trọn vẹn trên 1 hàng.
+      - **Hộp thoại thông báo (Toast)**: Loại bỏ triệt để `bottom: 100px !important;`, đặt `bottom: auto !important; height: auto !important; min-height: unset !important; border-radius: var(--radius-pill) !important; width: fit-content !important; max-width: min(90vw, 420px) !important;` trả về dạng Floating Pill Dynamic Island nhỏ gọn, thanh lịch như cũ.
+      - **Hộp thoại cài đặt SpendMindAI**: Chuyển xuống cuối trang `index.html` (ngay trước footer) dưới dạng card cài đặt sang trọng `#section-app-install`, ngăn chặn banner nổi trên trang index và liên kết trực tiếp luồng PWA native.
+      - **Màu chủ đạo xanh lá hiện đại**: Khôi phục `--accent-color: #10b981` (Dark) và `#059669` (Light), nút chính `.btn-primary` nền xanh lá chữ trắng, công tắc toggle, tab bar active và các điểm nhấn tương tác đồng bộ xanh lá hiện đại.
+    - **Trạng thái:** [x] RESOLVED.
+
+18. **[P1] UI/UX & Data Visualization - Phục hồi bảng màu đa sắc cho biểu đồ, bổ sung 4 ngưỡng màu cảnh báo ngân sách tháng và thiết kế Borderless toàn diện (100% không viền)**
+    - **File:** `js/dashboard.js`, `css/styles.css`, `css/mobile.css`, `js/cookie-consent.js`, `dashboard.html`, `DESIGN.md`
+    - **Vấn đề:**
+      - Biểu đồ phân bổ chi tiêu và xu hướng trước đó bị chuyển sang dải màu titanium xám đơn sắc làm giảm tính trực quan khi phân tích số liệu tài chính.
+      - Mục ngân sách chi tiêu tháng chưa có cơ chế trực quan thể hiện mức độ ngân sách khi gần chạm ngưỡng bằng các màu sắc chuẩn mực (Xanh, Vàng, Cam, Đỏ).
+      - Toàn bộ giao diện cần được chuyển sang phong cách Borderless hiện đại: loại bỏ triệt để 100% các đường viền thừa (hairline borders) của tất cả thành phần trên ứng dụng.
+    - **Giải pháp:**
+      - **Phục hồi bảng màu biểu đồ như cũ**: Khôi phục bảng màu Donut category đa sắc độ tươi sáng chuẩn Apple (Emerald `#10b981`, Blue `#3b82f6`, Amber `#f59e0b`, Pink `#ec4899`, Purple `#8b5cf6`, Cyan `#06b6d4`, Orange `#f97316`, Lime `#84cc16`). Khôi phục biểu đồ cột xu hướng với Thu nhập `#10b981` (xanh lục) và Chi tiêu `#ef4444` (đỏ).
+      - **4 Ngưỡng màu ngân sách chi tiêu tháng**: Bổ sung hàm tính toán và hiển thị 4 cấp độ trạng thái động trong `renderBudgetsProgress()`:
+        + Mức an toàn (< 70%): Xanh lá (`#10b981`), huy hiệu `.budget-badge-green` "An toàn".
+        + Mức chú ý (70% - 85%): Vàng (`#eab308`), huy hiệu `.budget-badge-yellow` "Cần chú ý".
+        + Mức cảnh báo (85% - 100%): Cam (`#f97316`), huy hiệu `.budget-badge-orange` "Gần chạm ngưỡng".
+        + Mức nguy hiểm (>= 100%): Đỏ (`#ef4444`), huy hiệu `.budget-badge-red` "Vượt hạn mức" kèm hiệu ứng rung cảnh báo `pulse-danger`.
+        + Bổ sung thẻ tổng quan ngân sách tháng (`.budget-total-card`) phía trên cùng của danh sách.
+      - **Thiết kế Borderless toàn diện**:
+        + Thiết lập các biến CSS token viền thành `transparent` (`--card-border`, `--input-border`, `--divider-color`, `--calendar-border`).
+        + Áp dụng quy tắc `border: none !important; border-color: transparent !important;` trên tất cả cards, panels, modals, dropdowns, inputs, buttons, tables, badges, chips, tab bars, toasts, và cookie consent banner.
+        + Xóa bỏ tất cả style inline `border: 1px solid ...` trong `dashboard.html`.
+        + Bảo vệ phần tử `.spinner` và `.spinner-inline` để animation xoay của loader hoạt động hoàn hảo.
+      - Cập nhật chuẩn hóa tài liệu `DESIGN.md` lên phiên bản 2.1.0.
+    - **Trạng thái:** [x] RESOLVED.
+

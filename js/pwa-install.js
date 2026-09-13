@@ -47,11 +47,27 @@
         }
     }
 
+    function isIndexPage() {
+        return !!document.getElementById('section-app-install') || 
+               window.location.pathname.endsWith('index.html') || 
+               window.location.pathname === '/' || 
+               window.location.pathname.endsWith('/SpendMindAI/');
+    }
+
     function bindInstallTriggers() {
         // Settings menu trigger
         const settingsInstallBtn = document.getElementById('menu-item-install-pwa');
         if (settingsInstallBtn) {
             settingsInstallBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                promptInstallFlow();
+            });
+        }
+
+        // Bottom index install card button
+        const indexInstallBtn = document.getElementById('btn-index-pwa-install');
+        if (indexInstallBtn) {
+            indexInstallBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 promptInstallFlow();
             });
@@ -126,18 +142,26 @@
                 badge.style.color = "#10b981";
             } else if (available) {
                 badge.textContent = isIOS ? "Thêm vào MH" : "Cài ngay";
-                badge.style.background = "rgba(0, 104, 255, 0.15)";
-                badge.style.color = "#0068ff";
+                badge.style.background = "rgba(16, 185, 129, 0.15)";
+                badge.style.color = "#10b981";
             }
         }
 
-        // Show floating banner on mobile if not standalone and not dismissed
-        if (!isStandalone && !sessionStorage.getItem('spendmind_pwa_banner_dismissed')) {
+        const indexBtn = document.getElementById('btn-index-pwa-install');
+        if (indexBtn && installed) {
+            indexBtn.innerHTML = '<i data-lucide="check"></i><span>Đã cài đặt</span>';
+            indexBtn.style.opacity = '0.7';
+            indexBtn.style.pointerEvents = 'none';
+        }
+
+        // Show floating banner on mobile if not standalone, not dismissed, and NOT index page
+        if (!isStandalone && !sessionStorage.getItem('spendmind_pwa_banner_dismissed') && !isIndexPage()) {
             showFloatingBanner();
         }
     }
 
     function showFloatingBanner() {
+        if (isIndexPage()) return;
         const banner = document.getElementById('pwa-floating-banner');
         if (banner) {
             setTimeout(() => {
@@ -228,7 +252,7 @@
     }
 
     function injectFloatingInstallBanner() {
-        if (document.getElementById('pwa-floating-banner') || isStandalone) return;
+        if (document.getElementById('pwa-floating-banner') || isStandalone || isIndexPage()) return;
 
         const banner = document.createElement('div');
         banner.id = 'pwa-floating-banner';

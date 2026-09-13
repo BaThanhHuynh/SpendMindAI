@@ -36,7 +36,7 @@
     background: var(--card-bg, rgba(25, 33, 52, 0.96)) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border: none !important;
     border-radius: 16px !important;
     box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.55) !important;
     padding: 18px 22px !important;
@@ -114,20 +114,19 @@
     transform: translateY(-1px) !important;
 }
 .btn-cookie-essential {
-    background: transparent !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
     color: var(--text-primary, #ffffff) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border: none !important;
     border-radius: 8px !important;
     padding: 8px 14px !important;
     font-size: 0.82rem !important;
     font-weight: 500 !important;
     cursor: pointer !important;
-    transition: background-color 0.2s ease, border-color 0.2s ease !important;
+    transition: background-color 0.2s ease, transform 0.1s ease !important;
 }
 .btn-cookie-essential:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border-color: #94a3b8 !important;
+    background: rgba(255, 255, 255, 0.14) !important;
 }
 .btn-cookie-customize {
     background: transparent !important;
@@ -181,7 +180,7 @@
     max-height: 90vh !important;
     background: #192134 !important;
     background: var(--card-bg, #192134) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border: none !important;
     border-radius: 18px !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65) !important;
     display: flex !important;
@@ -199,7 +198,7 @@
     display: flex !important;
     align-items: flex-start !important;
     justify-content: space-between !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: none !important;
     box-sizing: border-box !important;
 }
 .cookie-modal-title-group h3 {
@@ -242,7 +241,7 @@
 }
 .cookie-category-card {
     background: rgba(255, 255, 255, 0.03) !important;
-    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border: none !important;
     border-radius: 12px !important;
     padding: 14px 16px !important;
     display: flex !important;
@@ -297,7 +296,7 @@
 }
 .cookie-modal-footer {
     padding: 16px 22px !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-top: none !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;

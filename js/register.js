@@ -12,7 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     initGoogleAuth();
     document.getElementById("register-form").addEventListener("submit", handleRegisterSubmit);
-    document.getElementById("google-auth-btn").addEventListener("click", triggerGoogleAuthSimulated);
+    const googleBtn = document.getElementById("google-auth-btn");
+    if (googleBtn) googleBtn.addEventListener("click", triggerGoogleAuth);
     lucide.createIcons();
 });
 
@@ -46,16 +47,7 @@ function handleGoogleCredentialResponse(response) {
         return;
     }
     
-    const modal = document.getElementById("google-sim-modal");
-    const emailStep = document.getElementById("google-email-step");
-    const chooserStep = document.getElementById("google-chooser-step");
-    const loadingStep = document.getElementById("google-loading-step");
-    if (modal) {
-        if (emailStep) emailStep.classList.add("hidden");
-        if (chooserStep) chooserStep.classList.add("hidden");
-        if (loadingStep) loadingStep.classList.remove("hidden");
-        modal.classList.remove("hidden");
-    }
+    showToast("Đang xác thực tài khoản Google...", "info");
     
     fetch(`${API_URL}?action=google_auth`, {
         method: "POST",
@@ -81,7 +73,6 @@ function handleGoogleCredentialResponse(response) {
                 const googleId = data.google_id || ("google_id_" + btoa(unescape(encodeURIComponent(data.email))).replace(/[^a-zA-Z0-9]/g, "").substring(0, 24));
                 saveGoogleAccount(data.email, googleId, data.username, finalAvatar);
             }
-            if (modal) modal.classList.add("hidden");
             showToast(data.message, "success");
             setTimeout(() => {
                 window.location.href = "dashboard";
@@ -89,7 +80,6 @@ function handleGoogleCredentialResponse(response) {
         }
     })
     .catch(err => {
-        if (modal) modal.classList.add("hidden");
         showToast(err.message, "error");
     });
 }
@@ -176,7 +166,6 @@ function setupGoogleTokenClient(clientId) {
                         console.warn("Google OAuth Error Callback:", error);
                         if (error && error.type === 'popup_failed_to_open') {
                             showToast("Trình duyệt đang chặn cửa sổ bật lên (Pop-up). Vui lòng bấm vào biểu tượng 🚫 ở thanh địa chỉ URL để Cho phép pop-up.", "warning");
-                            triggerGoogleSimulatedModalDirectly();
                         }
                     }
                 });
@@ -208,16 +197,7 @@ function initGoogleAuth() {
 
 // Handle real Google token validation
 function handleGoogleToken(accessToken) {
-    const modal = document.getElementById("google-sim-modal");
-    const emailStep = document.getElementById("google-email-step");
-    const chooserStep = document.getElementById("google-chooser-step");
-    const loadingStep = document.getElementById("google-loading-step");
-    
-    // Show loading spinner modal
-    emailStep.classList.add("hidden");
-    if (chooserStep) chooserStep.classList.add("hidden");
-    loadingStep.classList.remove("hidden");
-    modal.classList.remove("hidden");
+    showToast("Đang xác thực tài khoản Google...", "info");
     
     fetch(`${API_URL}?action=google_auth`, {
         method: "POST",
@@ -244,7 +224,6 @@ function handleGoogleToken(accessToken) {
                 saveGoogleAccount(data.email, googleId, data.username, finalAvatar);
             }
             
-            modal.classList.add("hidden");
             showToast(data.message, "success");
             setTimeout(() => {
                 window.location.href = "dashboard";
@@ -252,7 +231,6 @@ function handleGoogleToken(accessToken) {
         }
     })
     .catch(err => {
-        modal.classList.add("hidden");
         showToast(err.message, "error");
     });
 }
@@ -271,145 +249,19 @@ function checkGoogleOAuthRedirect() {
     return false;
 }
 
-function triggerGoogleAuthSimulated() {
-    // Direct page navigation to Google OAuth (Completely immune to popup blockers!)
+function triggerGoogleAuth() {
+    if (googleTokenClient) {
+        try {
+            googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+            return;
+        } catch (e) {
+            console.warn("Token client request failed:", e);
+        }
+    }
     const clientId = DEFAULT_GOOGLE_CLIENT_ID;
-    const redirectUri = window.location.origin; // https://spend-mind-aia.vercel.app
+    const redirectUri = window.location.origin;
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile`;
     window.location.href = authUrl;
-}
-
-function triggerGoogleSimulatedModalDirectly() {
-    const modal = document.getElementById("google-sim-modal");
-    if (!modal) return;
-    const emailInput = document.getElementById("google-sim-email");
-    const emailStep = document.getElementById("google-email-step");
-    const chooserStep = document.getElementById("google-chooser-step");
-    const loadingStep = document.getElementById("google-loading-step");
-    
-    // Reset state
-    if (emailInput) emailInput.value = "";
-    if (emailStep) emailStep.classList.add("hidden");
-    if (chooserStep) chooserStep.classList.add("hidden");
-    if (loadingStep) loadingStep.classList.add("hidden");
-    modal.classList.remove("hidden");
-    
-    const accounts = getSavedGoogleAccounts();
-    
-    const showEmailStep = () => {
-        if (chooserStep) chooserStep.classList.add("hidden");
-        if (emailStep) emailStep.classList.remove("hidden");
-        if (emailInput) emailInput.focus();
-    };
-    
-    const startSimulatedAuth = (email, googleId) => {
-        emailStep.classList.add("hidden");
-        chooserStep.classList.add("hidden");
-        loadingStep.classList.remove("hidden");
-        
-        setTimeout(() => {
-            fetch(`${API_URL}?action=google_auth`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email, google_id: googleId })
-            })
-            .then(async res => {
-                let data;
-                try {
-                    data = await res.json();
-                } catch (e) {
-                    throw new Error(!res.ok ? `Lỗi kết nối máy chủ (${res.status}). Vui lòng kiểm tra biến môi trường CSDL trên Vercel.` : "Phản hồi máy chủ không hợp lệ");
-                }
-                if (!res.ok || !data.success) {
-                    throw new Error(data.message || "Xác thực Google thất bại");
-                }
-                return data;
-            })
-            .then(data => {
-                if (data.success) {
-                    const finalAvatar = data.avatar_url || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(email.split('@')[0]) + '&background=059669&color=fff&size=128');
-                    saveGoogleAccount(email, googleId, email.split('@')[0], finalAvatar);
-                    
-                    modal.classList.add("hidden");
-                    showToast(data.message, "success");
-                    setTimeout(() => {
-                        window.location.href = "dashboard";
-                    }, 1000);
-                }
-            })
-            .catch(err => {
-                showToast(err.message, "error");
-                loadingStep.classList.add("hidden");
-                if (accounts.length > 0) {
-                    chooserStep.classList.remove("hidden");
-                } else {
-                    emailStep.classList.remove("hidden");
-                }
-            });
-        }, 1200);
-    };
-    
-    if (accounts.length > 0) {
-        const container = document.getElementById("google-accounts-list-container");
-        container.innerHTML = "";
-        
-        accounts.forEach(acc => {
-            const item = document.createElement("div");
-            item.className = "google-account-item";
-            item.innerHTML = `
-                <img src="${acc.avatarUrl}" class="google-account-avatar" alt="avatar">
-                <div class="google-account-info">
-                    <span class="google-account-name">${acc.username}</span>
-                    <span class="google-account-email">${acc.email}</span>
-                </div>
-            `;
-            item.onclick = () => {
-                startSimulatedAuth(acc.email, acc.googleId);
-            };
-            container.appendChild(item);
-        });
-        
-        chooserStep.classList.remove("hidden");
-    } else {
-        showEmailStep();
-    }
-    
-    const btnNext = document.getElementById("btn-next-google-sim");
-    const btnCancel = document.getElementById("btn-cancel-google-sim");
-    const btnCancelChooser = document.getElementById("btn-cancel-google-chooser");
-    const btnUseOther = document.getElementById("btn-use-other-account");
-    const btnClose = document.getElementById("btn-close-google-modal");
-    
-    btnNext.onclick = (e) => {
-        e.preventDefault();
-        const email = emailInput.value.trim();
-        if (!email || !email.includes("@")) {
-            showToast("Vui lòng nhập địa chỉ email hợp lệ!", "error");
-            return;
-        }
-        
-        const googleId = "google_id_" + btoa(unescape(encodeURIComponent(email))).replace(/[^a-zA-Z0-9]/g, "").substring(0, 24);
-        startSimulatedAuth(email, googleId);
-    };
-    
-    btnUseOther.onclick = (e) => {
-        e.preventDefault();
-        showEmailStep();
-    };
-    
-    const closeModal = (e) => {
-        if (e) e.preventDefault();
-        modal.classList.add("hidden");
-    };
-    
-    btnCancel.onclick = closeModal;
-    btnCancelChooser.onclick = closeModal;
-    btnClose.onclick = closeModal;
-    modal.onclick = (e) => {
-        if (e.target === modal) {
-            modal.classList.add("hidden");
-        }
-    };
 }
 
 // 1. Initialize layout theme

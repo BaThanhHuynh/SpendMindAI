@@ -1,14 +1,12 @@
-# Design System Master File
+# Design System Master File - Apple Design Language
 
-> **LOGIC:** When building a specific page, first check `design-system/pages/[page-name].md`.
-> If that file exists, its rules **override** this Master file.
-> If not, strictly follow the rules below.
+> **LOGIC:** When building or updating components, strictly follow these Apple Human Interface Guidelines and Apple Web Design tokens.
 
 ---
 
-**Project:** SpendMindAI
-**Generated:** 2026-09-10 17:44:57
-**Category:** Personal Finance Tracker
+**Project:** SpendMindAI  
+**Design System:** Apple Human Interface Guidelines & Web Design  
+**Category:** Intelligent Personal Finance Management  
 
 ---
 
@@ -16,198 +14,63 @@
 
 ### Color Palette
 
-| Role | Hex | CSS Variable |
-|------|-----|--------------|
-| Primary | `#1E40AF` | `--color-primary` |
-| On Primary | `#FFFFFF` | `--color-on-primary` |
-| Secondary | `#3B82F6` | `--color-secondary` |
-| On Secondary | `#000000` | `--color-on-secondary` |
-| Accent/CTA | `#059669` | `--color-accent` |
-| On Accent/CTA | `#000000` | `--color-on-accent` |
-| Background | `#0F172A` | `--color-background` |
-| Foreground | `#FFFFFF` | `--color-foreground` |
-| Card | `#192134` | `--color-card` |
-| Card Foreground | `#FFFFFF` | `--color-card-foreground` |
-| Muted | `#101A34` | `--color-muted` |
-| Muted Foreground | `#94A3B8` | `--color-muted-foreground` |
-| Border | `transparent` (Borderless) | `--color-border` |
-| Destructive | `#DC2626` | `--color-destructive` |
-| On Destructive | `#FFFFFF` | `--color-on-destructive` |
-| Ring | `#FFFFFF` | `--color-ring` |
+| Role | Hex / Value (Light) | Hex / Value (Dark) | CSS Variable |
+|------|--------------------|-------------------|--------------|
+| Primary (Action Blue) | `#0071e3` | `#2997ff` | `--color-primary` / `--accent-color` |
+| Primary Hover | `#0077ed` | `#339cff` | `--accent-color-hover` |
+| Primary Active | `#005bb5` | `#1a80e5` | `--accent-color-active` |
+| Background (Canvas) | `#f5f5f7` (Parchment) | `#000000` (Apple Black) | `--bg-primary` |
+| Surface (Card) | `#ffffff` | `#1c1c1e` | `--card-bg` |
+| Surface Elevated | `#fbfbfd` | `#2c2c2e` | `--surface-raised` |
+| Hairline Border | `rgba(0, 0, 0, 0.08)` | `rgba(255, 255, 255, 0.12)` | `--card-border` |
+| Text Primary (Ink) | `#1d1d1f` | `#f5f5f7` | `--text-primary` |
+| Text Secondary | `#6e6e73` | `#a1a1a6` | `--text-secondary` |
+| Text Muted | `#86868b` | `#86868b` | `--text-muted` |
+| Income (System Green) | `#34c759` | `#30d158` | `--income-color` |
+| Expense (System Red) | `#ff3b30` | `#ff453a` | `--expense-color` |
+| Warning (System Orange) | `#ff9500` | `#ff9f0a` | `--warning-color` |
+| Frosted Glass Surface | `rgba(255, 255, 255, 0.78)` | `rgba(28, 28, 30, 0.78)` | `--glass-bg` |
 
-**Color Notes:** Google Material Design 3 borderless tonal elevation with seamless surfaces
+---
 
 ### Typography
 
-- **Heading Font:** Plus Jakarta Sans
-- **Body Font:** Plus Jakarta Sans
-- **Mood:** enterprise, saas, b2b, professional, indigo, modern, approachable, legible, ios dynamic type, android scaling
-- **Google Fonts:** [Plus Jakarta Sans + Plus Jakarta Sans](https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400)
-
-**CSS Import:**
-```css
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap');
-```
-
-### Spacing Variables
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--space-xs` | `4px` / `0.25rem` | Tight gaps |
-| `--space-sm` | `8px` / `0.5rem` | Icon gaps, inline spacing |
-| `--space-md` | `16px` / `1rem` | Standard padding |
-| `--space-lg` | `24px` / `1.5rem` | Section padding |
-| `--space-xl` | `32px` / `2rem` | Large gaps |
-| `--space-2xl` | `48px` / `3rem` | Section margins |
-| `--space-3xl` | `64px` / `4rem` | Hero padding |
-
-### Shadow Depths
-
-| Level | Value | Usage |
-|-------|-------|-------|
-| `--shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle lift |
-| `--shadow-md` | `0 4px 6px rgba(0,0,0,0.1)` | Cards, buttons |
-| `--shadow-lg` | `0 10px 15px rgba(0,0,0,0.1)` | Modals, dropdowns |
-| `--shadow-xl` | `0 20px 25px rgba(0,0,0,0.15)` | Hero images, featured cards |
+- **Primary Font Family:** `-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", -apple-system, sans-serif`
+- **Headline Display Tracking:** `-0.022em` to `-0.03em` ("Apple tight")
+- **Body Size:** `17px` at `weight: 400`, `line-height: 1.47`
+- **Hierarchy:**
+  - Hero / Display: 36px - 48px, Weight 600
+  - Section Headings: 22px - 28px, Weight 600
+  - Body Text: 17px, Weight 400
+  - Subhead / Button Text: 15px, Weight 500/600
+  - Captions / Meta: 12px - 13px, Weight 400
 
 ---
 
-## Component Specs
+### Shapes & Corner Radii
 
-### Buttons
-
-```css
-/* Primary Button */
-.btn-primary {
-  background: #059669;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-/* Secondary Button */
-.btn-secondary {
-  background: transparent;
-  color: #1E40AF;
-  border: 2px solid #1E40AF;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-```
-
-### Cards
-
-```css
-.card {
-  background: #0F172A;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-```
-
-### Inputs
-
-```css
-.input {
-  padding: 12px 16px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 200ms ease;
-}
-
-.input:focus {
-  border-color: #1E40AF;
-  outline: none;
-  box-shadow: 0 0 0 3px #1E40AF20;
-}
-```
-
-### Modals
-
-```css
-.modal-overlay {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-}
-
-.modal {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-  max-width: 500px;
-  width: 90%;
-}
-```
+| Token | Value | Component Usage |
+|-------|-------|-----------------|
+| `--radius-sm` | `8px` | Small tags, sub-chips |
+| `--radius-md` | `12px` | Inset grouped elements, list item chips |
+| `--radius-lg` | `18px` | Cards, popups, charts |
+| `--radius-xl` | `24px` | Modals, bottom sheets, balance card |
+| `--radius-pill` | `9999px` | Buttons, search inputs, status badges, Dynamic Island |
 
 ---
 
-## Style Guidelines
+### Shadows & Materials
 
-**Style:** Glassmorphism
-
-**Keywords:** Frosted glass, transparent, blurred background, layered, vibrant background, light source, depth, multi-layer
-
-**Best For:** Modern SaaS, financial dashboards, high-end corporate, lifestyle apps, modal overlays, navigation
-
-**Key Effects:** Backdrop blur (10-20px), subtle border (1px solid rgba white 0.2), light reflection, Z-depth
-
-### Page Pattern
-
-**Pattern Name:** Product Demo + Features
-
-- **Conversion Strategy:** Use an interactive demo only when it explains value better than static media. Provide captions, transcript, visible play/pause controls, and a non-video fallback; do not autoplay under reduced motion. Pause media when offscreen or hidden and keep the final product state available as static content.
-- **CTA Placement:** Video center + CTA right/bottom
-- **Section Order:** Hero > Product video/mockup (center) > Feature breakdown per section > Comparison (optional) > CTA
+- **Frosted Glass:** `backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);`
+- **Card Shadow (Light):** `0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)`
+- **Card Shadow (Dark):** `0 8px 32px rgba(0, 0, 0, 0.38)`
+- **Floating / Dynamic Island:** `0 12px 36px rgba(0, 0, 0, 0.16)`
 
 ---
 
-## Anti-Patterns (Do NOT Use)
+### Motion & Physics
 
-- ❌ Pure white backgrounds
-
-### Additional Forbidden Patterns
-
-- ❌ **Emojis as icons** — Use SVG icons (Heroicons, Lucide, Simple Icons)
-- ❌ **Missing cursor:pointer** — All clickable elements must have cursor:pointer
-- ❌ **Layout-shifting hovers** — Avoid scale transforms that shift layout
-- ❌ **Low contrast text** — Maintain 4.5:1 minimum contrast ratio
-- ❌ **Instant state changes** — Always use transitions (150-300ms)
-- ❌ **Invisible focus states** — Focus states must be visible for a11y
-
----
-
-## Pre-Delivery Checklist
-
-Before delivering any UI code, verify:
-
-- [ ] No emojis used as icons (use SVG instead)
-- [ ] All icons from consistent icon set (Heroicons/Lucide)
-- [ ] `cursor-pointer` on all clickable elements
-- [ ] Hover states with smooth transitions (150-300ms)
-- [ ] Light mode: text contrast 4.5:1 minimum
-- [ ] Focus states visible for keyboard navigation
-- [ ] `prefers-reduced-motion` respected
-- [ ] Responsive: 375px, 768px, 1024px, 1440px
-- [ ] No content hidden behind fixed navbars
-- [ ] No horizontal scroll on mobile
+- **Snappy Spring:** `0.18s cubic-bezier(0.16, 1, 0.3, 1)`
+- **Smooth Spring:** `0.32s cubic-bezier(0.32, 0.72, 0, 1)`
+- **Tactile Active Press:** `transform: scale(0.96);` on buttons and interactive chips.
+- **Respect Motion Preference:** All transitions fold to simple opacity under `prefers-reduced-motion: reduce`.

@@ -83,6 +83,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+// Re-verify session on back/forward browser cache navigation (bfcache)
+window.addEventListener("pageshow", (e) => {
+    if (e.persisted) {
+        checkAuthSession();
+    }
+});
+
 // Secure Session Guard Check
 function checkAuthSession() {
     fetch(`${API_URL}?action=check_session&include_state=1`)
@@ -1081,11 +1088,8 @@ function updateUI(redrawCharts = true) {
     document.getElementById("summary-expense").textContent = formatVND(stats.expense);
 
     const balanceEl = document.getElementById("total-balance");
-    if (stats.balance < 0) {
-        balanceEl.style.backgroundImage = "linear-gradient(to right, var(--expense-color), var(--text-muted))";
-    } else {
-        balanceEl.style.backgroundImage = "linear-gradient(to right, var(--text-primary), var(--text-secondary))";
-    }
+    balanceEl.style.backgroundImage = "none";
+    balanceEl.style.color = stats.balance < 0 ? "var(--expense-color)" : "var(--text-primary)";
 
     renderCalendarView(stats.filteredTransactions);
     renderBudgetsProgress(stats.categoryExpenses);
@@ -1414,44 +1418,119 @@ function renderBudgetsProgress(categoryExpenses) {
     container.innerHTML = "";
 
     let hasBudgets = false;
+    let totalBudgetLimit = 0;
+    let totalBudgetSpent = 0;
+
+    const budgetItemsHtml = [];
 
     Object.keys(state.budgets).forEach(categoryKey => {
         const limit = state.budgets[categoryKey];
         if (limit > 0) {
             hasBudgets = true;
             const spent = categoryExpenses[categoryKey] || 0;
+            totalBudgetLimit += limit;
+            totalBudgetSpent += spent;
             const percentage = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
             
-            const cat = CATEGORIES[categoryKey];
-            const item = document.createElement("div");
-            item.className = "budget-item";
+            const cat = CATEGORIES[categoryKey] || { label: categoryKey, icon: "tag" };
 
-            let progressClass = "progress-safe";
+            // 4 Mức độ màu ngân sách: Xanh (<70%), Vàng (70-85%), Cam (85-100%), Đỏ (>=100%)
+            let progressClass = "progress-level-green";
+            let statusBadgeClass = "budget-badge-green";
+            let statusText = "An toàn";
+            let levelColor = "#10b981";
+
             if (percentage >= 100) {
-                progressClass = "progress-danger";
-            } else if (percentage >= 80) {
-                progressClass = "progress-warning";
+                progressClass = "progress-level-red";
+                statusBadgeClass = "budget-badge-red";
+                statusText = "Vượt hạn mức";
+                levelColor = "#ef4444";
+            } else if (percentage >= 85) {
+                progressClass = "progress-level-orange";
+                statusBadgeClass = "budget-badge-orange";
+                statusText = "Gần chạm ngưỡng";
+                levelColor = "#f97316";
+            } else if (percentage >= 70) {
+                progressClass = "progress-level-yellow";
+                statusBadgeClass = "budget-badge-yellow";
+                statusText = "Cần chú ý";
+                levelColor = "#eab308";
             }
 
-            item.innerHTML = `
-                <div class="budget-meta">
-                    <span class="budget-name">
-                        <i data-lucide="${cat.icon}" style="width: 14px; height:14px; color: var(--text-secondary)"></i>
-                        ${cat.label}
-                    </span>
-                    <span class="budget-values">
-                        <strong>${formatVND(spent)}</strong> / ${formatVND(limit)} (${Math.round(percentage)}%)
-                    </span>
+            budgetItemsHtml.push(`
+                <div class="budget-item">
+                    <div class="budget-meta">
+                        <span class="budget-name">
+                            <i data-lucide="${cat.icon}" style="width: 14px; height: 14px; color: var(--text-secondary)"></i>
+                            ${cat.label}
+                        </span>
+                        <div class="budget-meta-right">
+                            <span class="budget-status-pill ${statusBadgeClass}">
+                                <span class="status-dot" style="background: ${levelColor};"></span>
+                                <span>${statusText}</span>
+                            </span>
+                            <span class="budget-values">
+                                <strong>${formatVND(spent)}</strong> / ${formatVND(limit)} (${Math.round(percentage)}%)
+                            </span>
+                        </div>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill ${progressClass}" style="width: ${percentage}%"></div>
+                    </div>
                 </div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill ${progressClass}" style="width: ${percentage}%"></div>
-                </div>
-            `;
-            container.appendChild(item);
+            `);
         }
     });
 
-    if (!hasBudgets) {
+    if (hasBudgets) {
+        // Thẻ tổng quan ngân sách chi tiêu tháng
+        const totalPct = totalBudgetLimit > 0 ? Math.min((totalBudgetSpent / totalBudgetLimit) * 100, 100) : 0;
+        let totalProgClass = "progress-level-green";
+        let totalBadgeClass = "budget-badge-green";
+        let totalStatusText = "An toàn";
+        let totalColor = "#10b981";
+
+        if (totalPct >= 100) {
+            totalProgClass = "progress-level-red";
+            totalBadgeClass = "budget-badge-red";
+            totalStatusText = "Vượt hạn mức";
+            totalColor = "#ef4444";
+        } else if (totalPct >= 85) {
+            totalProgClass = "progress-level-orange";
+            totalBadgeClass = "budget-badge-orange";
+            totalStatusText = "Gần chạm ngưỡng";
+            totalColor = "#f97316";
+        } else if (totalPct >= 70) {
+            totalProgClass = "progress-level-yellow";
+            totalBadgeClass = "budget-badge-yellow";
+            totalStatusText = "Cần chú ý";
+            totalColor = "#eab308";
+        }
+
+        const totalCardHtml = `
+            <div class="budget-total-card">
+                <div class="budget-total-header">
+                    <div class="budget-total-title">
+                        <i data-lucide="pie-chart" style="width: 15px; height: 15px; color: ${totalColor};"></i>
+                        <span>Tổng ngân sách tháng</span>
+                    </div>
+                    <span class="budget-status-pill ${totalBadgeClass}">
+                        <span class="status-dot" style="background: ${totalColor};"></span>
+                        <span>${totalStatusText} (${Math.round(totalPct)}%)</span>
+                    </span>
+                </div>
+                <div class="budget-total-values">
+                    <strong>${formatVND(totalBudgetSpent)}</strong>
+                    <span class="budget-total-limit"> / ${formatVND(totalBudgetLimit)}</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill ${totalProgClass}" style="width: ${totalPct}%"></div>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = totalCardHtml + budgetItemsHtml.join("");
+    } else {
         container.innerHTML = `
             <div class="text-center text-muted" style="font-size: 0.85rem; padding: 16px 0;">
                 <p>Chưa thiết lập hạn mức nào.</p>
@@ -1474,10 +1553,11 @@ function renderCharts(categoryExpenses = null) {
     if (trendChartInstance) trendChartInstance.destroy();
 
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-    const textThemeColor = isDark ? "#9bb0a5" : "#46594f";
-    const gridThemeColor = isDark ? "rgba(160, 235, 200, 0.06)" : "rgba(6, 78, 59, 0.06)";
+    const textThemeColor = isDark ? "#86868b" : "#6e6e73";
+    const gridThemeColor = isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.05)";
+    const appleFontStack = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro', 'Inter', sans-serif";
 
-    // -- CHART 1: DONUT CATEGORY EXPENSES --
+    // -- CHART 1: DONUT CATEGORY EXPENSES (RESTORE ORIGINAL VIVID PALETTE) --
     const donutCanvas = document.getElementById("categoryChart");
     const chartNoData = document.getElementById("chart-no-data");
     
@@ -1486,15 +1566,16 @@ function renderCharts(categoryExpenses = null) {
     const bgColors = [];
     const borderColors = [];
 
-    // Monochrome emerald scale (pale mint -> near-black green), widely spaced
-    // so even 2-3 categories read as clearly distinct slices.
+    // Bảng màu đa dạng hài hòa chuẩn Apple cho các danh mục
     const donutScale = [
-        { bg: 'rgba(154, 240, 207, 0.92)', border: '#9af0cf' },
-        { bg: 'rgba(52, 211, 153, 0.92)',  border: '#34d399' },
-        { bg: 'rgba(13, 148, 99, 0.92)',   border: '#0d9463' },
-        { bg: 'rgba(8, 107, 72, 0.92)',    border: '#086b48' },
-        { bg: 'rgba(6, 72, 49, 0.92)',     border: '#064831' },
-        { bg: 'rgba(4, 46, 31, 0.92)',     border: '#042e1f' }
+        { bg: '#10b981', border: isDark ? '#1c1c1e' : '#ffffff' }, // Emerald
+        { bg: '#3b82f6', border: isDark ? '#1c1c1e' : '#ffffff' }, // Blue
+        { bg: '#f59e0b', border: isDark ? '#1c1c1e' : '#ffffff' }, // Amber
+        { bg: '#ec4899', border: isDark ? '#1c1c1e' : '#ffffff' }, // Pink
+        { bg: '#8b5cf6', border: isDark ? '#1c1c1e' : '#ffffff' }, // Purple
+        { bg: '#06b6d4', border: isDark ? '#1c1c1e' : '#ffffff' }, // Cyan
+        { bg: '#f97316', border: isDark ? '#1c1c1e' : '#ffffff' }, // Orange
+        { bg: '#84cc16', border: isDark ? '#1c1c1e' : '#ffffff' }  // Lime
     ];
 
     Object.keys(categoryExpenses)
@@ -1524,7 +1605,7 @@ function renderCharts(categoryExpenses = null) {
                     data: expenseAmounts,
                     backgroundColor: bgColors,
                     borderColor: borderColors,
-                    borderWidth: 1.5,
+                    borderWidth: 2,
                     hoverOffset: 6
                 }]
             },
@@ -1538,10 +1619,10 @@ function renderCharts(categoryExpenses = null) {
                             color: textThemeColor,
                             usePointStyle: true,
                             pointStyle: 'circle',
-                            boxWidth: 8,
-                            boxHeight: 8,
-                            padding: 16,
-                            font: { family: "'Montserrat', sans-serif", size: 12.5 },
+                            boxWidth: 7,
+                            boxHeight: 7,
+                            padding: 14,
+                            font: { family: appleFontStack, size: 12 },
                             generateLabels: function(chart) {
                                 const ds = chart.data.datasets[0];
                                 const total = ds.data.reduce((a, b) => a + b, 0);
@@ -1560,6 +1641,15 @@ function renderCharts(categoryExpenses = null) {
                         }
                     },
                     tooltip: {
+                        backgroundColor: isDark ? 'rgba(28, 28, 30, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+                        titleColor: isDark ? '#f5f5f7' : '#1d1d1f',
+                        bodyColor: isDark ? '#a1a1a6' : '#6e6e73',
+                        borderColor: 'transparent',
+                        borderWidth: 0,
+                        cornerRadius: 10,
+                        padding: 10,
+                        titleFont: { family: appleFontStack, weight: '600' },
+                        bodyFont: { family: appleFontStack },
                         callbacks: {
                             label: function(context) {
                                 return ` ${context.label}: ${formatVND(context.raw)}`;
@@ -1567,12 +1657,12 @@ function renderCharts(categoryExpenses = null) {
                         }
                     }
                 },
-                cutout: '72%'
+                cutout: '74%'
             }
         });
     }
 
-    // -- CHART 2: DAILY/WEEKLY TRENDS --
+    // -- CHART 2: DAILY/WEEKLY TRENDS (RESTORE GREEN/RED) --
     const trendCanvas = document.getElementById("trendChart");
     const trendNoData = document.getElementById("trend-no-data");
 
@@ -1619,15 +1709,15 @@ function renderCharts(categoryExpenses = null) {
                         label: 'Thu nhập',
                         data: trendIncome,
                         backgroundColor: '#10b981',
-                        borderRadius: 6,
-                        maxBarThickness: 32
+                        borderRadius: 8,
+                        maxBarThickness: 28
                     },
                     {
                         label: 'Chi tiêu',
                         data: trendExpense,
                         backgroundColor: '#ef4444',
-                        borderRadius: 6,
-                        maxBarThickness: 32
+                        borderRadius: 8,
+                        maxBarThickness: 28
                     }
                 ]
             },
@@ -1637,13 +1727,13 @@ function renderCharts(categoryExpenses = null) {
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: { color: textThemeColor, font: { family: "'Montserrat', sans-serif", size: 10 } }
+                        ticks: { color: textThemeColor, font: { family: appleFontStack, size: 11 } }
                     },
                     y: {
                         grid: { color: gridThemeColor },
                         ticks: {
                             color: textThemeColor,
-                            font: { family: "'Montserrat', sans-serif", size: 10 },
+                            font: { family: appleFontStack, size: 10 },
                             callback: function(value) {
                                 return value >= 1000000 ? (value / 1000000) + 'Mđ' : (value / 1000) + 'kđ';
                             }
@@ -1655,11 +1745,23 @@ function renderCharts(categoryExpenses = null) {
                         position: 'bottom',
                         labels: {
                             color: textThemeColor,
-                            font: { family: "'Montserrat', sans-serif", size: 11 },
-                            padding: 14
+                            font: { family: appleFontStack, size: 11 },
+                            padding: 14,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            boxWidth: 7
                         }
                     },
                     tooltip: {
+                        backgroundColor: isDark ? 'rgba(28, 28, 30, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+                        titleColor: isDark ? '#f5f5f7' : '#1d1d1f',
+                        bodyColor: isDark ? '#a1a1a6' : '#6e6e73',
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                        borderWidth: 1,
+                        cornerRadius: 10,
+                        padding: 10,
+                        titleFont: { family: appleFontStack, weight: '600' },
+                        bodyFont: { family: appleFontStack },
                         callbacks: {
                             label: function(context) {
                                 return ` ${context.dataset.label}: ${formatVND(context.raw)}`;

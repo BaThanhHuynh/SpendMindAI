@@ -13,7 +13,9 @@ import time
 import socket
 import webbrowser
 from http.server import HTTPServer, SimpleHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
+import urllib.request
+import urllib.parse
+from urllib.parse import urlparse, parse_qs, quote
 
 # Force UTF-8 terminal encoding on Windows
 if sys.platform == "win32":
@@ -142,6 +144,8 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=UTF-8")
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
         self.end_headers()
         self.wfile.write(body)
 
@@ -166,6 +170,12 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
         if path in ("/api", "/api/", "/api.php", "/api/index.php"):
             db = load_data()
             if action == "check_session":
+                if not db.get("user", {}).get("authenticated", False):
+                    return self.send_json({
+                        "authenticated": False,
+                        "db_connected": True,
+                        "db_error": None
+                    })
                 res = dict(db["user"])
                 if qs.get("include_state", [""])[0] == "1":
                     res["transactions"] = db.get("transactions", [])
@@ -173,9 +183,21 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                 return self.send_json(res)
 
             if action == "get_google_client_id":
+                google_client_id = "125274610515-6qi1cnl41k7itnfch3v6123q6tbqgovf.apps.googleusercontent.com"
+                env_path = os.path.join(ROOT_DIR, ".env")
+                if os.path.exists(env_path):
+                    try:
+                        with open(env_path, "r", encoding="utf-8") as f:
+                            for line in f:
+                                if line.startswith("GOOGLE_CLIENT_ID="):
+                                    val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                                    if val:
+                                        google_client_id = val
+                    except Exception:
+                        pass
                 return self.send_json({
                     "success": True,
-                    "client_id": "125274610515-6qi1cnl41k7itnfch3v6123q6tbqgovf.apps.googleusercontent.com"
+                    "client_id": google_client_id
                 })
 
             if action == "get_gemini_key":
@@ -221,17 +243,29 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                 })
 
             # Default GET /api returns transactions & budgets
+            is_auth = db.get("user", {}).get("authenticated", False)
             return self.send_json({
                 "success": True,
-                "authenticated": True,
-                "username": db["user"]["username"],
-                "transactions": db["transactions"],
-                "budgets": db["budgets"]
+                "authenticated": is_auth,
+                "username": db["user"]["username"] if is_auth else "",
+                "transactions": db["transactions"] if is_auth else [],
+                "budgets": db["budgets"] if is_auth else {}
             })
 
-        # Static files fallback (index.html, dashboard.html, etc.)
-        if path == "/":
+        # Static files & Clean URLs rewrite (matching vercel.json & Apache)
+        if path in ("/", "/index", "/index/", "/dashboard/index.html"):
             self.path = "/index.html"
+        elif path in ("/dashboard", "/dashboard/"):
+            self.path = "/dashboard.html"
+        elif path in ("/login", "/login/"):
+            self.path = "/login.html"
+        elif path in ("/register", "/register/"):
+            self.path = "/register.html"
+        else:
+            clean_path = path.lstrip("/")
+            full_path = os.path.join(ROOT_DIR, clean_path)
+            if not os.path.exists(full_path) and os.path.exists(full_path + ".html"):
+                self.path = path + ".html"
 
         return super().do_GET()
 
@@ -252,22 +286,59 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
             db = load_data()
 
             if action in ("login", "register", "google_auth"):
-                username = payload.get("username", "Bá Thành")
-                email = payload.get("email", "demo@spendmindai.com")
+                cred = payload.get("credential")
+                email = payload.get("email")
+                username = payload.get("username")
+                avatar_url = payload.get("avatar_url")
+                google_id = payload.get("google_id")
+
+                if cred and not email:
+                    try:
+                        import base64
+                        parts = cred.split(".")
+                        if len(parts) >= 2:
+                            padded = parts[1] + "=" * ((4 - len(parts[1]) % 4) % 4)
+                            jwt_payload = json.loads(base64.urlsafe_b64decode(padded.encode("utf-8")).decode("utf-8"))
+                            email = jwt_payload.get("email", email)
+                            username = jwt_payload.get("name", username)
+                            avatar_url = jwt_payload.get("picture", avatar_url)
+                            google_id = jwt_payload.get("sub", google_id)
+                    except Exception as e:
+                        print(f"[Google JWT decode error] {e}")
+
+                if not email:
+                    email = "demo@spendmindai.com"
+                if not username:
+                    if "@" in email:
+                        username = email.split("@")[0].replace(".", " ").title()
+                    else:
+                        username = "Bá Thành"
+                if not avatar_url:
+                    avatar_url = f"https://ui-avatars.com/api/?name={urllib.parse.quote(username)}&background=0071e3&color=fff&size=128"
+
                 db["user"]["authenticated"] = True
                 db["user"]["username"] = username
                 db["user"]["email"] = email
+                db["user"]["avatar_url"] = avatar_url
                 save_data(db)
                 return self.send_json({
                     "success": True,
                     "authenticated": True,
                     "username": username,
-                    "message": "Đăng nhập thành công (Local Demo)"
+                    "email": email,
+                    "avatar_url": avatar_url,
+                    "google_id": google_id or "gid_google",
+                    "message": "Đăng nhập Google thành công" if action == "google_auth" else "Đăng nhập thành công"
                 })
 
             if action == "logout":
-                # Keep authenticated for easy demo, or toggle:
-                return self.send_json({"success": True, "message": "Đăng xuất thành công"})
+                db["user"]["authenticated"] = False
+                save_data(db)
+                return self.send_json({
+                    "success": True,
+                    "authenticated": False,
+                    "message": "Đăng xuất thành công"
+                })
 
             if action == "save_transaction":
                 tx_id = payload.get("id")
@@ -373,7 +444,6 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                                 gemini_key = line.split("=", 1)[1].strip().strip('"').strip("'")
                 if gemini_key:
                     try:
-                        import urllib.request
                         api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={gemini_key}"
                         req_body = json.dumps({
                             "contents": [{"parts": [{"text": f"Bạn là trợ lý tài chính SpendMindAI. Câu hỏi: {msg}. Trả lời ngắn gọn súc tích bằng tiếng Việt định dạng markdown."}]}]

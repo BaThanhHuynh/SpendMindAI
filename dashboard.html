@@ -10,13 +10,13 @@
     <link rel="shortcut icon" href="favicon.ico?v=20260911_v8">
 
     <!-- Preload critical CSS & Fonts -->
-    <link rel="preload" href="css/styles.css?v=20260912_v3" as="style">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" as="style">
+    <link rel="preload" href="css/styles.css?v=20260913_v2" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..700;1,14..32,300..700&display=swap" as="style">
 
-    <!-- Google Fonts: Montserrat -->
+    <!-- Google Fonts: Inter (Apple SF Pro Equivalent) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..700;1,14..32,300..700&display=swap" rel="stylesheet">
 
     <!-- Lucide Icons CDN (pinned version for consistent + faster loading) -->
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -26,7 +26,7 @@
 
     <!-- PWA & Mobile Web App Meta -->
     <link rel="manifest" href="manifest.json?v=20260912_v3">
-    <meta name="theme-color" content="#10b981">
+    <meta name="theme-color" content="#0071e3">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -362,7 +362,7 @@
                         <i data-lucide="bell" style="color: var(--accent-color);"></i>
                         <span>Thông báo ứng dụng</span>
                     </div>
-                    <div class="item-right" style="display: flex; align-items: center; gap: 8px;">
+                    <div class="item-right" style="display: flex; align-items: center; gap: 6px;">
                         <span id="badge-app-notif-status">20:00</span>
                         <label class="switch">
                             <input type="checkbox" id="settings-app-notif-toggle" checked>
@@ -378,7 +378,7 @@
                         <span class="zalo-icon-badge" style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; background: #0068ff; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: -0.5px; flex-shrink: 0;">Z</span>
                         <span>Nhắc nhở qua Zalo</span>
                     </div>
-                    <div class="item-right" style="display: flex; align-items: center; gap: 8px;">
+                    <div class="item-right" style="display: flex; align-items: center; gap: 6px;">
                         <span id="badge-reminder-status">Tắt</span>
                         <label class="switch">
                             <input type="checkbox" id="settings-reminder-toggle">
@@ -462,7 +462,7 @@
                     <div class="form-group">
                         <label for="settings-zalo-phone" style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 2px;">Số điện thoại Zalo</label>
                         <input type="tel" id="settings-zalo-phone" placeholder="0912 345 678"
-                            style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);"
+                            style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: none;"
                             autocomplete="tel">
                         <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 4px;">Số điện thoại Zalo của bạn để nhận tin nhắn nhắc hẹn thu chi hàng ngày.</span>
                     </div>
@@ -470,7 +470,7 @@
                         <div class="form-group" style="flex: 1;">
                             <label for="settings-reminder-time" style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 2px;">Giờ nhắc hàng ngày</label>
                             <input type="time" id="settings-reminder-time"
-                                style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);">
+                                style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: none;">
                         </div>
                     </div>
                     <div class="form-checkbox-group" style="display: flex; align-items: center; gap: 6px;">
@@ -479,20 +479,20 @@
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
-                        <button type="submit" class="btn btn-sm btn-primary w-full" style="padding: 8px 12px; font-size: 0.8rem; background: #0068ff; border-color: #0068ff;">
+                        <button type="submit" class="btn btn-sm btn-primary w-full" style="padding: 8px 12px; font-size: 0.8rem; background: #0068ff; border: none;">
                             <i data-lucide="save" style="width: 14px; height: 14px;"></i> Lưu cài đặt Zalo
                         </button>
                         <button type="button" id="btn-test-zalo" class="btn btn-sm w-full" 
-                            style="padding: 7px 12px; font-size: 0.78rem; border: 1px solid #0068ff; color: #0068ff; background: transparent; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+                            style="padding: 7px 12px; font-size: 0.78rem; border: none; color: #0068ff; background: rgba(0, 104, 255, 0.1); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
                             <i data-lucide="send" style="width: 13px; height: 13px;"></i> Gửi tin nhắn thử nghiệm
                         </button>
                         <a id="btn-open-zalo-direct" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm w-full" 
-                            style="display: none; padding: 7px 12px; font-size: 0.78rem; border: 1px solid #0068ff; color: #ffffff; background: #0068ff; border-radius: 6px; text-decoration: none; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+                            style="display: none; padding: 7px 12px; font-size: 0.78rem; border: none; color: #ffffff; background: #0068ff; border-radius: 6px; text-decoration: none; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
                             <i data-lucide="external-link" style="width: 13px; height: 13px;"></i> Mở Zalo trò chuyện ngay
                         </a>
                     </div>
 
-                    <div class="zalo-tip-card" style="margin-top: 6px; padding: 10px; border-radius: 8px; background: rgba(0, 104, 255, 0.08); border: 1px solid rgba(0, 104, 255, 0.2); font-size: 0.72rem; line-height: 1.45; color: var(--text-secondary);">
+                    <div class="zalo-tip-card" style="margin-top: 6px; padding: 10px; border-radius: 8px; background: rgba(0, 104, 255, 0.08); border: none; font-size: 0.72rem; line-height: 1.45; color: var(--text-secondary);">
                         <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 4px; color: #0068ff; font-weight: 600;">
                             <i data-lucide="info" style="width: 12px; height: 12px;"></i> Hỗ trợ Zalo Thường (Cá Nhân)
                         </div>
@@ -519,7 +519,7 @@
             <div class="dropdown-body">
                 <form id="form-app-notification-settings" style="display: flex; flex-direction: column; gap: 12px;">
                     <!-- iOS PWA Home Screen Guidance -->
-                    <div id="ios-pwa-guidance-note" style="display: none; padding: 10px; border-radius: 8px; background: rgba(0, 104, 255, 0.1); border: 1px solid rgba(0, 104, 255, 0.25); font-size: 0.72rem; line-height: 1.45; color: var(--text-primary); margin-bottom: 4px;">
+                    <div id="ios-pwa-guidance-note" style="display: none; padding: 10px; border-radius: 8px; background: rgba(0, 104, 255, 0.1); border: none; font-size: 0.72rem; line-height: 1.45; color: var(--text-primary); margin-bottom: 4px;">
                         <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 3px; color: #0068ff; font-weight: 600;">
                             <i data-lucide="smartphone" style="width: 13px; height: 13px;"></i> Dành cho iPhone & iPad (iOS)
                         </div>
@@ -531,7 +531,7 @@
                             <span class="perm-title" style="font-size: 0.76rem; color: var(--text-secondary); font-weight: 500;">Quyền thông báo hệ thống:</span>
                             <span id="badge-app-notif-perm" class="notif-perm-badge default">Chưa cấp quyền</span>
                         </div>
-                        <button type="button" id="btn-request-app-notif-perm" class="btn btn-xs btn-outline-primary" style="margin-top: 6px; display: none; font-size: 0.72rem; padding: 4px 10px;">
+                        <button type="button" id="btn-request-app-notif-perm" class="btn btn-xs btn-outline-primary" style="margin-top: 6px; display: none; font-size: 0.72rem; padding: 4px 10px; border: none;">
                             <i data-lucide="shield-alert" style="width: 12px; height: 12px;"></i> Cấp quyền thông báo
                         </button>
                     </div>
@@ -539,7 +539,7 @@
                     <div class="form-group">
                         <label for="settings-app-notif-time" style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 2px;">Giờ nhắc hàng ngày</label>
                         <input type="time" id="settings-app-notif-time" value="20:00"
-                            style="width: 100%; padding: 8px 10px; font-size: 0.85rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);">
+                            style="width: 100%; padding: 8px 10px; font-size: 0.85rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: none;">
                         <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 4px;">Máy chủ sẽ gửi thông báo Web Push tới điện thoại vào giờ này kể cả khi bạn đã tắt màn hình hoặc đóng ứng dụng.</span>
                     </div>
 
@@ -554,16 +554,16 @@
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
-                        <button type="submit" class="btn btn-sm btn-primary w-full" style="padding: 8px 12px; font-size: 0.8rem;">
+                        <button type="submit" class="btn btn-sm btn-primary w-full" style="padding: 8px 12px; font-size: 0.8rem; border: none;">
                             <i data-lucide="save" style="width: 14px; height: 14px;"></i> Lưu cài đặt thông báo
                         </button>
                         <button type="button" id="btn-test-app-notification" class="btn btn-sm w-full btn-outline-accent" 
-                            style="padding: 7px 12px; font-size: 0.78rem; border: 1px solid var(--accent-color); color: var(--accent-color); background: transparent; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+                            style="padding: 7px 12px; font-size: 0.78rem; border: none; color: var(--accent-color); background: rgba(16, 185, 129, 0.12); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
                             <i data-lucide="bell-ring" style="width: 13px; height: 13px;"></i> Gửi thông báo đẩy thử nghiệm (Web Push)
                         </button>
                     </div>
 
-                    <div class="app-notif-tip-card" style="padding: 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.72rem; line-height: 1.45; color: var(--text-secondary);">
+                    <div class="app-notif-tip-card" style="padding: 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.08); border: none; font-size: 0.72rem; line-height: 1.45; color: var(--text-secondary);">
                         <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 4px; color: var(--accent-color); font-weight: 600;">
                             <i data-lucide="sparkles" style="width: 12px; height: 12px;"></i> Nhắc nhở thông minh & Không làm phiền
                         </div>

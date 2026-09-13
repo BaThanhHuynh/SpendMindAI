@@ -99,6 +99,10 @@
       "destination": "/api/index.php"
     },
     {
+      "source": "/index",
+      "destination": "/index.html"
+    },
+    {
       "source": "/login",
       "destination": "/login.html"
     },

@@ -15,6 +15,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+// Re-verify session if restored from bfcache
+window.addEventListener("pageshow", (e) => {
+    if (e.persisted) {
+        checkAuthSession();
+    }
+});
+
 const API_URL = "api";
 
 // 1. Typewriter phrase configuration for Hero Section (only greeting phrase)
