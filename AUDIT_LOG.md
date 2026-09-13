@@ -3,7 +3,7 @@
 > **Audit Execution Date:** 2026-09-13  
 > **Auditor:** AI Principal Software Architect & Staff Security Engineer  
 > **Standard:** `PRODUCTION_STANDARDS.md` & `AGENTS.md`  
-> **Current Status:** COMPLETED - ALL RESOLVED (18/18 items)
+> **Current Status:** COMPLETED - ALL RESOLVED (19/19 items)
 
 ---
 
@@ -13,9 +13,9 @@
 |:---|:---:|:---:|:---:|
 | **Critical (P0)** | 1 | 1 | 0 |
 | **High (P1)** | 8 | 8 | 0 |
-| **Medium (P2)** | 7 | 7 | 0 |
+| **Medium (P2)** | 8 | 8 | 0 |
 | **Minor (P3)** | 2 | 2 | 0 |
-| **Total** | **18** | **18** | **0** |
+| **Total** | **19** | **19** | **0** |
 
 ---
 
@@ -212,4 +212,18 @@
         + Bảo vệ phần tử `.spinner` và `.spinner-inline` để animation xoay của loader hoạt động hoàn hảo.
       - Cập nhật chuẩn hóa tài liệu `DESIGN.md` lên phiên bản 2.1.0.
     - **Trạng thái:** [x] RESOLVED.
+
+19. **[P2] UI/UX - Tái cấu trúc bố cục Header trên giao diện Mobile theo chuẩn Apple iOS Top Bar**
+    - **File:** `css/mobile.css`, `css/styles.css`, `js/dashboard.js`
+    - **Vấn đề:** 
+      - (Hình chụp người dùng) Trên giao diện di động, Header bị ngắt thành 2 dòng bất đối xứng: Logo cùng lời chào ("Xin chào, Bá Thành! / Quản lý tài chính thông minh") bị căn giữa ở dòng 1; 3 nút chức năng (Xuất, Nhập, Avatar Cài đặt) bị đẩy xuống góc phải ở dòng 2, tạo khoảng trống đen lớn không hợp lý ở góc trái và làm header quá cao (~140px), đẩy thẻ số dư xuống dưới.
+      - Avatar mèo bên trong nút cài đặt bị thu nhỏ (26px) và có viền màu chưa đồng bộ với thiết kế borderless.
+    - **Giải pháp:**
+      - Tái cấu trúc Header trên Mobile thành thanh Top Bar đơn hàng ngang (Single-row horizontal layout) chuẩn Apple HIG:
+        + Cánh trái (`.logo-area`): Logo squircle 36px đặt cạnh lời chào và slogan tài chính, căn lề trái tự nhiên, hỗ trợ tự thu ngắn (`ellipsis`) khi tên dài.
+        + Cánh phải (`.header-actions`): Cụm 3 nút hành động tròn chuẩn xúc giác iOS (`36px x 36px`, gồm nút Xuất, Nhập dạng icon tròn không chữ, và nút Cài đặt có ảnh đại diện tràn viền bo tròn 100% không viền thừa).
+        + Thêm vi tương tác co ép `scale(0.90)` khi chạm tay (active touch state).
+        + Chiều cao header thu gọn từ 140px xuống chỉ còn 56px, cân đối hoàn hảo và giải phóng tối đa không gian màn hình phía trên cho thẻ số dư và biểu đồ.
+    - **Trạng thái:** [x] RESOLVED.
+
 

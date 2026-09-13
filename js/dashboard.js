@@ -180,7 +180,7 @@ function updateAvatarUI(avatarUrl) {
     if (avatarUrl && (avatarUrl.startsWith("https://") || avatarUrl.startsWith("http://"))) {
         const btnSettings = document.getElementById("btn-settings");
         if (btnSettings && !btnSettings.querySelector(".user-avatar-img")) {
-            btnSettings.innerHTML = `<img src="${avatarUrl}" class="user-avatar-img" alt="Avatar" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover; display: block; border: 1.5px solid var(--accent-color);">`;
+            btnSettings.innerHTML = `<img src="${avatarUrl}" class="user-avatar-img" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; border: none;">`;
         }
     }
 }

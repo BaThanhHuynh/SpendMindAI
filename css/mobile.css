@@ -215,20 +215,184 @@
         max-height: 520px !important;
     }
 
-    /* Mobile Header Layout */
+    /* Mobile Header Layout - Apple iOS Top Bar Standard */
     .app-header {
-        flex-wrap: wrap;
-        gap: 12px;
-        padding: 14px 16px;
-        -webkit-backdrop-filter: none !important;
-        backdrop-filter: none !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        padding: 10px 14px !important;
+        margin-bottom: 12px !important;
+        border-radius: var(--radius-lg, 18px) !important;
+        background: var(--surface-card, #1c1c1e) !important;
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+        border: none !important;
         transform: none !important;
         filter: none !important;
     }
 
+    [data-theme="light"] .app-header {
+        background: #ffffff !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .logo-area {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        text-align: left !important;
+        gap: 10px !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+
+    .logo-icon {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        border-radius: 11px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+    }
+
+    .logo-icon img {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 11px !important;
+        object-fit: cover !important;
+        display: block !important;
+    }
+
+    .logo-area > div {
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+    }
+
+    .logo-area h1 {
+        font-size: 0.92rem !important;
+        font-weight: 700 !important;
+        color: var(--text-primary) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1.25 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        letter-spacing: -0.015em !important;
+    }
+
+    .logo-area .tagline {
+        font-size: 0.70rem !important;
+        color: var(--text-secondary) !important;
+        margin: 2px 0 0 0 !important;
+        padding: 0 !important;
+        line-height: 1.2 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
     .header-actions {
-        width: 100%;
-        justify-content: flex-end;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        width: auto !important;
+        gap: 6px !important;
+        flex-shrink: 0 !important;
+        border-top: none !important;
+        padding-top: 0 !important;
+    }
+
+    .backup-actions {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+
+    .btn-icon-label {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: var(--surface-secondary, rgba(255, 255, 255, 0.06)) !important;
+        color: var(--text-secondary) !important;
+        border: none !important;
+        transition: transform 0.15s cubic-bezier(0.32, 0.72, 0, 1), background 0.15s ease !important;
+    }
+
+    [data-theme="light"] .btn-icon-label {
+        background: rgba(0, 0, 0, 0.05) !important;
+        color: var(--text-secondary) !important;
+    }
+
+    .btn-icon-label:active {
+        transform: scale(0.90) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+    }
+
+    .btn-icon-label span {
+        display: none !important;
+    }
+
+    .btn-icon-label i,
+    .btn-icon-label svg {
+        width: 17px !important;
+        height: 17px !important;
+        stroke-width: 1.8 !important;
+    }
+
+    .settings-menu-container {
+        position: relative !important;
+    }
+
+    .theme-toggle-btn#btn-settings {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: var(--surface-secondary, rgba(255, 255, 255, 0.06)) !important;
+        border: none !important;
+        overflow: hidden !important;
+        cursor: pointer !important;
+        transition: transform 0.15s cubic-bezier(0.32, 0.72, 0, 1) !important;
+    }
+
+    [data-theme="light"] .theme-toggle-btn#btn-settings {
+        background: rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .theme-toggle-btn#btn-settings:active {
+        transform: scale(0.90) !important;
+    }
+
+    .theme-toggle-btn#btn-settings .user-avatar-img {
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 50% !important;
+        object-fit: cover !important;
+        display: block !important;
+        border: none !important;
     }
 
     /* Touch target sizes (minimum 44px) */
