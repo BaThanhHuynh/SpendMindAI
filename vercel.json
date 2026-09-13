@@ -71,6 +71,34 @@
       "destination": "/404"
     },
     {
+      "source": "/dev_server.py",
+      "destination": "/404"
+    },
+    {
+      "source": "/local_dev_data.json",
+      "destination": "/404"
+    },
+    {
+      "source": "/database.sql",
+      "destination": "/404"
+    },
+    {
+      "source": "/design-system/(.*)",
+      "destination": "/404"
+    },
+    {
+      "source": "/(.*)\\.md",
+      "destination": "/404"
+    },
+    {
+      "source": "/(.*)\\.sql",
+      "destination": "/404"
+    },
+    {
+      "source": "/(.*)\\.log",
+      "destination": "/404"
+    },
+    {
       "source": "/watch_deploy.py",
       "destination": "/404"
     },

@@ -153,7 +153,24 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         qs = parse_qs(parsed.query)
-        action = qs.get("action", [""])[0]
+        # Block access to sensitive files
+        lower_path = path.lower()
+        if (
+            lower_path.startswith("/.env")
+            or lower_path.startswith("/.git")
+            or lower_path.endswith(".sql")
+            or lower_path.endswith(".db")
+            or lower_path.endswith(".sqlite")
+            or lower_path == "/local_dev_data.json"
+            or lower_path.startswith("/api/config")
+            or lower_path.startswith("/api/controllers")
+            or lower_path.startswith("/api/services")
+        ):
+            self.send_response(403)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b"403 Forbidden: Access Denied")
+            return
 
         # 0. Health & Readiness endpoints
         if path in ("/healthz", "/readyz") or (path in ("/api", "/api.php", "/api/index.php") and action in ("health", "healthz", "readyz")):
@@ -268,6 +285,27 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
                 self.path = path + ".html"
 
         return super().do_GET()
+
+    def do_HEAD(self):
+        parsed = urlparse(self.path)
+        path = parsed.path
+        lower_path = path.lower()
+        if (
+            lower_path.startswith("/.env")
+            or lower_path.startswith("/.git")
+            or lower_path.endswith(".sql")
+            or lower_path.endswith(".db")
+            or lower_path.endswith(".sqlite")
+            or lower_path == "/local_dev_data.json"
+            or lower_path.startswith("/api/config")
+            or lower_path.startswith("/api/controllers")
+            or lower_path.startswith("/api/services")
+        ):
+            self.send_response(403)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.end_headers()
+            return
+        return super().do_HEAD()
 
     def do_POST(self):
         parsed = urlparse(self.path)

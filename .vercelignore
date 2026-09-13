@@ -1,15 +1,41 @@
+# Secrets & Environment
 .env
 .env.*
-scratch/
-vps_deployment/
+*.env
+
+# Development Server & Local Simulation
+dev_server.py
+local_demo_server.py
 watch_deploy.py
-Dockerfile
-docker-compose.yml
-database.sql
-.agents/
-local_dev_data.json
-*.sqlite
-*.db
 test_*.py
 temp_*.py
+local_dev_data.json
+
+# Internal Database Schema & Backups
+database.sql
+*.sql
+*.sqlite
+*.db
+
+# Internal Documentation & Checklists
+*.md
+.cursorrules
+design-system/
+
+# AI Agents & Scratch Workspaces
+scratch/
+.agents/
+.github/
+
+# Deployment & Docker
+vps_deployment/
+Dockerfile*
+docker-compose*.yml
+
+# Logs & Cache
+*.log
+logs/
+__pycache__/
+*.pyc
+
 

@@ -1,60 +1,125 @@
-# Configurations and Secrets
+# =========================================================================
+# SpendMindAI - Production .gitignore Specification
+# =========================================================================
+
+# 1. Secrets & Environment Configurations (CRITICAL)
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+*.env
+*.env.local
+*.env.production
+*.env.development
+.envrc
+
+# 2. Local Development Data & Databases
 local_dev_data.json
 spendmind_local.db
-local_demo_server.py
-.agents/
-scratch/
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db3
+*.dump
+# Keep database schema blueprint tracked
+!database.sql
 
-# Cloudflare Tunnel temporary link and executable
+# 3. Private Keys, Certificates & Tokens
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+*.cer
+*.id_rsa
+*.pub
+id_ed25519*
+token*.json
+credentials*.json
+
+# 4. Deployment, Cloud & Tunnel Artifacts
+.vercel/
 cloudflare_link.txt
 cloudflared
 cloudflared.exe
+vps_deployment/
+watch_deploy.py
+local_demo_server.py
 
-# Database files
-*.sqlite
-*.db
-# Keep database.sql schema template tracked
-!database.sql
+# 5. AI Agent Artifacts & Scratchpads
+.agents/
+scratch/
+.gemini/
+.claude/
+.system_generated/
 
-# Logs and Debug
+# 6. Logs & Debug Traces
 *.log
+logs/
+*.log.*
 email_outbox.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# CSS and File Backups
-styles.backup_*
-*.bak
-*.tmp
-*.temp
-~$*.docx
-~$*.xlsx
-
-# Dependency and System Files
+# 7. Dependency Directories
 node_modules/
-.idea/
-.vscode/
-.DS_Store
-Thumbs.db
-desktop.ini
+vendor/
 
-# Python cache
+# 8. Python Cache & Virtual Environments
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
 .pytest_cache/
+.coverage
+htmlcov/
 .venv/
 venv/
 ENV/
+env/
 
-# Output and Archives
+# 9. IDE & Editor Configurations
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# 10. Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# 11. Temporary, Backup & Swap Files
+*.bak
+*.backup
+*.tmp
+*.temp
+*~
+styles.backup_*
+
+# 12. Archives & Builds
 *.zip
 *.tar.gz
+*.tgz
 *.rar
+*.7z
+dist/
+build/
 
-# Project Reports
-BaoCaoDoAn.docx
-BaoCaoDoAn.md
-BaoCaoDoAn_HoanThien.docx
+# 13. Office Drafts & Reports
+~$*.docx
+~$*.xlsx
+~$*.pptx
+BaoCaoDoAn*.docx
+BaoCaoDoAn*.md
+BaoCaoDoAn*.pdf

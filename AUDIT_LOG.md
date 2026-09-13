@@ -3,7 +3,7 @@
 > **Audit Execution Date:** 2026-09-13  
 > **Auditor:** AI Principal Software Architect & Staff Security Engineer  
 > **Standard:** `PRODUCTION_STANDARDS.md` & `AGENTS.md`  
-> **Current Status:** COMPLETED - ALL RESOLVED (19/19 items)
+> **Current Status:** COMPLETED - ALL RESOLVED (20/20 items)
 
 ---
 
@@ -12,10 +12,10 @@
 | Severity | Total Detected | Resolved | Pending |
 |:---|:---:|:---:|:---:|
 | **Critical (P0)** | 1 | 1 | 0 |
-| **High (P1)** | 8 | 8 | 0 |
+| **High (P1)** | 9 | 9 | 0 |
 | **Medium (P2)** | 8 | 8 | 0 |
 | **Minor (P3)** | 2 | 2 | 0 |
-| **Total** | **19** | **19** | **0** |
+| **Total** | **20** | **20** | **0** |
 
 ---
 
@@ -225,5 +225,19 @@
         + Thêm vi tương tác co ép `scale(0.90)` khi chạm tay (active touch state).
         + Chiều cao header thu gọn từ 140px xuống chỉ còn 56px, cân đối hoàn hảo và giải phóng tối đa không gian màn hình phía trên cho thẻ số dư và biểu đồ.
     - **Trạng thái:** [x] RESOLVED.
+
+20. **[P1] Security & Architecture - Chuẩn hóa cấu trúc Production, gia cố bảo mật và triệt để cách ly các tệp nhạy cảm (.gitignore, .vercelignore, .htaccess, vercel.json)**
+    - **File:** `.gitignore`, `.vercelignore`, `.htaccess`, `vercel.json`, `dev_server.py`
+    - **Vấn đề:**
+      - File `.gitignore` cũ còn thiếu nhiều quy tắc bảo mật thiết yếu (Private keys, chứng chỉ SSL/TLS, tokens, database dumps, virtual environments, agent scratchpads, log files).
+      - Trước đây, một số tệp tài liệu nội bộ (`AUDIT_LOG.md`, `dev_server.py`) có thể bị truy cập trực tiếp qua HTTP GET trên môi trường Vercel production do thiếu quy tắc chặn và `.vercelignore`.
+      - Máy chủ phát triển `dev_server.py` chưa chặn các yêu cầu HEAD/GET tới các tệp nhạy cảm (`.env`, `local_dev_data.json`, `database.sql`).
+    - **Giải pháp:**
+      - Nâng cấp `.gitignore` theo chuẩn Production Security gồm 13 phân nhóm bảo mật rõ ràng (Secrets & Environment, Local DBs, Private keys/Certs, Cloud/Tunnel artifacts, AI agent scratchpads, Logs/Debug, Dependencies, Python cache/venv, IDE configs, OS files, Temporary/Bak, Archives/Builds, Office drafts).
+      - Nâng cấp `.vercelignore`: Tuyệt đối ngăn chặn việc đưa `dev_server.py`, `database.sql`, `*.md`, `*.py`, `*.sql`, `local_dev_data.json`, `design-system/`, `.cursorrules` lên hạ tầng Vercel Production.
+      - Cập nhật `vercel.json` và `.htaccess`: Chặn và điều hướng toàn bộ yêu cầu truy cập các tệp nội bộ, script dev, database schema và tài liệu markdown về `404 Not Found` / `403 Forbidden`.
+      - Gia cố `dev_server.py`: Tích hợp bộ lọc bảo mật cho cả phương thức GET và HEAD, lập tức phản hồi `403 Forbidden` khi phát hiện truy cập vào `.env`, `.git`, `local_dev_data.json`, file `.sql`, file `.db` hoặc cấu hình `api/config/`.
+    - **Trạng thái:** [x] RESOLVED.
+
 
 
