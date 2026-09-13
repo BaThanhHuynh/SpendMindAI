@@ -481,10 +481,13 @@ function initEventListeners() {
 
     const settingsBackdrop = document.getElementById("settings-backdrop");
     if (settingsBackdrop) {
-        settingsBackdrop.addEventListener("click", (e) => {
+        const dismissBackdrop = (e) => {
             e.stopPropagation();
             closeSettingsDropdown();
-        });
+        };
+        settingsBackdrop.addEventListener("click", dismissBackdrop);
+        settingsBackdrop.addEventListener("pointerdown", dismissBackdrop);
+        settingsBackdrop.addEventListener("touchstart", dismissBackdrop, { passive: true });
     }
 
     const settingsForm = document.getElementById("settings-notification-form");
@@ -628,6 +631,9 @@ function initEventListeners() {
 
     const btnCloseThemeSub = document.getElementById("btn-close-theme-sub");
     if (btnCloseThemeSub) btnCloseThemeSub.addEventListener("click", closeSettingsDropdown);
+
+    const btnCloseAppNotifSub = document.getElementById("btn-close-app-notif-sub");
+    if (btnCloseAppNotifSub) btnCloseAppNotifSub.addEventListener("click", closeSettingsDropdown);
 
     // Back buttons click in sub-panels (goes back to main menu panel)
     document.querySelectorAll(".btn-back-settings").forEach(btn => {

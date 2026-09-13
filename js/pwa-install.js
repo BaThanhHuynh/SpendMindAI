@@ -14,7 +14,9 @@
     });
 
     function initPwaInstaller() {
-        injectIosModalHTML();
+        if (isIOS) {
+            injectIosModalHTML();
+        }
         injectFloatingInstallBanner();
 
         // 1. Android & Desktop Chrome/Edge event
@@ -107,8 +109,10 @@
             return;
         }
 
-        // Fallback for desktop browsers without prompt
-        openIosModal();
+        // Fallback for Android Chrome or other browsers when deferred prompt is unavailable
+        if (typeof showToast === 'function') {
+            showToast("Để cài đặt trên Android: Nhấn biểu tượng menu 3 chấm (⋮) ở góc trên trình duyệt Chrome ➔ chọn 'Cài đặt ứng dụng' hoặc 'Thêm vào màn hình chính'.", "info");
+        }
     }
 
     function updateInstallUI(available, installed = false) {

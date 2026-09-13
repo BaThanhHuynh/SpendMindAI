@@ -140,6 +140,7 @@
                 const subJson = subscription.toJSON();
                 await fetch('/api/?action=save_push_subscription', {
                     method: 'POST',
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         endpoint: subscription.endpoint,
@@ -173,6 +174,7 @@
 
                 await fetch('/api/?action=remove_push_subscription', {
                     method: 'POST',
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ endpoint })
                 });
@@ -328,6 +330,7 @@
         try {
             const pushRes = await fetch('/api/?action=test_app_push_notification', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({})
             });
@@ -415,7 +418,7 @@
         const permReqBtn = document.getElementById('btn-request-app-notif-perm');
         if (permBadge) {
             if (perm === 'granted') {
-                permBadge.textContent = state.isPushSubscribed ? 'Web Push & Thiết bị: Đã kích hoạt' : 'Đã cấp quyền hệ thống';
+                permBadge.textContent = state.isPushSubscribed ? 'Web Push & Thiết bị: Sẵn sàng 🟢' : 'Đã cấp quyền hệ thống';
                 permBadge.className = 'notif-perm-badge granted';
                 if (permReqBtn) permReqBtn.style.display = 'none';
             } else if (perm === 'denied') {
@@ -582,6 +585,7 @@
 
             const res = await fetch('/api/?action=save_notification_settings', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });

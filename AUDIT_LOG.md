@@ -63,6 +63,29 @@
      - Đồng bộ API endpoints và mô phỏng hoàn chỉnh trong `dev_server.py`.
    - **Trạng thái:** [x] RESOLVED.
 
+7. **[P0] Mobile/UX - Đóng băng cử chỉ vuốt & cảm ứng trên Android (Touch Gesture Deadlock)**
+   - **File:** `css/styles.css`, `css/mobile.css`, `js/dashboard.js`, `js/pwa-install.js`
+   - **Vấn đề:** Trên Android Chrome, người dùng không thể vuốt, cuộn hoặc chạm vào các nút điều hướng.
+     - *Nguyên nhân 1:* `html, body { overflow-x: hidden !important; }` kết hợp `body { overscroll-behavior-y: contain; }` triệt tiêu bộ nhận diện cử chỉ cuộn trên Chromium Blink.
+     - *Nguyên nhân 2:* Phần tử `.toast` có `z-index: 9999` và `pointer-events: auto` khi ẩn (`opacity: 0`), đè lên các nút ở góc phải thanh điều hướng dưới cùng.
+     - *Nguyên nhân 3:* `#settings-backdrop` chỉ nhận sự kiện `click` (không nhận `touchstart`), khiến `body.settings-open { overflow: hidden !important; }` bị kẹt vĩnh viễn khi người dùng chạm backdrop để thoát. Sub-panel thiếu `overflow-y: auto`.
+     - *Nguyên nhân 4:* `promptInstallFlow()` gọi nhầm `openIosModal()` trên thiết bị Android, kích hoạt backdrop che phủ màn hình.
+   - **Giải pháp:**
+     - Tách biệt `html { overflow-x: hidden; touch-action: pan-y; }` và `body { overflow-x: clip; touch-action: pan-y; }`, đổi `overscroll-behavior-y: auto;`.
+     - Thêm `pointer-events: none !important;` cho `.toast` ở trạng thái ẩn.
+     - Bổ sung sự kiện `pointerdown` và `touchstart` cho `#settings-backdrop`, bổ sung nút đóng `X` và thuộc tính cuộn mượt cho sub-panel.
+     - Phân định rõ ràng thiết bị Android trong `pwa-install.js`, chỉ hiển thị hướng dẫn native của Android Chrome.
+   - **Trạng thái:** [x] RESOLVED.
+
+8. **[P1] Architecture/Cron - Giới hạn tần suất Cron Vercel Hobby không hỗ trợ giờ nhắc tùy biến**
+   - **File:** `.github/workflows/reminder-cron.yml`, `js/app-notification.js`, `sw.js`
+   - **Vấn đề:** Vercel Hobby chỉ hỗ trợ chạy cron 1 lần/ngày cố định lúc 20:00 VN (`0 13 * * *`). Người dùng cài đặt giờ nhắc nhở tùy ý (ví dụ 14:10, 14:30) sẽ không được kích hoạt Web Push từ máy chủ khi đang tắt màn hình.
+   - **Giải pháp:**
+     - Thiết lập GitHub Actions cron `.github/workflows/reminder-cron.yml` chạy định kỳ mỗi 15 phút ping `api/cron.php?token=safe_cron_token_2026` để quét toàn bộ người dùng đến hạn nhắc trong ngày.
+     - Thêm `requireInteraction: true`, cờ `renotify: true` và chuỗi rung `vibrate` nâng cao trong `sw.js` để màn hình Android sáng lên và rung cảnh báo.
+     - Thêm `credentials: 'include'` cho toàn bộ các lệnh gọi API Web Push và hiển thị huy hiệu trạng thái xanh trực quan trên dashboard.
+   - **Trạng thái:** [x] RESOLVED.
+
 ---
 
 ### [P2 - Medium]

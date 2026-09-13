@@ -2,7 +2,7 @@
    SPENDMINDAI - SERVICE WORKER (PWA & Offline Resilience)
    ========================================================================== */
 
-const CACHE_NAME = 'spendmind-v3.6';
+const CACHE_NAME = 'spendmind-v3.7';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -169,7 +169,9 @@ self.addEventListener('push', (event) => {
             badge: payload.badge || '/images/logoapp-192.png',
             tag: payload.tag || 'spendmind-daily-reminder',
             renotify: true,
-            vibrate: [200, 100, 200],
+            requireInteraction: true,
+            silent: false,
+            vibrate: [300, 100, 300, 100, 400],
             data: payload.data || { url: '/dashboard.html?action=add_transaction' },
             actions: [
                 { action: 'open', title: 'Ghi chép ngay' },

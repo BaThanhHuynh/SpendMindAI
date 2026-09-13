@@ -249,8 +249,10 @@
         font-size: 0.8rem !important;
     }
 
-    /* Pull to refresh & overscroll behavior */
-    body {
-        overscroll-behavior-y: contain;
+    /* Mobile inertial touch scrolling & vertical pan navigation */
+    html, body {
+        overscroll-behavior-y: auto;
+        touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
     }
 }
