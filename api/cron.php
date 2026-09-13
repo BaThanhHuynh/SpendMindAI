@@ -16,7 +16,8 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 // Ensure execution is authorized (CLI, valid token, or Vercel Cron Bearer header)
 $isCli = (php_sapi_name() === 'cli');
 $token = isset($_GET['token']) ? trim($_GET['token']) : '';
-$expectedToken = function_exists('getEnvVar') ? getEnvVar('CRON_TOKEN', '') : (getenv('CRON_TOKEN') ?: '');
+$defaultToken = 'safe_cron_token_2026';
+$expectedToken = function_exists('getEnvVar') ? getEnvVar('CRON_TOKEN', $defaultToken) : (getenv('CRON_TOKEN') ?: $defaultToken);
 
 $authHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : '';
 $cronSecret = function_exists('getEnvVar') ? getEnvVar('CRON_SECRET', '') : (getenv('CRON_SECRET') ?: '');

@@ -183,6 +183,9 @@ class ReminderController {
                 "reminder_time = :rtime",
                 "last_reminder_sent = NULL"
             ];
+            if (in_array('last_app_reminder_sent', $tableCols)) {
+                $setClauses[] = "last_app_reminder_sent = NULL";
+            }
             $params = [
                 ':rtime' => $reminderTime,
                 ':id' => $userId

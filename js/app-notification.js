@@ -378,8 +378,19 @@
 
     // Synchronize settings with server & local storage
     async function updateSettings(newSettings) {
-        if (typeof newSettings.enabled === 'boolean') state.enabled = newSettings.enabled;
-        if (newSettings.time) state.time = newSettings.time;
+        if (typeof newSettings.enabled === 'boolean') {
+            state.enabled = newSettings.enabled;
+            if (newSettings.enabled) {
+                localStorage.removeItem(STORAGE_KEY_LAST_SENT);
+            }
+        }
+        if (newSettings.time) {
+            if (state.time !== newSettings.time) {
+                // Reset last sent date so newly scheduled time can trigger today
+                localStorage.removeItem(STORAGE_KEY_LAST_SENT);
+            }
+            state.time = newSettings.time;
+        }
         if (typeof newSettings.onlyIfNoExpenses === 'boolean') state.onlyIfNoExpenses = newSettings.onlyIfNoExpenses;
 
         try {
@@ -453,6 +464,10 @@
         if (timeInput && !timeInput.matches(':focus')) {
             timeInput.value = state.time ? state.time.substring(0, 5) : '20:00';
         }
+        const onlyEmptyInput = document.getElementById('settings-app-notif-only-empty');
+        if (onlyEmptyInput) {
+            onlyEmptyInput.checked = state.onlyIfNoExpenses;
+        }
     }
 
     // Bind event listeners on dashboard elements
@@ -525,9 +540,11 @@
                 e.preventDefault();
                 const subToggle = document.getElementById('settings-app-notif-active');
                 const timeInput = document.getElementById('settings-app-notif-time');
+                const onlyEmptyInput = document.getElementById('settings-app-notif-only-empty');
 
                 const enabled = subToggle ? subToggle.checked : state.enabled;
                 const time = timeInput && timeInput.value ? timeInput.value : state.time;
+                const onlyIfNoExpenses = onlyEmptyInput ? onlyEmptyInput.checked : state.onlyIfNoExpenses;
 
                 if (enabled && getPermissionStatus() !== 'granted') {
                     const res = await requestPermission();
@@ -543,7 +560,7 @@
                     await unsubscribeDevicePush();
                 }
 
-                updateSettings({ enabled, time });
+                updateSettings({ enabled, time, onlyIfNoExpenses });
                 syncSettingsToServer(true);
             });
         }
