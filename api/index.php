@@ -94,6 +94,10 @@ switch ($action) {
     case 'get_gemini_key':
         $chatbotCtrl->getGeminiKey();
         exit();
+
+    case 'get_vapid_public_key':
+        $reminderCtrl->getVapidPublicKey();
+        exit();
 }
 
 // 6. Database Guard for Protected Endpoints
@@ -126,10 +130,6 @@ if ($action === 'save_notification_settings' && $method === 'POST') {
 }
 if ($action === 'test_zalo_reminder' && $method === 'POST') {
     $reminderCtrl->testZaloReminder($userId, $input);
-    exit();
-}
-if ($action === 'get_vapid_public_key' && $method === 'GET') {
-    $reminderCtrl->getVapidPublicKey();
     exit();
 }
 if ($action === 'save_push_subscription' && $method === 'POST') {
