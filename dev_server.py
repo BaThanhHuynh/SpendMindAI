@@ -153,6 +153,7 @@ class SpendMindHandler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         qs = parse_qs(parsed.query)
+        action = qs.get("action", [""])[0]
         # Block access to sensitive files
         lower_path = path.lower()
         if (

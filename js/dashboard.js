@@ -633,14 +633,10 @@ function initEventListeners() {
     });
 
     // Sub-panels close buttons (closes the entire dropdown menu)
-    const btnCloseReminderSub = document.getElementById("btn-close-reminder-sub");
-    if (btnCloseReminderSub) btnCloseReminderSub.addEventListener("click", closeSettingsDropdown);
-
-    const btnCloseThemeSub = document.getElementById("btn-close-theme-sub");
-    if (btnCloseThemeSub) btnCloseThemeSub.addEventListener("click", closeSettingsDropdown);
-
-    const btnCloseAppNotifSub = document.getElementById("btn-close-app-notif-sub");
-    if (btnCloseAppNotifSub) btnCloseAppNotifSub.addEventListener("click", closeSettingsDropdown);
+    ["btn-close-reminder-sub", "btn-close-theme-sub", "btn-close-app-notif-sub"].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener("click", closeSettingsDropdown);
+    });
 
     // Back buttons click in sub-panels (goes back to main menu panel)
     document.querySelectorAll(".btn-back-settings").forEach(btn => {
@@ -651,33 +647,18 @@ function initEventListeners() {
     });
 
     // Theme options list checkmark select triggers
-    const optLight = document.getElementById("opt-theme-light");
-    if (optLight) {
-        optLight.addEventListener("click", () => {
-            if (state.theme !== "light") {
-                setTheme("light");
-                showToast("Đã chuyển sang giao diện Sáng", "info");
-            }
-        });
-    }
-    const optDark = document.getElementById("opt-theme-dark");
-    if (optDark) {
-        optDark.addEventListener("click", () => {
-            if (state.theme !== "dark") {
-                setTheme("dark");
-                showToast("Đã chuyển sang giao diện Tối", "info");
-            }
-        });
-    }
-    const optSystem = document.getElementById("opt-theme-system");
-    if (optSystem) {
-        optSystem.addEventListener("click", () => {
-            if (state.theme !== "system") {
-                setTheme("system");
-                showToast("Đã chuyển sang giao diện Hệ thống", "info");
-            }
-        });
-    }
+    const themeLabels = { light: "Sáng", dark: "Tối", system: "Hệ thống" };
+    Object.entries(themeLabels).forEach(([thm, label]) => {
+        const opt = document.getElementById(`opt-theme-${thm}`);
+        if (opt) {
+            opt.addEventListener("click", () => {
+                if (state.theme !== thm) {
+                    setTheme(thm);
+                    showToast(`Đã chuyển sang giao diện ${label}`, "info");
+                }
+            });
+        }
+    });
 
     // Clear all data event listener
     const btnClear = document.getElementById("btn-clear-all-data");

@@ -11,11 +11,11 @@
 
 | Severity | Total Detected | Resolved | Pending |
 |:---|:---:|:---:|:---:|
-| **Critical (P0)** | 1 | 1 | 0 |
-| **High (P1)** | 9 | 9 | 0 |
-| **Medium (P2)** | 8 | 8 | 0 |
+| **Critical (P0)** | 2 | 2 | 0 |
+| **High (P1)** | 12 | 12 | 0 |
+| **Medium (P2)** | 9 | 9 | 0 |
 | **Minor (P3)** | 2 | 2 | 0 |
-| **Total** | **20** | **20** | **0** |
+| **Total** | **25** | **25** | **0** |
 
 ---
 
@@ -237,6 +237,38 @@
       - Nâng cấp `.vercelignore`: Tuyệt đối ngăn chặn việc đưa `dev_server.py`, `database.sql`, `*.md`, `*.py`, `*.sql`, `local_dev_data.json`, `design-system/`, `.cursorrules` lên hạ tầng Vercel Production.
       - Cập nhật `vercel.json` và `.htaccess`: Chặn và điều hướng toàn bộ yêu cầu truy cập các tệp nội bộ, script dev, database schema và tài liệu markdown về `404 Not Found` / `403 Forbidden`.
       - Gia cố `dev_server.py`: Tích hợp bộ lọc bảo mật cho cả phương thức GET và HEAD, lập tức phản hồi `403 Forbidden` khi phát hiện truy cập vào `.env`, `.git`, `local_dev_data.json`, file `.sql`, file `.db` hoặc cấu hình `api/config/`.
+    - **Trạng thái:** [x] RESOLVED.
+
+21. **[P0] DevServer - Lỗi crash `NameError: name 'action' is not defined` trong phương thức `do_GET`**
+    - **File:** `dev_server.py` (dòng 155-177)
+    - **Vấn đề:** Biến `action` được tham chiếu tại dòng 176 (`is_ready = path == "/readyz" or action == "readyz"`) trước khi được gán giá trị từ query string. Lỗi này làm máy chủ Python lập tức đóng kết nối bất ngờ (crash) trên mọi lượt gọi tới `/healthz`, `/readyz`, và `/api`.
+    - **Giải pháp:** Bổ sung trích xuất `action = qs.get("action", [""])[0]` ngay đầu hàm `do_GET()`, tương đồng với hàm `do_POST()`.
+    - **Trạng thái:** [x] RESOLVED.
+
+22. **[P1] Architecture/DRY - Trùng lặp mã nguồn nghiêm trọng giữa `login.js` và `register.js` (>75% duplicate)**
+    - **File:** `js/login.js`, `js/register.js`, `js/auth.js`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** Hai file `login.js` (369 dòng) và `register.js` (375 dòng) trùng lặp hơn 250 dòng logic hoàn toàn giống hệt nhau (Google Identity Services GIS, token client, cache tài khoản localStorage, kiểm tra phiên, toast, theme toggling).
+    - **Giải pháp:** Xây dựng module xác thực dùng chung `js/auth.js` (~250 dòng), tự động phát hiện ngữ cảnh trang login/register để gắn event listener tương ứng. Thu gọn `login.js` và `register.js` thành các wrapper mỏng bảo toàn 100% khả năng tương thích ngược.
+    - **Kết quả Ponytail:** Cắt giảm ròng >490 dòng boilerplate dư thừa.
+    - **Trạng thái:** [x] RESOLVED.
+
+23. **[P1] Performance/Bloat - Tối ưu hóa triệt để Cookie Consent Widget (`cookie-consent.js`)**
+    - **File:** `js/cookie-consent.js` (721 dòng -> 92 dòng)
+    - **Vấn đề:** Module Cookie Consent bị phình to (over-engineered) lên 721 dòng, tự nhúng chuỗi CSS 312 dòng với cờ `!important` vào thẻ `<head>` trong khi `css/styles.css` vốn đã có sẵn toàn bộ class CSS cho cookie banner.
+    - **Giải pháp:** Loại bỏ hoàn toàn 312 dòng chuỗi CSS nhúng động. Viết lại `js/cookie-consent.js` thuần túy (~90 dòng) tận dụng class có sẵn trong CSS, lưu trữ cấu hình `localStorage` gọn gàng và phát sự kiện chuẩn `spendmind:cookie-consent-updated`.
+    - **Kết quả Ponytail:** Giảm 630 dòng code (-87% kích thước file), tăng tốc độ nạp trang ban đầu.
+    - **Trạng thái:** [x] RESOLVED.
+
+24. **[P1] CSS System - Tinh gọn các selector trùng lặp và loại bỏ các khối ghi đè thừa trong `styles.css`**
+    - **File:** `css/styles.css`
+    - **Vấn đề:** File `styles.css` tích lũy nhiều lớp vá lỗi qua các phiên bản, dẫn đến hơn 90 selector bị khai báo lặp lại nhiều lần (ví dụ `.balance-amount` lặp 8 lần, các khối `.btn-primary` bị định nghĩa lặp lại ngay sau vài dòng).
+    - **Giải pháp:** Loại bỏ các khối CSS trùng lặp, xóa các thuộc tính `!important` thừa, xóa bỏ quy tắc ẩn mobile-bottom-nav trên desktop bị lặp giữa `styles.css` và `mobile.css`.
+    - **Trạng thái:** [x] RESOLVED.
+
+25. **[P2] Frontend/Performance - Tối ưu hóa Event Listeners và xử lý theme trong `dashboard.js`**
+    - **File:** `js/dashboard.js`
+    - **Vấn đề:** Các hàm đóng sub-panel và chuyển đổi theme lặp lại cấu trúc `addEventListener` thủ công nhiều lần, làm phình to hàm `initEventListeners`.
+    - **Giải pháp:** Tinh gọn các bộ lắng nghe sự kiện bằng vòng lặp ánh xạ gọn gàng qua `Object.entries()`, giảm thiểu truy vấn DOM thủ công.
     - **Trạng thái:** [x] RESOLVED.
 
 

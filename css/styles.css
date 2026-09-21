@@ -2483,15 +2483,7 @@ html[data-theme="light"] .btn-secondary:hover {
 }
 
 /* --- Balance card typography --- */
-.balance-label { color: rgba(255, 255, 255, 0.62); letter-spacing: 0.12em; }
-.balance-amount {
-    font-weight: 800;
-    font-size: 2.8rem;
-    background: none;
-    -webkit-text-fill-color: #ffffff;
-    color: #ffffff;
-    text-shadow: 0 2px 20px rgba(52, 211, 153, 0.20);
-}
+.balance-label { color: var(--text-secondary); letter-spacing: 0.08em; }
 
 /* --- Income / Expense toggle: styles defined below --- */
 
@@ -2512,6 +2504,8 @@ html[data-theme="light"] .btn-secondary:hover {
 /* --- Hero (landing) premium emphasis --- */
 .hero-title { font-weight: 800; letter-spacing: -0.04em; }
 .hero-tag {
+    font-weight: 600;
+    letter-spacing: 0.04em;
     color: var(--accent-color);
     background: rgba(52, 211, 153, 0.08);
     border-color: rgba(52, 211, 153, 0.18);
@@ -2521,6 +2515,7 @@ html[data-theme="light"] .btn-secondary:hover {
 /* --- Responsive type scale --- */
 @media (max-width: 768px) {
     .balance-amount { font-size: 2.2rem; }
+    .hero-title { font-size: 2.5rem; }
     .app-header { position: static; }
 }
 @media (min-width: 1280px) {
@@ -2529,12 +2524,16 @@ html[data-theme="light"] .btn-secondary:hover {
 
 /* --- Category pills: unified monochrome emerald (matches mockup) --- */
 .category-badge {
-    background: rgba(52, 211, 153, 0.10);
-    color: var(--accent-strong);
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
     border: 1px solid rgba(52, 211, 153, 0.18);
     padding: 5px 12px;
     border-radius: 20px;
     font-weight: 600;
+}
+html[data-theme="light"] .category-badge {
+    background: rgba(5, 150, 105, 0.10);
+    color: #059669;
 }
 .category-badge i { color: var(--accent-color); }
 
@@ -2543,17 +2542,6 @@ html[data-theme="light"] .btn-secondary:hover {
    No garish green panels or rainbow gradients. Maximum contrast & elegance.
    ========================================================================== */
 
-/* --- Buttons: Apple Monochromatic Contrast --- */
-.btn-primary {
-    background: var(--accent-color) !important;
-    color: var(--accent-text) !important;
-    box-shadow: var(--shadow-sm) !important;
-}
-.btn-primary:hover {
-    background: var(--accent-color-hover) !important;
-    box-shadow: var(--shadow-md) !important;
-    transform: translateY(-1px);
-}
 
 /* --- Logo marks: solid monochromatic fill --- */
 .logo-icon, .logo-icon-sm {
@@ -5895,15 +5883,6 @@ body {
     }
 }
 
-/* Mobile Bottom Navigation: Strictly hidden on Desktop screens (> 768px) */
-@media (min-width: 769px) {
-    .mobile-bottom-nav,
-    .mobile-nav-bar,
-    #mobile-bottom-nav,
-    #mobile-nav-bar {
-        display: none !important;
-    }
-}
 
 /* ==========================================================================
    PWA INSTALLATION PROMPT & IOS BOTTOM SHEET STYLES
