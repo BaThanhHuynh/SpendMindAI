@@ -425,4 +425,48 @@
         touch-action: pan-y;
         -webkit-overflow-scrolling: touch;
     }
+
+    /* Daily Transactions List - Scroll Tàng Hình Tự Động & Vuốt Sang Trái Để Xóa */
+    .daily-list {
+        max-height: 290px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .daily-list::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    .daily-item-swipe-wrapper {
+        flex: 0 0 auto !important;
+        flex-shrink: 0 !important;
+        box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06) !important;
+    }
+
+    [data-theme="light"] .daily-item-swipe-wrapper {
+        box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.06) !important;
+    }
+
+    .daily-item {
+        min-height: 52px !important;
+        padding: 10px 14px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Ở chế độ mobile: Khỏi cần để icon thùng rác tĩnh, chỉ cần vuốt sang trái là được */
+    .btn-daily-delete,
+    .daily-actions {
+        display: none !important;
+    }
+
+    .daily-item-right {
+        gap: 0 !important;
+    }
 }
