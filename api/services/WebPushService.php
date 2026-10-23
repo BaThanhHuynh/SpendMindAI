@@ -6,17 +6,48 @@
    ========================================================================== */
 
 class WebPushService {
-    // Default fallback keys if not provided in environment
-    const DEFAULT_PUBLIC_KEY = 'BMQjBm-Q8HdsZtTjxqhCrRja2-vW0HG8D66eYM6eI8znAs3dWCzVzSBqUc8xlMEx2_ygHCc3ALNlO9virV5wzPo';
-    const DEFAULT_PRIVATE_KEY = 'IdGlj3y8FDqOs22a0MlYgLVeWT1E6MliYQI9J_7ycig';
     const DEFAULT_SUBJECT = 'mailto:admin@huynhbathanh.site';
+
+    /**
+     * Validate that a Web Push endpoint belongs to an authenticated public push gateway (SSRF Protection).
+     */
+    public static function isValidPushEndpoint(string $endpoint): bool {
+        if (empty($endpoint) || strlen($endpoint) > 500) {
+            return false;
+        }
+        $parsed = parse_url($endpoint);
+        if (!$parsed || empty($parsed['scheme']) || empty($parsed['host'])) {
+            return false;
+        }
+        if (strtolower($parsed['scheme']) !== 'https') {
+            return false;
+        }
+        $host = strtolower($parsed['host']);
+        if ($host === 'localhost' || filter_var($host, FILTER_VALIDATE_IP)) {
+            return false;
+        }
+        $allowedSuffixes = [
+            '.googleapis.com',
+            '.push.apple.com',
+            '.mozilla.com',
+            '.services.mozilla.com',
+            '.notify.windows.com',
+            '.push.samsungosp.com'
+        ];
+        foreach ($allowedSuffixes as $suffix) {
+            if ($host === ltrim($suffix, '.') || str_ends_with($host, $suffix)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Get VAPID public key
      */
     public static function getPublicKey(): string {
         $key = function_exists('getEnvVar') ? getEnvVar('VAPID_PUBLIC_KEY', '') : (getenv('VAPID_PUBLIC_KEY') ?: '');
-        return !empty($key) ? trim($key) : self::DEFAULT_PUBLIC_KEY;
+        return !empty($key) ? trim($key) : '';
     }
 
     /**
@@ -24,7 +55,7 @@ class WebPushService {
      */
     public static function getPrivateKey(): string {
         $key = function_exists('getEnvVar') ? getEnvVar('VAPID_PRIVATE_KEY', '') : (getenv('VAPID_PRIVATE_KEY') ?: '');
-        return !empty($key) ? trim($key) : self::DEFAULT_PRIVATE_KEY;
+        return !empty($key) ? trim($key) : '';
     }
 
     /**
@@ -230,12 +261,12 @@ class WebPushService {
      * @return array [success => bool, status => int, expired => bool, message => string]
      */
     public static function send(string $endpoint, string $p256dh = '', string $auth = '', array $payload = []): array {
-        if (empty($endpoint) || !filter_var($endpoint, FILTER_VALIDATE_URL)) {
+        if (!self::isValidPushEndpoint($endpoint)) {
             return [
                 'success' => false,
                 'status' => 400,
                 'expired' => false,
-                'message' => 'Endpoint Web Push không hợp lệ'
+                'message' => 'Endpoint Web Push không hợp lệ hoặc không thuộc cổng push gateway được chấp nhận (SSRF Blocked)'
             ];
         }
 

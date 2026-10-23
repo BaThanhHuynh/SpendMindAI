@@ -76,14 +76,26 @@ switch ($action) {
         exit();
 
     case 'google_auth':
+        $clientIp = getClientIp();
+        if (!enforceRateLimit('google_auth', $clientIp, 10, 60, $pdo)) {
+            sendError("Quá nhiều yêu cầu đăng nhập Google từ IP này. Vui lòng đợi 1 phút.", 429, "RATE_LIMIT_EXCEEDED");
+        }
         $authCtrl->handleGoogleAuth($input);
         exit();
 
     case 'register':
+        $clientIp = getClientIp();
+        if (!enforceRateLimit('register', $clientIp, 4, 300, $pdo)) {
+            sendError("Quá nhiều lượt đăng ký tài khoản từ IP của bạn. Vui lòng thử lại sau 5 phút.", 429, "RATE_LIMIT_EXCEEDED");
+        }
         $authCtrl->handleRegister($input);
         exit();
 
     case 'login':
+        $clientIp = getClientIp();
+        if (!enforceRateLimit('login', $clientIp, 6, 60, $pdo)) {
+            sendError("Quá nhiều lần thử đăng nhập từ IP của bạn. Vui lòng đợi 1 phút và thử lại.", 429, "RATE_LIMIT_EXCEEDED");
+        }
         $authCtrl->handleLogin($input);
         exit();
 
@@ -106,29 +118,38 @@ if (!$pdo) {
     exit();
 }
 
-// 7. Authentication Guard for Protected User Endpoints
+// 7. Authentication Guard for Protected User Endpoints (Row Level Security Barrier)
 $userId = AuthController::getLoggedInUserId();
 if (!$userId) {
     sendError("Vui lòng đăng nhập để thực hiện thao tác", 401);
     exit();
 }
 
-// 8. AI Chatbot Endpoint (Protected)
+// 8. AI Chatbot Endpoint (Protected + Rate Limited: max 15 requests/minute)
 if ($action === 'chat' && $method === 'POST') {
+    if (!enforceRateLimit('chat', "u_{$userId}", 15, 60, $pdo)) {
+        sendError("Bạn đã gửi câu hỏi quá nhanh. Trợ lý AI cần nghỉ 1 phút trước khi tiếp tục.", 429, "RATE_LIMIT_EXCEEDED");
+    }
     $chatbotCtrl->handleChat($userId, $input, $pdo);
     exit();
 }
 
-// 9. Reminder & Settings Endpoints
+// 9. Reminder & Settings Endpoints (Strictly scoped to $userId)
 if ($action === 'get_notification_settings' && $method === 'GET') {
     $reminderCtrl->getSettings($userId);
     exit();
 }
 if ($action === 'save_notification_settings' && $method === 'POST') {
+    if (!enforceRateLimit('settings', "u_{$userId}", 20, 60, $pdo)) {
+        sendError("Thao tác quá nhanh. Vui lòng đợi giây lát.", 429, "RATE_LIMIT_EXCEEDED");
+    }
     $reminderCtrl->saveSettings($userId, $input);
     exit();
 }
 if ($action === 'test_zalo_reminder' && $method === 'POST') {
+    if (!enforceRateLimit('test_zalo', "u_{$userId}", 3, 60, $pdo)) {
+        sendError("Thao tác quá nhanh. Tối đa 3 lần thử Zalo mỗi phút.", 429, "RATE_LIMIT_EXCEEDED");
+    }
     $reminderCtrl->testZaloReminder($userId, $input);
     exit();
 }
@@ -141,6 +162,9 @@ if ($action === 'remove_push_subscription' && $method === 'POST') {
     exit();
 }
 if ($action === 'test_app_push_notification' && $method === 'POST') {
+    if (!enforceRateLimit('test_push', "u_{$userId}", 5, 60, $pdo)) {
+        sendError("Thao tác quá nhanh. Tối đa 5 lần thử thông báo đẩy mỗi phút.", 429, "RATE_LIMIT_EXCEEDED");
+    }
     $reminderCtrl->testAppPushNotification($userId, $input);
     exit();
 }
@@ -149,13 +173,16 @@ if ($action === 'check_and_send_reminder') {
     exit();
 }
 
-// 10. Transaction & Budget Endpoints
+// 10. Transaction & Budget Endpoints (Strictly scoped to $userId - Row Level Security)
 if ($method === 'GET') {
     $transCtrl->list($userId);
     exit();
 }
 
 if ($method === 'POST') {
+    if (!enforceRateLimit('write_ops', "u_{$userId}", 60, 60, $pdo)) {
+        sendError("Thao tác ghi nhận quá nhanh. Vui lòng đợi giây lát.", 429, "RATE_LIMIT_EXCEEDED");
+    }
     switch ($action) {
         case 'save_transaction':
             $transCtrl->save($userId, $input);

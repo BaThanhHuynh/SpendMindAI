@@ -16,16 +16,26 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 // Ensure execution is authorized (CLI, valid token, or Vercel Cron Bearer header)
 $isCli = (php_sapi_name() === 'cli');
 $token = isset($_GET['token']) ? trim($_GET['token']) : '';
-$defaultToken = 'safe_cron_token_2026';
-$expectedToken = function_exists('getEnvVar') ? getEnvVar('CRON_TOKEN', $defaultToken) : (getenv('CRON_TOKEN') ?: $defaultToken);
+$expectedToken = function_exists('getEnvVar') ? getEnvVar('CRON_TOKEN', '') : (getenv('CRON_TOKEN') ?: '');
 
 $authHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : '';
 $cronSecret = function_exists('getEnvVar') ? getEnvVar('CRON_SECRET', '') : (getenv('CRON_SECRET') ?: '');
 $isVercelCron = (!empty($cronSecret) && $authHeader === 'Bearer ' . $cronSecret);
 $isValidToken = (!empty($expectedToken) && hash_equals($expectedToken, $token));
 
+// Rate limit cron triggers: max 10 per minute per IP
+$clientIp = getClientIp();
+if (!$isCli && !enforceRateLimit('cron_trigger', $clientIp, 10, 60, $pdo)) {
+    sendError("Quá nhiều yêu cầu kích hoạt cron. Vui lòng thử lại sau.", 429, "RATE_LIMIT_EXCEEDED");
+    exit();
+}
+
 if (!$isCli && !$isValidToken && !$isVercelCron) {
-    sendError("Truy cập bị từ chối. Token xác thực cron không hợp lệ.", 403);
+    if (empty($expectedToken) && empty($cronSecret)) {
+        sendError("Lỗi bảo mật hệ thống: CRON_TOKEN hoặc CRON_SECRET chưa được cấu hình.", 500);
+    } else {
+        sendError("Truy cập bị từ chối. Token xác thực cron không hợp lệ.", 403);
+    }
     exit();
 }
 

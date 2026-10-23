@@ -71,5 +71,13 @@ CREATE TABLE IF NOT EXISTS `push_subscriptions` (
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 6. Bảng lưu trữ Rate Limits bảo vệ máy chủ và hạn mức gọi API
+CREATE TABLE IF NOT EXISTS `rate_limits` (
+    `rate_key` VARCHAR(64) NOT NULL PRIMARY KEY,
+    `hits` INT UNSIGNED NOT NULL DEFAULT 1,
+    `expires_at` INT UNSIGNED NOT NULL,
+    INDEX `idx_rl_exp` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 

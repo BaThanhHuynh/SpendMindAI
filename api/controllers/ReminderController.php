@@ -104,7 +104,7 @@ class ReminderController {
             ]);
         } catch (Throwable $e) {
             error_log("getSettings error: " . $e->getMessage());
-            sendError("Lỗi hệ thống khi tải cài đặt nhắc nhở: " . $e->getMessage(), 500);
+            sendError("Lỗi hệ thống khi tải cài đặt nhắc nhở. Vui lòng thử lại sau.", 500);
         }
     }
 
@@ -226,7 +226,7 @@ class ReminderController {
             ]);
         } catch (Throwable $e) {
             error_log("saveSettings error: " . $e->getMessage());
-            sendError("Lỗi lưu cấu hình nhắc nhở: " . $e->getMessage(), 500);
+            sendError("Lỗi lưu cấu hình nhắc nhở. Vui lòng thử lại sau.", 500);
         }
     }
 
@@ -284,7 +284,7 @@ class ReminderController {
             ]);
         } catch (Throwable $e) {
             error_log("testZaloReminder error: " . $e->getMessage());
-            sendError("Lỗi gửi tin nhắn Zalo thử nghiệm: " . $e->getMessage(), 500);
+            sendError("Lỗi gửi tin nhắn Zalo thử nghiệm. Vui lòng thử lại sau.", 500);
         }
     }
 
@@ -314,8 +314,8 @@ class ReminderController {
         $auth = isset($input['auth']) ? trim((string)$input['auth']) : '';
         $userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? substr($_SERVER['HTTP_USER_AGENT'], 0, 255) : null;
 
-        if (empty($endpoint) || !filter_var($endpoint, FILTER_VALIDATE_URL)) {
-            sendError("Endpoint Web Push không hợp lệ", 400);
+        if (!WebPushService::isValidPushEndpoint($endpoint)) {
+            sendError("Endpoint Web Push không hợp lệ hoặc không thuộc cổng push gateway được chấp nhận (SSRF Blocked)", 400);
             return;
         }
 
@@ -352,7 +352,7 @@ class ReminderController {
             ]);
         } catch (Throwable $e) {
             error_log("savePushSubscription error: " . $e->getMessage());
-            sendError("Lỗi lưu cấu hình thông báo đẩy: " . $e->getMessage(), 500);
+            sendError("Lỗi lưu cấu hình thông báo đẩy. Vui lòng thử lại sau.", 500);
         }
     }
 
@@ -384,7 +384,7 @@ class ReminderController {
             ]);
         } catch (Throwable $e) {
             error_log("removePushSubscription error: " . $e->getMessage());
-            sendError("Lỗi hủy thông báo đẩy: " . $e->getMessage(), 500);
+            sendError("Lỗi hủy thông báo đẩy. Vui lòng thử lại sau.", 500);
         }
     }
 
@@ -455,7 +455,7 @@ class ReminderController {
             }
         } catch (Throwable $e) {
             error_log("testAppPushNotification error: " . $e->getMessage());
-            sendError("Lỗi gửi thông báo đẩy thử nghiệm: " . $e->getMessage(), 500);
+            sendError("Lỗi gửi thông báo đẩy thử nghiệm. Vui lòng thử lại sau.", 500);
         }
     }
 
@@ -599,7 +599,7 @@ class ReminderController {
             ]);
         } catch (Throwable $e) {
             error_log("checkAndSend error: " . $e->getMessage());
-            sendError("Lỗi kiểm tra nhắc nhở: " . $e->getMessage(), 500);
+            sendError("Lỗi kiểm tra nhắc nhở. Vui lòng thử lại sau.", 500);
         }
     }
 
@@ -743,7 +743,7 @@ class ReminderController {
                 "sent" => 0,
                 "skipped" => 0,
                 "failed" => 0,
-                "message" => "Lỗi CSDL Cron: " . $e->getMessage()
+                "message" => "Lỗi CSDL Cron hệ thống."
             ];
         }
     }

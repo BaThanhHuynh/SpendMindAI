@@ -112,11 +112,11 @@ class TransactionController {
                 INSERT INTO `transactions` (`id`, `user_id`, `type`, `amount`, `category`, `date`, `description`) 
                 VALUES (:id, :uid, :type, :amount, :category, :date, :description)
                 ON DUPLICATE KEY UPDATE 
-                    `type` = :type_up, 
-                    `amount` = :amount_up, 
-                    `category` = :category_up, 
-                    `date` = :date_up, 
-                    `description` = :description_up
+                    `type` = IF(`user_id` = VALUES(`user_id`), VALUES(`type`), `type`), 
+                    `amount` = IF(`user_id` = VALUES(`user_id`), VALUES(`amount`), `amount`), 
+                    `category` = IF(`user_id` = VALUES(`user_id`), VALUES(`category`), `category`), 
+                    `date` = IF(`user_id` = VALUES(`user_id`), VALUES(`date`), `date`), 
+                    `description` = IF(`user_id` = VALUES(`user_id`), VALUES(`description`), `description`)
             ");
 
             $stmt->execute([
@@ -126,13 +126,7 @@ class TransactionController {
                 ':amount' => $amount,
                 ':category' => $category,
                 ':date' => $date,
-                ':description' => $description,
-
-                ':type_up' => $type,
-                ':amount_up' => $amount,
-                ':category_up' => $category,
-                ':date_up' => $date,
-                ':description_up' => $description
+                ':description' => $description
             ]);
 
             sendJson(["success" => true, "message" => "Đã ghi nhận giao dịch thành công"]);

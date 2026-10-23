@@ -189,6 +189,7 @@ class AuthController {
                     $stmt->execute([':avatar' => $avatarUrl, ':id' => $user['id']]);
                     $user['avatar_url'] = $avatarUrl;
                 }
+                session_regenerate_id(true);
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $this->setRememberCookie(true);
@@ -212,6 +213,7 @@ class AuthController {
                 $stmt = $this->pdo->prepare("UPDATE users SET google_id = :gid, avatar_url = :avatar WHERE id = :id");
                 $stmt->execute([':gid' => $googleId, ':avatar' => $avatarUrl, ':id' => $user['id']]);
 
+                session_regenerate_id(true);
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $this->setRememberCookie(true);
@@ -246,6 +248,7 @@ class AuthController {
             ]);
 
             $newUserId = (int)$this->pdo->lastInsertId();
+            session_regenerate_id(true);
             $_SESSION['user_id'] = $newUserId;
             $_SESSION['username'] = $username;
             $this->setRememberCookie(true);
@@ -340,6 +343,7 @@ class AuthController {
                 return;
             }
 
+            session_regenerate_id(true);
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $this->setRememberCookie(!empty($input['remember']));
@@ -358,17 +362,39 @@ class AuthController {
     public function handleLogout(): void {
         session_unset();
         session_destroy();
-        setcookie('remember_me', '', time() - 3600, '/', '', $this->isSecure, true);
+        $cookieOptions = [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $this->isSecure,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ];
+        setcookie('remember_me', '', $cookieOptions);
         sendJson(["success" => true, "message" => "Đăng xuất thành công"]);
     }
 
     private function setRememberCookie(bool $remember): void {
+        $cookieOptions = [
+            'expires' => $remember ? time() + 2592000 : time() - 3600,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $this->isSecure,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ];
+        setcookie('remember_me', $remember ? '1' : '', $cookieOptions);
         if ($remember) {
-            setcookie('remember_me', '1', time() + 2592000, '/', '', $this->isSecure, true);
             $params = session_get_cookie_params();
-            setcookie(session_name(), session_id(), time() + 2592000, $params['path'], $params['domain'], $this->isSecure, true);
-        } else {
-            setcookie('remember_me', '', time() - 3600, '/', '', $this->isSecure, true);
+            $sessOptions = [
+                'expires' => time() + 2592000,
+                'path' => $params['path'] ?: '/',
+                'domain' => $params['domain'] ?: '',
+                'secure' => $this->isSecure,
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ];
+            setcookie(session_name(), session_id(), $sessOptions);
         }
     }
 }
