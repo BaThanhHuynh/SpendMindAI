@@ -2749,8 +2749,11 @@ h1, h2, h3, h4 { font-weight: 500; }
 /* ==========================================================================
    CHATBOT WIDGET STYLING (REDESIGNED)
    ========================================================================== */
-.chatbot-backdrop {
-    display: none !important;
+/* Desktop default: backdrop is hidden on large screens */
+@media (min-width: 769px) {
+    .chatbot-backdrop {
+        display: none !important;
+    }
 }
 
 .chatbot-widget {
@@ -3103,30 +3106,7 @@ html[data-theme="light"] .chat-message.bot {
 
 /* Responsive adjustment for small screens */
 @media (max-width: 480px) {
-    .chatbot-widget {
-        bottom: 12px;
-        right: 12px;
-    }
-    
-    .chatbot-trigger-btn {
-        width: 44px;
-        height: 44px;
-    }
-    
-    .chatbot-trigger-btn i {
-        width: 18px;
-        height: 18px;
-    }
-    
-    .chatbot-container {
-        position: fixed;
-        bottom: 64px;
-        right: 12px;
-        width: calc(100vw - 24px);
-        height: 360px;
-        border-radius: var(--radius-md) !important;
-        z-index: 10000;
-    }
+    /* Legacy chatbot rules removed in favor of unified mobile.css modal */
 
     .auth-container {
         padding: 12px;
@@ -5415,20 +5395,8 @@ body {
     }
 
     /* Chatbot - Hide floating trigger button on mobile */
-    .chatbot-widget {
-        bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
-        right: 16px !important;
-    }
-
     .chatbot-trigger-btn {
         display: none !important;
-    }
-
-    .chatbot-container {
-        width: calc(100vw - 24px) !important;
-        max-width: 380px !important;
-        right: -4px !important;
-        bottom: 60px !important;
     }
 }
 
