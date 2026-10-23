@@ -1489,16 +1489,26 @@ html[data-theme="light"] .toast {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 24px 48px;
+    padding: max(24px, env(safe-area-inset-top, 0px)) max(48px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(48px, env(safe-area-inset-left, 0px));
     position: relative;
     z-index: 10;
     max-width: 1400px;
     margin: 0 auto;
+    box-sizing: border-box;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 880px) {
     .landing-wrapper {
-        padding: 16px 20px;
+        padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 12px) !important;
+        padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-left: max(20px, env(safe-area-inset-left, 0px)) !important;
+        padding-right: max(20px, env(safe-area-inset-right, 0px)) !important;
+        box-sizing: border-box !important;
+    }
+
+    .landing-header {
+        height: auto !important;
+        min-height: 48px !important;
     }
 }
 
@@ -1509,6 +1519,8 @@ html[data-theme="light"] .toast {
     align-items: center;
     width: 100%;
     height: 64px;
+    position: relative;
+    z-index: 100;
 }
 
 .landing-logo {
@@ -4667,8 +4679,8 @@ html[data-theme="light"] #google-auth-btn:hover {
 .mobile-nav-dropdown {
     display: none;
     position: absolute;
-    top: 70px;
-    right: 24px;
+    top: calc(100% + 10px);
+    right: 0;
     width: 220px;
     background: rgba(15, 23, 42, 0.96);
     border: 1px solid var(--card-border);

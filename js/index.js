@@ -232,24 +232,24 @@ function initSplashScreen() {
         path2.getBoundingClientRect();
 
         setTimeout(() => {
-            path1.style.transition = "stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1)";
+            path1.style.transition = "stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1)";
             path1.style.strokeDashoffset = "0";
 
             setTimeout(() => {
-                path2.style.transition = "stroke-dashoffset 0.9s cubic-bezier(0.16, 1, 0.3, 1)";
+                path2.style.transition = "stroke-dashoffset 1.8s cubic-bezier(0.4, 0, 0.2, 1)";
                 path2.style.strokeDashoffset = "0";
-            }, 150);
-        }, 80);
+            }, 300);
+        }, 200);
 
         setTimeout(() => {
             const subtitle = document.querySelector(".splash-subtitle");
             if (subtitle) subtitle.classList.add("subtitle-visible");
-        }, 600);
+        }, 1500);
 
-        // Complete smoothly after 1.2s instead of 4 seconds
+        // Smoothly complete splash after graceful animation (or tap anytime to skip)
         setTimeout(() => {
             completeSplash();
-        }, 1250);
+        }, 3200);
     } catch (e) {
         console.warn("Splash init notice:", e);
         completeSplash();
