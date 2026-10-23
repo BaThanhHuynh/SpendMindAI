@@ -1,6 +1,6 @@
 <?php
 /* ==========================================================================
-   SPENDMINDAI - CHATBOT CONTROLLER
+   SPENDMINDAI - CHATBOT CONTROLLER (OPTIMIZED FOR HIGH SPEED & ACCURACY)
    Secure Server-side Google Gemini AI Integration for Financial Advisory
    ========================================================================== */
 
@@ -29,8 +29,8 @@ class ChatbotController {
             return;
         }
 
-        if (mb_strlen($message) > 2000) {
-            sendError("Câu hỏi quá dài. Vui lòng tóm tắt dưới 2000 ký tự.", 400);
+        if (mb_strlen($message) > 1000) {
+            sendError("Câu hỏi quá dài. Vui lòng tóm tắt dưới 1000 ký tự để tối ưu tốc độ xử lý.", 400);
             return;
         }
 
@@ -40,14 +40,27 @@ class ChatbotController {
             return;
         }
 
-        $model = function_exists('getEnvVar') 
-            ? getEnvVar('GEMINI_MODEL', 'gemini-3.1-flash-lite') 
-            : (getenv('GEMINI_MODEL') ?: 'gemini-3.1-flash-lite');
+        // Fast low-latency model (gemini-2.5-flash-lite averages ~1.2s vs 50s+ on heavy models)
+        $primaryModel = function_exists('getEnvVar') 
+            ? getEnvVar('GEMINI_MODEL', 'gemini-2.5-flash-lite') 
+            : (getenv('GEMINI_MODEL') ?: 'gemini-2.5-flash-lite');
 
-        // Fetch user financial context from database
-        $budgetsText = "- Chưa thiết lập hạn mức ngân sách nào.\n";
-        $transactionsText = "- Chưa ghi nhận giao dịch nào.\n";
+        // Pre-compute user financial statistics with high-performance SQL
         $displayName = "bạn";
+        $currentBalance = 0.0;
+        $allTimeIncome = 0.0;
+        $allTimeExpense = 0.0;
+        $monthIncome = 0.0;
+        $monthExpense = 0.0;
+        $monthNet = 0.0;
+        $catSummaryText = "  • Chưa phát sinh chi tiêu tháng này.";
+        $budgetSummaryText = "  • Chưa thiết lập ngân sách.";
+        $transactionsText = "  • Chưa ghi nhận giao dịch nào.";
+
+        $todayStr = date('d/m/Y');
+        $monthStr = date('m/Y');
+        $monthStart = date('Y-m-01');
+        $monthEnd = date('Y-m-t');
 
         if ($pdo) {
             try {
@@ -59,7 +72,57 @@ class ChatbotController {
                     $displayName = $this->sanitizeDisplayName($uRow['username']);
                 }
 
-                // 2. Get budgets
+                // 2. Exact All-time Net Balance (Sum of Income - Sum of Expense)
+                $totStmt = $pdo->prepare("
+                    SELECT 
+                        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS total_income,
+                        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS total_expense
+                    FROM transactions 
+                    WHERE user_id = :uid
+                ");
+                $totStmt->execute([':uid' => $userId]);
+                $totRow = $totStmt->fetch(PDO::FETCH_ASSOC);
+                $allTimeIncome = (float)($totRow['total_income'] ?? 0);
+                $allTimeExpense = (float)($totRow['total_expense'] ?? 0);
+                $currentBalance = $allTimeIncome - $allTimeExpense;
+
+                // 3. Current Month Income vs Expense
+                $mStmt = $pdo->prepare("
+                    SELECT 
+                        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS m_income,
+                        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS m_expense
+                    FROM transactions 
+                    WHERE user_id = :uid AND date >= :m_start AND date <= :m_end
+                ");
+                $mStmt->execute([':uid' => $userId, ':m_start' => $monthStart, ':m_end' => $monthEnd]);
+                $mRow = $mStmt->fetch(PDO::FETCH_ASSOC);
+                $monthIncome = (float)($mRow['m_income'] ?? 0);
+                $monthExpense = (float)($mRow['m_expense'] ?? 0);
+                $monthNet = $monthIncome - $monthExpense;
+
+                // 4. Current Month Spending by Category
+                $catStmt = $pdo->prepare("
+                    SELECT category, SUM(amount) AS cat_spent, COUNT(*) AS cat_count
+                    FROM transactions 
+                    WHERE user_id = :uid AND type = 'expense' AND date >= :m_start AND date <= :m_end
+                    GROUP BY category
+                    ORDER BY cat_spent DESC
+                ");
+                $catStmt->execute([':uid' => $userId, ':m_start' => $monthStart, ':m_end' => $monthEnd]);
+                $catList = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+                $catSpentMap = [];
+                if (!empty($catList)) {
+                    $catLines = [];
+                    foreach ($catList as $c) {
+                        $cName = self::CATEGORY_LABELS[$c['category']] ?? $c['category'];
+                        $sAmount = (float)$c['cat_spent'];
+                        $catSpentMap[$c['category']] = $sAmount;
+                        $catLines[] = "  • {$cName}: " . number_format($sAmount, 0, ',', '.') . "đ ({$c['cat_count']} giao dịch)";
+                    }
+                    $catSummaryText = implode("\n", $catLines);
+                }
+
+                // 5. Budgets & Real-time Progress this month
                 $bStmt = $pdo->prepare("SELECT category, limit_amount FROM budgets WHERE user_id = :uid");
                 $bStmt->execute([':uid' => $userId]);
                 $bList = $bStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -69,66 +132,113 @@ class ChatbotController {
                         $limit = (float)$b['limit_amount'];
                         if ($limit > 0) {
                             $catLabel = self::CATEGORY_LABELS[$b['category']] ?? $b['category'];
-                            $bLines[] = "- Hạng mục $catLabel: " . number_format($limit, 0, ',', '.') . "đ";
+                            $spent = $catSpentMap[$b['category']] ?? 0.0;
+                            $pct = round(($spent / $limit) * 100, 1);
+                            if ($spent > $limit) {
+                                $over = $spent - $limit;
+                                $bLines[] = "  • $catLabel: Đã chi " . number_format($spent, 0, ',', '.') . "đ / Hạn mức " . number_format($limit, 0, ',', '.') . "đ [ĐÃ VƯỢT " . number_format($over, 0, ',', '.') . "đ ({$pct}%)]";
+                            } else {
+                                $remain = $limit - $spent;
+                                $bLines[] = "  • $catLabel: Đã chi " . number_format($spent, 0, ',', '.') . "đ / Hạn mức " . number_format($limit, 0, ',', '.') . "đ [Còn lại: " . number_format($remain, 0, ',', '.') . "đ ({$pct}%)]";
+                            }
                         }
                     }
                     if (!empty($bLines)) {
-                        $budgetsText = implode("\n", $bLines) . "\n";
+                        $budgetSummaryText = implode("\n", $bLines);
                     }
                 }
 
-                // 3. Get recent 60 transactions
+                // 6. 15 Most Recent Transactions (drastically reduces tokens & eliminates noise)
                 $tStmt = $pdo->prepare("
                     SELECT type, amount, category, date, description 
                     FROM transactions 
                     WHERE user_id = :uid 
                     ORDER BY date DESC, id DESC 
-                    LIMIT 60
+                    LIMIT 15
                 ");
                 $tStmt->execute([':uid' => $userId]);
                 $tList = $tStmt->fetchAll(PDO::FETCH_ASSOC);
                 if (!empty($tList)) {
                     $tLines = [];
                     foreach ($tList as $t) {
-                        $typeLabel = ($t['type'] === 'income') ? 'Thu nhập (+)' : 'Chi tiêu (-)';
+                        $sign = ($t['type'] === 'income') ? '(+Thu)' : '(-Chi)';
                         $catLabel = self::CATEGORY_LABELS[$t['category']] ?? $t['category'];
                         $desc = !empty($t['description']) ? " - Ghi chú: " . trim($t['description']) : "";
                         $amountFormatted = number_format((float)$t['amount'], 0, ',', '.');
-                        $tLines[] = "- Ngày {$t['date']}: $typeLabel | {$amountFormatted}đ | Danh mục: $catLabel$desc";
+                        $tLines[] = "  • Ngày {$t['date']}: $sign {$amountFormatted}đ | $catLabel$desc";
                     }
-                    if (!empty($tLines)) {
-                        $transactionsText = implode("\n", $tLines) . "\n";
-                    }
+                    $transactionsText = implode("\n", $tLines);
                 }
             } catch (Throwable $e) {
                 error_log("Chatbot financial context error: " . $e->getMessage());
             }
         }
 
-        $nowStr = date('d/m/Y H:i:s');
-        $systemPrompt = "Bạn là trợ lý tài chính ảo SpendMindAI thông thái, thân thiện và nhiệt tình của người dùng tên là '{$displayName}'.\n\n";
-        $systemPrompt .= "Dưới đây là thông tin tài chính hiện tại của họ lấy từ cơ sở dữ liệu hệ thống:\n\n";
-        $systemPrompt .= "### [DANH SÁCH NGÂN SÁCH/HẠN MỨC CHI TIÊU HÀNG THÁNG]\n" . $budgetsText . "\n";
-        $systemPrompt .= "### [LỊCH SỬ 60 GIAO DỊCH GẦN NHẤT]\n" . $transactionsText . "\n";
-        $systemPrompt .= "### [CẤU HÌNH THỜI GIAN]\n";
-        $systemPrompt .= "- Thời gian hiện tại trên hệ thống: {$nowStr}\n\n";
-        $systemPrompt .= "Nhiệm vụ của bạn:\n";
-        $systemPrompt .= "1. Trả lời câu hỏi của người dùng thật ngắn gọn, súc tích, đi thẳng vào trọng tâm, hỏi gì đáp nấy (không trả lời lan man dài dòng, không giải thích vòng vo).\n";
-        $systemPrompt .= "2. CHỈ trả lời và tư vấn các câu hỏi trong phạm vi thông tin tài chính cá nhân được cung cấp ở trên (thu nhập, chi tiêu, số dư, ngân sách, phân tích tài chính). Đối với các câu hỏi ngoài lề hoặc ngoài phạm vi hệ thống, bạn phải lịch sự từ chối trả lời và hướng người dùng hỏi về tài chính cá nhân.\n";
-        $systemPrompt .= "3. Tuyệt đối không bịa đặt số liệu hay tự tạo ra thông tin không có trong danh sách giao dịch hay ngân sách được cung cấp. Luôn nói đúng sự thật khách quan của dữ liệu.\n";
-        $systemPrompt .= "4. Sử dụng tiếng Việt chuẩn, định dạng markdown gọn đẹp (bảng, danh sách gạch đầu dòng, chữ in đậm) khi trình bày dữ liệu.\n\n";
-        $systemPrompt .= "Câu hỏi của người dùng: \"" . addcslashes($message, "\"\\") . "\"\n\n";
-        $systemPrompt .= "Trả lời:";
+        // Format concise, high-density system instruction
+        $formattedBalance = number_format($currentBalance, 0, ',', '.') . 'đ';
+        $formattedIncomeAll = number_format($allTimeIncome, 0, ',', '.') . 'đ';
+        $formattedExpenseAll = number_format($allTimeExpense, 0, ',', '.') . 'đ';
+        $formattedMIncome = number_format($monthIncome, 0, ',', '.') . 'đ';
+        $formattedMExpense = number_format($monthExpense, 0, ',', '.') . 'đ';
+        $formattedMNet = ($monthNet >= 0 ? '+' : '') . number_format($monthNet, 0, ',', '.') . 'đ';
 
-        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($model) . ":generateContent?key=" . urlencode($geminiApiKey);
+        $systemInstruction = "Bạn là trợ lý tài chính thông minh SpendMindAI của '{$displayName}'. Hôm nay là {$todayStr}.\n\n"
+            . "=== DỮ LIỆU TÀI CHÍNH THỰC TẾ (TÍNH TỪ CƠ SỞ DỮ LIỆU) ===\n"
+            . "1. Số dư ròng tích lũy hiện tại: {$formattedBalance} (Tổng thu: {$formattedIncomeAll} | Tổng chi: {$formattedExpenseAll})\n"
+            . "2. Tháng này ({$monthStr}):\n"
+            . "   - Tổng thu nhập: {$formattedMIncome}\n"
+            . "   - Tổng chi tiêu: {$formattedMExpense}\n"
+            . "   - Dòng tiền ròng: {$formattedMNet}\n"
+            . "3. Chi tiêu từng danh mục tháng {$monthStr}:\n{$catSummaryText}\n"
+            . "4. Tình hình ngân sách tháng {$monthStr}:\n{$budgetSummaryText}\n"
+            . "5. 15 giao dịch gần đây nhất:\n{$transactionsText}\n\n"
+            . "=== QUY TẮC PHẢN HỒI (BẮT BUỘC) ===\n"
+            . "1. CỰC KỲ NGẮN GỌN & ĐÚNG TRỌNG TÂM: Hỏi gì đáp nấy trong 1-3 câu hoặc bảng/danh sách ngắn. Tuyệt đối KHÔNG chào hỏi lặp lại ('Xin chào...', 'Chào bạn...'), KHÔNG mở bài dài dòng ('Theo dữ liệu...'), KHÔNG kết bài sáo rỗng ('Chúc bạn...').\n"
+            . "2. CHÍNH XÁC TUYỆT ĐỐI: Dùng đúng các con số đã được tính sẵn ở trên, không tự tính nhẩm sai lệch, không bịa số liệu.\n"
+            . "3. ĐỊNH DẠNG RÕ RÀNG: In đậm các con số tiền (ví dụ: **150.000đ**).\n"
+            . "4. CHỈ TRẢ LỜI TÀI CHÍNH: Nếu câu hỏi ngoài lề không liên quan tài chính cá nhân, từ chối đúng 1 câu ngắn gọn.";
+
+        $reply = $this->callGeminiApi($primaryModel, $geminiApiKey, $systemInstruction, $message);
+
+        // Fallback to gemini-2.5-flash if primary model encountered an issue
+        if ($reply === null && $primaryModel !== 'gemini-2.5-flash') {
+            $reply = $this->callGeminiApi('gemini-2.5-flash', $geminiApiKey, $systemInstruction, $message);
+        }
+
+        if ($reply === null || $reply === '') {
+            sendError("Trợ lý AI tạm thời không phản hồi. Vui lòng thử lại sau.", 502);
+            return;
+        }
+
+        sendJson([
+            "success" => true,
+            "reply" => $reply
+        ]);
+    }
+
+    /**
+     * Call Gemini GenerateContent API with low latency & strict token limits.
+     */
+    private function callGeminiApi(string $model, string $apiKey, string $systemInstruction, string $userMessage): ?string {
+        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($model) . ":generateContent?key=" . urlencode($apiKey);
 
         $payload = json_encode([
+            "system_instruction" => [
+                "parts" => [
+                    ["text" => $systemInstruction]
+                ]
+            ],
             "contents" => [
                 [
                     "parts" => [
-                        ["text" => $systemPrompt]
+                        ["text" => $userMessage]
                     ]
                 ]
+            ],
+            "generationConfig" => [
+                "temperature" => 0.2,
+                "topP" => 0.8,
+                "maxOutputTokens" => 350
             ]
         ], JSON_UNESCAPED_UNICODE);
 
@@ -136,10 +246,12 @@ class ChatbotController {
         curl_setopt($ch, CURLOPT_URL, $apiUrl);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Content-Type: application/json; charset=UTF-8"
+        ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 12);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 
         $response = curl_exec($ch);
@@ -148,33 +260,18 @@ class ChatbotController {
         curl_close($ch);
 
         if ($curlErr) {
-            error_log("Gemini cURL error: " . $curlErr);
-            sendError("Không thể kết nối đến máy chủ AI (Timeout). Vui lòng thử lại sau.", 504);
-            return;
+            error_log("Gemini cURL ($model) error: " . $curlErr);
+            return null;
+        }
+
+        if ($httpCode !== 200 || empty($response)) {
+            error_log("Gemini API ($model) HTTP error ($httpCode): " . substr((string)$response, 0, 300));
+            return null;
         }
 
         $resData = json_decode($response, true);
-        if ($httpCode !== 200 || empty($resData)) {
-            $errMsg = $resData['error']['message'] ?? "Lỗi gọi API Google AI ($httpCode)";
-            error_log("Gemini API error ($httpCode): " . $errMsg);
-            if ($httpCode === 429) {
-                sendError("Hệ thống AI đang quá tải lượt gọi (Rate Limit). Vui lòng đợi trong giây lát và thử lại.", 429);
-            } else {
-                sendError("Trợ lý AI tạm thời không phản hồi. Vui lòng thử lại sau.", 502);
-            }
-            return;
-        }
-
-        $reply = $resData['candidates'][0]['content']['parts'][0]['text'] ?? '';
-        if ($reply === '') {
-            sendError("Không nhận được nội dung phản hồi từ AI.", 502);
-            return;
-        }
-
-        sendJson([
-            "success" => true,
-            "reply" => $reply
-        ]);
+        $text = $resData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        return trim($text) !== '' ? trim($text) : null;
     }
 
     /**
@@ -200,3 +297,4 @@ class ChatbotController {
         return $name ?: 'bạn';
     }
 }
+

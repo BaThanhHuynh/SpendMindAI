@@ -316,6 +316,14 @@ function initChatbot() {
     }
 
     let activeChatAbortController = null;
+    const queryCache = new Map(); // Fast local cache for identical repeated queries (TTL: 45s)
+
+    // Allow user to click to immediately finish/skip typing effect
+    messagesContainer.addEventListener("click", () => {
+        if (activeTypingTimer) {
+            clearActiveTyping();
+        }
+    });
 
     function handleUserMessage(text) {
         clearActiveTyping();
@@ -324,12 +332,64 @@ function initChatbot() {
             messagesContainer.innerHTML = "";
         }
 
-        addMessage("user", text);
+        const trimmedText = text.trim();
+        addMessage("user", trimmedText);
 
         const indicator = showTypingIndicator();
         const sendBtn = document.getElementById("chatbot-send-btn");
         if (sendBtn) sendBtn.disabled = true;
         if (inputField) inputField.disabled = true;
+
+        // Check local memory cache for identical query within 45s
+        const cacheKey = trimmedText.toLowerCase();
+        const cachedItem = queryCache.get(cacheKey);
+        const now = Date.now();
+
+        function renderBotReply(replyText) {
+            indicator.remove();
+            clearActiveTyping();
+            
+            activeTypingFullText = replyText;
+            const msgDiv = document.createElement("div");
+            msgDiv.className = "chat-message bot";
+            messagesContainer.appendChild(msgDiv);
+            activeTypingDiv = msgDiv;
+            
+            let currentText = "";
+            let index = 0;
+            const totalLen = replyText.length;
+            // Snappy typing animation: renders smoothly in ~250ms
+            const charsPerTick = Math.max(3, Math.ceil(totalLen / 35));
+            
+            activeTypingTimer = setInterval(() => {
+                if (index >= totalLen) {
+                    clearActiveTyping();
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    return;
+                }
+                
+                currentText += replyText.substring(index, index + charsPerTick);
+                index += charsPerTick;
+                
+                msgDiv.innerHTML = formatMarkdown(currentText);
+                
+                const threshold = 60;
+                const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < threshold;
+                if (isNearBottom) {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            }, 8);
+        }
+
+        if (cachedItem && (now - cachedItem.time < 45000)) {
+            renderBotReply(cachedItem.reply);
+            if (sendBtn) sendBtn.disabled = false;
+            if (inputField) {
+                inputField.disabled = false;
+                inputField.focus();
+            }
+            return;
+        }
 
         if (activeChatAbortController) {
             activeChatAbortController.abort();
@@ -339,7 +399,7 @@ function initChatbot() {
         fetch("api?action=chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: text }),
+            body: JSON.stringify({ message: trimmedText }),
             signal: activeChatAbortController.signal
         })
         .then(async res => {
@@ -355,43 +415,16 @@ function initChatbot() {
             return data;
         })
         .then(data => {
-            indicator.remove();
             const replyText = data.reply;
             if (replyText) {
-                clearActiveTyping();
-                
-                activeTypingFullText = replyText;
-                const msgDiv = document.createElement("div");
-                msgDiv.className = "chat-message bot";
-                messagesContainer.appendChild(msgDiv);
-                activeTypingDiv = msgDiv;
-                
-                let currentText = "";
-                let index = 0;
-                const totalLen = replyText.length;
-                const charsPerTick = Math.max(1, Math.ceil(totalLen / 150));
-                
-                activeTypingTimer = setInterval(() => {
-                    if (index >= totalLen) {
-                        clearInterval(activeTypingTimer);
-                        activeTypingTimer = null;
-                        activeTypingDiv = null;
-                        activeTypingFullText = "";
-                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                        return;
-                    }
-                    
-                    currentText += replyText.substring(index, index + charsPerTick);
-                    index += charsPerTick;
-                    
-                    msgDiv.innerHTML = formatMarkdown(currentText);
-                    
-                    const threshold = 60;
-                    const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < threshold;
-                    if (isNearBottom) {
-                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                    }
-                }, 12);
+                // Save to cache (limit size to 20 entries)
+                if (queryCache.size >= 20) {
+                    const firstKey = queryCache.keys().next().value;
+                    queryCache.delete(firstKey);
+                }
+                queryCache.set(cacheKey, { reply: replyText, time: Date.now() });
+
+                renderBotReply(replyText);
             } else {
                 throw new Error("Không nhận được nội dung từ trợ lý AI.");
             }
@@ -401,9 +434,9 @@ function initChatbot() {
             indicator.remove();
             console.error("Chatbot API error:", err);
             const safeErr = String(err.message || err).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            const errorMsg = `<p>🤖 <strong>Trợ lý AI tạm thời gián đoạn:</strong></p>
+            const errorMsg = `<p>🤖 <strong>Trợ lý AI phản hồi:</strong></p>
                 <p style="color: #ef4444; font-size: 12.5px; background: rgba(239, 68, 68, 0.08); padding: 8px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.2); margin: 6px 0;">${safeErr}</p>
-                <p style="font-size: 12px; opacity: 0.85; margin-top: 6px;">Vui lòng thử lại sau giây lát hoặc kiểm tra cấu hình biến môi trường GEMINI_API_KEY.</p>`;
+                <p style="font-size: 12px; opacity: 0.85; margin-top: 6px;">Vui lòng thử lại sau giây lát hoặc làm mới trang.</p>`;
             addMessage("bot", errorMsg, true);
         })
         .finally(() => {
@@ -415,3 +448,4 @@ function initChatbot() {
         });
     }
 }
+
