@@ -1305,8 +1305,14 @@ html[data-theme="light"] .toast {
 @media (max-width: 768px) {
     /* Main layout and container */
     .app-container {
-        padding: 12px;
-        gap: 16px;
+        padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 10px) !important;
+        padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-left: max(14px, env(safe-area-inset-left, 0px)) !important;
+        padding-right: max(14px, env(safe-area-inset-right, 0px)) !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        gap: 16px !important;
     }
     
     .card {
@@ -5143,8 +5149,14 @@ body {
 /* ---------- Tablet Portrait (≤ 768px) ---------- */
 @media (max-width: 768px) {
     .app-container {
-        padding: 12px !important;
-        gap: 14px !important;
+        padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 10px) !important;
+        padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-left: max(14px, env(safe-area-inset-left, 0px)) !important;
+        padding-right: max(14px, env(safe-area-inset-right, 0px)) !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        gap: 16px !important;
     }
 
     /* Header: shrink spacing */
@@ -5379,20 +5391,19 @@ body {
         margin-top: 0 !important;
     }
 
-    /* Chatbot */
+    /* Chatbot - Hide floating trigger button on mobile */
     .chatbot-widget {
-        bottom: 16px !important;
+        bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
         right: 16px !important;
     }
 
     .chatbot-trigger-btn {
-        width: 46px !important;
-        height: 46px !important;
+        display: none !important;
     }
 
     .chatbot-container {
         width: calc(100vw - 24px) !important;
-        max-width: 340px !important;
+        max-width: 380px !important;
         right: -4px !important;
         bottom: 60px !important;
     }
@@ -5401,7 +5412,13 @@ body {
 /* ---------- Extra small Mobile (≤ 400px) ---------- */
 @media (max-width: 400px) {
     .app-container {
-        padding: 6px !important;
+        padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 8px) !important;
+        padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-left: max(12px, env(safe-area-inset-left, 0px)) !important;
+        padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
 
     .app-header {

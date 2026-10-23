@@ -1766,6 +1766,8 @@ function renderCharts(categoryExpenses = null) {
         donutCanvas.style.display = "block";
         chartNoData.style.display = "none";
 
+        const isMobileScreen = window.innerWidth <= 640;
+
         // In-place update if instance exists and valid (0ms re-render)
         if (categoryChartInstance && categoryChartInstance.ctx) {
             categoryChartInstance.data.labels = expenseLabels;
@@ -1773,6 +1775,10 @@ function renderCharts(categoryExpenses = null) {
             categoryChartInstance.data.datasets[0].backgroundColor = bgColors;
             categoryChartInstance.data.datasets[0].borderColor = borderColors;
             categoryChartInstance.options.plugins.legend.labels.color = textThemeColor;
+            categoryChartInstance.options.plugins.legend.position = isMobileScreen ? 'bottom' : 'right';
+            categoryChartInstance.options.plugins.legend.labels.padding = isMobileScreen ? 8 : 14;
+            categoryChartInstance.options.plugins.legend.labels.font.size = isMobileScreen ? 11 : 12;
+            categoryChartInstance.options.cutout = isMobileScreen ? '68%' : '74%';
             categoryChartInstance.update('none');
         } else {
             if (categoryChartInstance) categoryChartInstance.destroy();
@@ -1794,15 +1800,15 @@ function renderCharts(categoryExpenses = null) {
                     animation: { duration: 250 },
                     plugins: {
                         legend: {
-                            position: 'right',
+                            position: isMobileScreen ? 'bottom' : 'right',
                             labels: {
                                 color: textThemeColor,
                                 usePointStyle: true,
                                 pointStyle: 'circle',
                                 boxWidth: 7,
                                 boxHeight: 7,
-                                padding: 14,
-                                font: { family: appleFontStack, size: 12 },
+                                padding: isMobileScreen ? 8 : 14,
+                                font: { family: appleFontStack, size: isMobileScreen ? 11 : 12 },
                                 generateLabels: function(chart) {
                                     const ds = chart.data.datasets[0];
                                     const total = ds.data.reduce((a, b) => a + b, 0);
@@ -1837,7 +1843,7 @@ function renderCharts(categoryExpenses = null) {
                             }
                         }
                     },
-                    cutout: '74%'
+                    cutout: isMobileScreen ? '68%' : '74%'
                 }
             });
         }
@@ -1885,15 +1891,23 @@ function renderCharts(categoryExpenses = null) {
         trendCanvas.style.display = "block";
         trendNoData.style.display = "none";
 
+        const isMobileScreen = window.innerWidth <= 640;
+
         // In-place update if instance exists and valid (0ms re-render)
         if (trendChartInstance && trendChartInstance.ctx) {
             trendChartInstance.data.labels = displayDates;
             trendChartInstance.data.datasets[0].data = trendIncome;
             trendChartInstance.data.datasets[1].data = trendExpense;
+            trendChartInstance.data.datasets[0].maxBarThickness = isMobileScreen ? 18 : 28;
+            trendChartInstance.data.datasets[1].maxBarThickness = isMobileScreen ? 18 : 28;
             trendChartInstance.options.scales.x.ticks.color = textThemeColor;
+            trendChartInstance.options.scales.x.ticks.font.size = isMobileScreen ? 9.5 : 11;
             trendChartInstance.options.scales.y.ticks.color = textThemeColor;
+            trendChartInstance.options.scales.y.ticks.font.size = isMobileScreen ? 9.5 : 10;
             trendChartInstance.options.scales.y.grid.color = gridThemeColor;
             trendChartInstance.options.plugins.legend.labels.color = textThemeColor;
+            trendChartInstance.options.plugins.legend.labels.padding = isMobileScreen ? 8 : 14;
+            trendChartInstance.options.plugins.legend.labels.font.size = isMobileScreen ? 10.5 : 11;
             trendChartInstance.update('none');
         } else {
             if (trendChartInstance) trendChartInstance.destroy();
@@ -1906,15 +1920,15 @@ function renderCharts(categoryExpenses = null) {
                             label: 'Thu nhập',
                             data: trendIncome,
                             backgroundColor: '#10b981',
-                            borderRadius: 8,
-                            maxBarThickness: 28
+                            borderRadius: 6,
+                            maxBarThickness: isMobileScreen ? 18 : 28
                         },
                         {
                             label: 'Chi tiêu',
                             data: trendExpense,
                             backgroundColor: '#ef4444',
-                            borderRadius: 8,
-                            maxBarThickness: 28
+                            borderRadius: 6,
+                            maxBarThickness: isMobileScreen ? 18 : 28
                         }
                     ]
                 },
@@ -1925,13 +1939,13 @@ function renderCharts(categoryExpenses = null) {
                     scales: {
                         x: {
                             grid: { display: false },
-                            ticks: { color: textThemeColor, font: { family: appleFontStack, size: 11 } }
+                            ticks: { color: textThemeColor, font: { family: appleFontStack, size: isMobileScreen ? 9.5 : 11 } }
                         },
                         y: {
                             grid: { color: gridThemeColor },
                             ticks: {
                                 color: textThemeColor,
-                                font: { family: appleFontStack, size: 10 },
+                                font: { family: appleFontStack, size: isMobileScreen ? 9.5 : 10 },
                                 callback: function(value) {
                                     return value >= 1000000 ? (value / 1000000) + 'Mđ' : (value / 1000) + 'kđ';
                                 }
@@ -1943,8 +1957,8 @@ function renderCharts(categoryExpenses = null) {
                             position: 'bottom',
                             labels: {
                                 color: textThemeColor,
-                                font: { family: appleFontStack, size: 11 },
-                                padding: 14,
+                                font: { family: appleFontStack, size: isMobileScreen ? 10.5 : 11 },
+                                padding: isMobileScreen ? 8 : 14,
                                 usePointStyle: true,
                                 pointStyle: 'circle',
                                 boxWidth: 7
