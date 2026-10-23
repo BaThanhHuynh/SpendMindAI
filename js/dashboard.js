@@ -778,8 +778,12 @@ function initEventListeners() {
 
     if (navBtnChatbot) {
         navBtnChatbot.addEventListener("click", () => {
-            const chatBtn = document.getElementById("chatbot-trigger-btn");
-            if (chatBtn) chatBtn.click();
+            if (typeof window.toggleChatbot === "function") {
+                window.toggleChatbot();
+            } else {
+                const chatBtn = document.getElementById("chatbot-trigger-btn");
+                if (chatBtn) chatBtn.click();
+            }
         });
     }
 
@@ -2510,3 +2514,30 @@ window.closeTransactionModal = closeTransactionModal;
 window.closeSettingsDropdown = closeSettingsDropdown;
 window.toggleSettingsDropdown = toggleSettingsDropdown;
 window.positionSettingsDropdown = positionSettingsDropdown;
+
+// Auto-scale layout & charts on viewport change (Mobile <-> Tablet <-> Desktop)
+let resizeDebounceTimer = null;
+window.addEventListener("resize", () => {
+    clearTimeout(resizeDebounceTimer);
+    resizeDebounceTimer = setTimeout(() => {
+        const isMobileScreen = window.innerWidth <= 640;
+        if (categoryChartInstance && categoryChartInstance.ctx) {
+            categoryChartInstance.options.plugins.legend.position = isMobileScreen ? 'bottom' : 'right';
+            categoryChartInstance.options.plugins.legend.labels.padding = isMobileScreen ? 8 : 14;
+            categoryChartInstance.options.plugins.legend.labels.font.size = isMobileScreen ? 11 : 12;
+            categoryChartInstance.options.cutout = isMobileScreen ? '68%' : '74%';
+            categoryChartInstance.resize();
+            categoryChartInstance.update('none');
+        }
+        if (trendChartInstance && trendChartInstance.ctx) {
+            trendChartInstance.data.datasets[0].maxBarThickness = isMobileScreen ? 18 : 28;
+            trendChartInstance.data.datasets[1].maxBarThickness = isMobileScreen ? 18 : 28;
+            trendChartInstance.options.scales.x.ticks.font.size = isMobileScreen ? 9.5 : 11;
+            trendChartInstance.options.scales.y.ticks.font.size = isMobileScreen ? 9.5 : 10;
+            trendChartInstance.options.plugins.legend.labels.padding = isMobileScreen ? 8 : 14;
+            trendChartInstance.options.plugins.legend.labels.font.size = isMobileScreen ? 10.5 : 11;
+            trendChartInstance.resize();
+            trendChartInstance.update('none');
+        }
+    }, 150);
+});

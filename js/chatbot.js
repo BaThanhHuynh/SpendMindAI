@@ -10,12 +10,13 @@ function initChatbot() {
     const triggerBtn = document.getElementById("chatbot-trigger-btn");
     const closeBtn = document.getElementById("chatbot-close-btn");
     const container = document.getElementById("chatbot-container");
+    const backdrop = document.getElementById("chatbot-backdrop");
     const inputForm = document.getElementById("chatbot-input-form");
     const inputField = document.getElementById("chatbot-input");
     const messagesContainer = document.getElementById("chatbot-messages");
     const suggestionsContainer = document.getElementById("chatbot-suggestions");
 
-    if (!triggerBtn) return;
+    if (!container) return;
 
     let activeTypingTimer = null;
     let activeTypingDiv = null;
@@ -33,32 +34,73 @@ function initChatbot() {
         }
     }
 
-    // Toggle open/close
-    triggerBtn.addEventListener("click", () => {
-        const isHidden = container.classList.contains("hidden");
-        if (isHidden) {
-            container.classList.remove("hidden");
-            triggerBtn.querySelector(".chat-icon").classList.add("hidden");
-            triggerBtn.querySelector(".close-icon").classList.remove("hidden");
+    function openChatbot() {
+        container.classList.remove("hidden");
+        if (backdrop) backdrop.classList.remove("hidden");
+        document.body.classList.add("chatbot-open");
+        if (triggerBtn) {
+            const chatIcon = triggerBtn.querySelector(".chat-icon");
+            const closeIcon = triggerBtn.querySelector(".close-icon");
+            if (chatIcon) chatIcon.classList.add("hidden");
+            if (closeIcon) closeIcon.classList.remove("hidden");
+        }
 
-            // Generate welcome message if empty
-            if (messagesContainer.children.length === 0) {
-                sendWelcomeMessage();
-            }
-            // Focus input
-            inputField.focus();
+        // Generate welcome message if empty
+        if (messagesContainer && messagesContainer.children.length === 0) {
+            sendWelcomeMessage();
+        }
+        // Focus input
+        if (inputField) inputField.focus();
+    }
+
+    function closeChatbot() {
+        container.classList.add("hidden");
+        if (backdrop) backdrop.classList.add("hidden");
+        document.body.classList.remove("chatbot-open");
+        if (triggerBtn) {
+            const chatIcon = triggerBtn.querySelector(".chat-icon");
+            const closeIcon = triggerBtn.querySelector(".close-icon");
+            if (chatIcon) chatIcon.classList.remove("hidden");
+            if (closeIcon) closeIcon.classList.add("hidden");
+        }
+        clearActiveTyping();
+    }
+
+    function toggleChatbot() {
+        if (container.classList.contains("hidden")) {
+            openChatbot();
         } else {
+            closeChatbot();
+        }
+    }
+
+    // Toggle open/close via trigger button
+    if (triggerBtn) {
+        triggerBtn.addEventListener("click", toggleChatbot);
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener("click", closeChatbot);
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener("click", closeChatbot);
+        backdrop.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            closeChatbot();
+        }, { passive: false });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && container && !container.classList.contains("hidden")) {
             closeChatbot();
         }
     });
 
-    closeBtn.addEventListener("click", closeChatbot);
-
-    function closeChatbot() {
-        container.classList.add("hidden");
-        triggerBtn.querySelector(".chat-icon").classList.remove("hidden");
-        triggerBtn.querySelector(".close-icon").classList.add("hidden");
-    }
+    // Expose globally for mobile bottom navigation item
+    window.openChatbot = openChatbot;
+    window.closeChatbot = closeChatbot;
+    window.toggleChatbot = toggleChatbot;
 
     // Handle suggestion chips click
     suggestionsContainer.addEventListener("click", (e) => {

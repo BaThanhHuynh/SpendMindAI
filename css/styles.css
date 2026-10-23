@@ -1305,14 +1305,14 @@ html[data-theme="light"] .toast {
 @media (max-width: 768px) {
     /* Main layout and container */
     .app-container {
-        padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 10px) !important;
+        padding-top: 0 !important;
         padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
         padding-left: max(14px, env(safe-area-inset-left, 0px)) !important;
         padding-right: max(14px, env(safe-area-inset-right, 0px)) !important;
         box-sizing: border-box !important;
         width: 100% !important;
         max-width: 100% !important;
-        gap: 16px !important;
+        gap: 0 !important;
     }
     
     .card {
@@ -2749,6 +2749,10 @@ h1, h2, h3, h4 { font-weight: 500; }
 /* ==========================================================================
    CHATBOT WIDGET STYLING (REDESIGNED)
    ========================================================================== */
+.chatbot-backdrop {
+    display: none !important;
+}
+
 .chatbot-widget {
     position: fixed;
     bottom: 24px;
@@ -5133,30 +5137,49 @@ body {
     box-sizing: border-box;
 }
 
-/* ---------- Tablet Landscape (≤ 1024px) ---------- */
-@media (max-width: 1024px) {
+/* ---------- Tablet Landscape & Portrait (769px ≤ screen ≤ 1024px) ---------- */
+@media (min-width: 769px) and (max-width: 1024px) {
     .app-container {
-        padding: 16px !important;
-        gap: 16px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: clamp(16px, 2.5vw, 24px) !important;
+        gap: 20px !important;
+        box-sizing: border-box !important;
+    }
+
+    .app-main-grid {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .charts-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+        gap: 20px !important;
     }
 
     .calendar-layout-wrapper {
-        grid-template-columns: 1fr !important;
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)) !important;
         gap: 20px !important;
+    }
+
+    .chart-container {
+        height: 250px !important;
     }
 }
 
-/* ---------- Tablet Portrait (≤ 768px) ---------- */
+/* ---------- Tablet Portrait & Mobile (≤ 768px) ---------- */
 @media (max-width: 768px) {
     .app-container {
-        padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 10px) !important;
+        padding-top: 0 !important;
         padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
         padding-left: max(14px, env(safe-area-inset-left, 0px)) !important;
         padding-right: max(14px, env(safe-area-inset-right, 0px)) !important;
         box-sizing: border-box !important;
         width: 100% !important;
         max-width: 100% !important;
-        gap: 16px !important;
+        gap: 0 !important;
     }
 
     /* Header: shrink spacing */
@@ -5412,13 +5435,14 @@ body {
 /* ---------- Extra small Mobile (≤ 400px) ---------- */
 @media (max-width: 400px) {
     .app-container {
-        padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 8px) !important;
+        padding-top: 0 !important;
         padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
         padding-left: max(12px, env(safe-area-inset-left, 0px)) !important;
         padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
         box-sizing: border-box !important;
         width: 100% !important;
         max-width: 100% !important;
+        gap: 0 !important;
     }
 
     .app-header {
