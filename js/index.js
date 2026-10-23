@@ -120,21 +120,11 @@ function checkGoogleOAuthRedirect() {
 // 4. Router check: If logged in, redirect directly to dashboard.html
 function checkAuthSession() {
     fetch(`${API_URL}?action=check_session`)
-        .then(res => {
-            if (!res.ok) {
-                return null;
-            }
-            return res.json();
-        })
+        .then(res => res.ok ? res.json() : null)
         .then(data => {
             if (data && data.authenticated) {
-                const splash = document.getElementById("iphone-splash-screen");
-                // If splash screen is active, wait for animation to complete smoothly
-                if (splash && !splash.classList.contains("splash-hidden")) {
-                    pendingAuthRedirect = "dashboard";
-                } else {
-                    window.location.href = "dashboard";
-                }
+                // Instant redirect without delay: bypass splash screen immediately
+                window.location.href = "dashboard";
             }
         })
         .catch(err => {
@@ -181,18 +171,50 @@ function initSplashScreen() {
         return;
     }
 
-    // Clear legacy flag so splash always animates
+    // Check if splash was already shown in this browser session
+    let splashShown = false;
     try {
-        sessionStorage.removeItem("splash_screen_shown");
+        splashShown = sessionStorage.getItem("spendmind_splash_shown") === "1";
     } catch (e) {}
+
+    let isCompleted = false;
+    const completeSplash = () => {
+        if (isCompleted) return;
+        isCompleted = true;
+        splash.classList.add("splash-hidden");
+        document.body.classList.add("splash-completed");
+        try {
+            sessionStorage.setItem("spendmind_splash_shown", "1");
+        } catch (e) {}
+
+        setTimeout(() => {
+            splash.remove();
+            if (pendingAuthRedirect) {
+                window.location.href = pendingAuthRedirect;
+            } else {
+                runTypewriter();
+            }
+        }, 350);
+    };
+
+    if (splashShown) {
+        // Skip splash immediately on back-navigation or refresh in same session
+        splash.remove();
+        document.body.classList.add("splash-completed");
+        runTypewriter();
+        return;
+    }
+
+    // Tap/Click anywhere to skip splash immediately
+    splash.style.cursor = "pointer";
+    splash.addEventListener("click", completeSplash, { once: true });
+    splash.addEventListener("touchstart", completeSplash, { once: true, passive: true });
 
     const path1 = document.querySelector(".path-1");
     const path2 = document.querySelector(".path-2");
 
     if (!path1 || !path2) {
-        splash.remove();
-        document.body.classList.add("splash-completed");
-        runTypewriter();
+        completeSplash();
         return;
     }
 
@@ -210,38 +232,27 @@ function initSplashScreen() {
         path2.getBoundingClientRect();
 
         setTimeout(() => {
-            path1.style.transition = "stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1)";
+            path1.style.transition = "stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1)";
             path1.style.strokeDashoffset = "0";
 
             setTimeout(() => {
-                path2.style.transition = "stroke-dashoffset 1.8s cubic-bezier(0.4, 0, 0.2, 1)";
+                path2.style.transition = "stroke-dashoffset 0.9s cubic-bezier(0.16, 1, 0.3, 1)";
                 path2.style.strokeDashoffset = "0";
-            }, 300);
-        }, 200);
+            }, 150);
+        }, 80);
 
         setTimeout(() => {
             const subtitle = document.querySelector(".splash-subtitle");
             if (subtitle) subtitle.classList.add("subtitle-visible");
-        }, 1500);
+        }, 600);
 
+        // Complete smoothly after 1.2s instead of 4 seconds
         setTimeout(() => {
-            splash.classList.add("splash-hidden");
-            document.body.classList.add("splash-completed");
-
-            setTimeout(() => {
-                splash.remove();
-                if (pendingAuthRedirect) {
-                    window.location.href = pendingAuthRedirect;
-                } else {
-                    runTypewriter();
-                }
-            }, 800);
-        }, 3200);
+            completeSplash();
+        }, 1250);
     } catch (e) {
-        console.error("Splash error:", e);
-        splash.remove();
-        document.body.classList.add("splash-completed");
-        runTypewriter();
+        console.warn("Splash init notice:", e);
+        completeSplash();
     }
 }
 

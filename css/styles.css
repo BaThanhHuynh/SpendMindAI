@@ -188,10 +188,9 @@ body {
     width: 60vw;
     height: 60vw;
     border-radius: 50%;
-    filter: blur(140px);
     z-index: -1;
     pointer-events: none;
-    transition: background-color var(--transition-slow);
+    display: none; /* Avoid GPU blur compositing overhead while background is transparent */
 }
 .bg-glow-1 {
     top: -20%;
@@ -1976,13 +1975,13 @@ html[data-theme="light"] .toast {
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: opacity, transform;
 }
 
 #iphone-splash-screen.splash-hidden {
     opacity: 0;
-    transform: translateX(-50px) scale(0.95);
+    transform: scale(0.96) translateY(-10px);
     pointer-events: none;
 }
 
@@ -1994,18 +1993,18 @@ body.landing-page-body:not(.splash-completed) > *:not(#iphone-splash-screen):not
 }
 
 body.landing-page-body.splash-completed > *:not(#iphone-splash-screen):not(script):not(style) {
-    animation: app-content-fade-in 0.8s ease-out forwards;
+    animation: app-content-fade-in 0.35s ease-out forwards;
 }
 
 @keyframes app-content-fade-in {
     from {
         opacity: 0;
-        transform: translateX(40px);
+        transform: translateY(8px);
         visibility: hidden;
     }
     to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateY(0);
         visibility: visible;
     }
 }
@@ -2417,7 +2416,7 @@ body {
 ::selection { background: var(--accent-glow); color: var(--text-primary); }
 
 /* --- Ambient glow refinement --- */
-.bg-glow { filter: blur(170px); opacity: 0.95; }
+.bg-glow { opacity: 0.95; }
 
 /* --- Cards: refined glass, hairline border, layered shadow --- */
 .card {

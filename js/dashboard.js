@@ -65,6 +65,17 @@ function escapeHTML(str) {
     );
 }
 
+// Scoped icon helper to prevent scanning the entire document on every minor DOM update
+function renderScopedIcons(rootElement) {
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        if (rootElement && (rootElement instanceof Element || rootElement instanceof DocumentFragment)) {
+            lucide.createIcons({ root: rootElement });
+        } else {
+            lucide.createIcons();
+        }
+    }
+}
+
 // Calendar State
 let currentCalendarDate = new Date();
 let selectedCalendarDay = new Date();
@@ -138,12 +149,7 @@ function checkAuthSession() {
                     state.budgets = (data.budgets && Object.keys(data.budgets).length > 0)
                         ? data.budgets
                         : { ...DEFAULT_BUDGETS };
-                    updateUI();
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => {
-                            updateUI(false);
-                        });
-                    });
+                    updateUI(true);
                 } else {
                     fetchStateFromServer(); // Fallback to secondary fetch if omitted
                 }
@@ -155,6 +161,7 @@ function checkAuthSession() {
                 window.location.href = "login";
             }
         })
+
         .catch(err => {
             console.error("Auth Guard error:", err);
             window.location.href = "login";
@@ -167,7 +174,7 @@ function updateAvatarUI(avatarUrl) {
     if (logoIcon) {
         logoIcon.innerHTML = "";
         const img = document.createElement("img");
-        img.src = "images/logoapp.png?v=20260911_v8";
+        img.src = "images/logoapp.webp?v=20260911_v8";
         img.alt = "SpendMindAI Logo";
         img.width = 38;
         img.height = 38;
@@ -416,8 +423,16 @@ function initEventListeners() {
     const budgetForm = document.getElementById("budget-form");
     if (budgetForm) budgetForm.addEventListener("submit", handleBudgetSubmit);
 
+    let searchDebounceTimer = null;
     const searchInput = document.getElementById("search-input");
-    if (searchInput) searchInput.addEventListener("input", () => updateUI(false)); // Performance
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                updateUI(false);
+            }, 120);
+        });
+    }
 
     const filterType = document.getElementById("filter-type");
     if (filterType) filterType.addEventListener("change", () => updateUI());
@@ -591,7 +606,7 @@ function initEventListeners() {
                 if (clean.length >= 10) {
                     openZaloBtn.href = `https://zalo.me/${clean}`;
                     openZaloBtn.style.display = "flex";
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    renderScopedIcons(openZaloBtn);
                 } else {
                     openZaloBtn.style.display = "none";
                 }
@@ -843,7 +858,7 @@ function toggleBudgetSettings() {
         panel.classList.add("collapsed");
         triggerBtn.innerHTML = '<i data-lucide="settings"></i> Thiết lập hạn mức chi tiêu';
     }
-    lucide.createIcons();
+    renderScopedIcons(triggerBtn);
 }
 
 // Render inputs inside budget settings form
@@ -962,7 +977,7 @@ function resetTransactionForm() {
     document.getElementById("btn-cancel-edit").style.display = "none";
     document.getElementById("btn-delete-edit").style.display = "none";
     document.getElementById("form-title").textContent = "Giao dịch mới";
-    lucide.createIcons();
+    renderScopedIcons(document.getElementById("btn-submit"));
 }
 
 // Edit transaction trigger (loads data into form)
@@ -994,7 +1009,7 @@ function editTransaction(id) {
     document.getElementById("btn-cancel-edit").style.display = "inline-flex";
     document.getElementById("btn-delete-edit").style.display = "inline-flex";
     document.getElementById("btn-delete-edit").onclick = () => deleteTransaction(transaction.id);
-    lucide.createIcons();
+    renderScopedIcons(document.getElementById("btn-submit"));
 }
 
 // Delete transaction trigger
@@ -1211,7 +1226,10 @@ function openTransactionModalForDate(time, event) {
     openTransactionModal();
 }
 
-function renderCalendarView(filteredTransactions) {
+function renderCalendarView(filteredTransactions = null) {
+    if (!filteredTransactions) {
+        filteredTransactions = calculateFinanceStats().filteredTransactions;
+    }
     const gridCells = document.getElementById("calendar-grid-cells");
     const monthYearDisplay = document.getElementById("month-year-display");
     const dailyIncomeVal = document.getElementById("daily-income-val");
@@ -1248,6 +1266,9 @@ function renderCalendarView(filteredTransactions) {
             transactionsByDate[dateKey].push(t);
         }
     });
+
+    const calendarFragment = document.createDocumentFragment();
+    const quickAddSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>`;
 
     for (let i = 1; i <= totalCells; i++) {
         let cellDay, cellMonth, cellYear;
@@ -1305,21 +1326,19 @@ function renderCalendarView(filteredTransactions) {
         cellEl.innerHTML = `
             <span class="day-num ${dayClass}">${cellDate.getDate()}</span>
             ${amountHTML}
-            <button type="button" class="btn-quick-add" data-time="${cellDate.getTime()}" title="Thêm giao dịch mới"><i data-lucide="edit-2"></i></button>
+            <button type="button" class="btn-quick-add" data-time="${cellDate.getTime()}" title="Thêm giao dịch mới">${quickAddSvg}</button>
         `;
-        gridCells.appendChild(cellEl);
+        calendarFragment.appendChild(cellEl);
     }
     
-    // Layout reflow workaround removed as DOM is no longer rebuilt on click
+    // Batch DOM insertion in a single operation
+    gridCells.appendChild(calendarFragment);
 
-    updateDailyTransactionsView();
-    
-    // Create icons for the newly injected quick-add buttons
-    lucide.createIcons();
+    updateDailyTransactionsView({ filteredTransactions });
 }
 
-function updateDailyTransactionsView() {
-    const stats = calculateFinanceStats();
+function updateDailyTransactionsView(cachedStats = null) {
+    const stats = cachedStats || calculateFinanceStats();
     const filteredTransactions = stats.filteredTransactions;
     
     const selectedDayTransactions = filteredTransactions.filter(t => {
@@ -1364,6 +1383,7 @@ function updateDailyTransactionsView() {
         dailyEmptyState.style.display = "none";
         dailyTransactionsList.style.display = "flex";
 
+        const dailyFragment = document.createDocumentFragment();
         selectedDayTransactions.forEach(t => {
             const cat = CATEGORIES[t.category] || { label: t.category, icon: "help-circle", colorClass: "badge-color-mint" };
             const item = document.createElement("div");
@@ -1387,10 +1407,11 @@ function updateDailyTransactionsView() {
                     </div>
                 </div>
             `;
-            dailyTransactionsList.appendChild(item);
+            dailyFragment.appendChild(item);
         });
 
-        lucide.createIcons();
+        dailyTransactionsList.appendChild(dailyFragment);
+        renderScopedIcons(dailyTransactionsList);
     }
 }
 
@@ -1520,7 +1541,7 @@ function renderBudgetsProgress(categoryExpenses) {
         `;
     }
 
-    lucide.createIcons();
+    renderScopedIcons(container);
 }
 
 // --- 5. RENDER CHART JS VISUALIZATIONS ---
@@ -1529,9 +1550,6 @@ function renderCharts(categoryExpenses = null) {
         const stats = calculateFinanceStats();
         categoryExpenses = stats.categoryExpenses;
     }
-
-    if (categoryChartInstance) categoryChartInstance.destroy();
-    if (trendChartInstance) trendChartInstance.destroy();
 
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
     const textThemeColor = isDark ? "#86868b" : "#6e6e73";
@@ -1574,73 +1592,89 @@ function renderCharts(categoryExpenses = null) {
     if (expenseAmounts.length === 0) {
         donutCanvas.style.display = "none";
         chartNoData.style.display = "block";
+        if (categoryChartInstance) {
+            categoryChartInstance.destroy();
+            categoryChartInstance = null;
+        }
     } else {
         donutCanvas.style.display = "block";
         chartNoData.style.display = "none";
 
-        categoryChartInstance = new Chart(donutCanvas, {
-            type: 'doughnut',
-            data: {
-                labels: expenseLabels,
-                datasets: [{
-                    data: expenseAmounts,
-                    backgroundColor: bgColors,
-                    borderColor: borderColors,
-                    borderWidth: 2,
-                    hoverOffset: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            color: textThemeColor,
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            boxWidth: 7,
-                            boxHeight: 7,
-                            padding: 14,
-                            font: { family: appleFontStack, size: 12 },
-                            generateLabels: function(chart) {
-                                const ds = chart.data.datasets[0];
-                                const total = ds.data.reduce((a, b) => a + b, 0);
-                                return chart.data.labels.map((label, i) => {
-                                    const pct = total > 0 ? Math.round((ds.data[i] / total) * 100) : 0;
-                                    return {
-                                        text: `${label}  ${pct}%`,
-                                        fillStyle: ds.backgroundColor[i],
-                                        strokeStyle: ds.backgroundColor[i],
-                                        lineWidth: 0,
-                                        index: i,
-                                        fontColor: textThemeColor
-                                    };
-                                });
+        // In-place update if instance exists and valid (0ms re-render)
+        if (categoryChartInstance && categoryChartInstance.ctx) {
+            categoryChartInstance.data.labels = expenseLabels;
+            categoryChartInstance.data.datasets[0].data = expenseAmounts;
+            categoryChartInstance.data.datasets[0].backgroundColor = bgColors;
+            categoryChartInstance.data.datasets[0].borderColor = borderColors;
+            categoryChartInstance.options.plugins.legend.labels.color = textThemeColor;
+            categoryChartInstance.update('none');
+        } else {
+            if (categoryChartInstance) categoryChartInstance.destroy();
+            categoryChartInstance = new Chart(donutCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: expenseLabels,
+                    datasets: [{
+                        data: expenseAmounts,
+                        backgroundColor: bgColors,
+                        borderColor: borderColors,
+                        borderWidth: 2,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 250 },
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: textThemeColor,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                boxWidth: 7,
+                                boxHeight: 7,
+                                padding: 14,
+                                font: { family: appleFontStack, size: 12 },
+                                generateLabels: function(chart) {
+                                    const ds = chart.data.datasets[0];
+                                    const total = ds.data.reduce((a, b) => a + b, 0);
+                                    return chart.data.labels.map((label, i) => {
+                                        const pct = total > 0 ? Math.round((ds.data[i] / total) * 100) : 0;
+                                        return {
+                                            text: `${label}  ${pct}%`,
+                                            fillStyle: ds.backgroundColor[i],
+                                            strokeStyle: ds.backgroundColor[i],
+                                            lineWidth: 0,
+                                            index: i,
+                                            fontColor: textThemeColor
+                                        };
+                                    });
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: isDark ? 'rgba(28, 28, 30, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+                            titleColor: isDark ? '#f5f5f7' : '#1d1d1f',
+                            bodyColor: isDark ? '#a1a1a6' : '#6e6e73',
+                            borderColor: 'transparent',
+                            borderWidth: 0,
+                            cornerRadius: 10,
+                            padding: 10,
+                            titleFont: { family: appleFontStack, weight: '600' },
+                            bodyFont: { family: appleFontStack },
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${formatVND(context.raw)}`;
+                                }
                             }
                         }
                     },
-                    tooltip: {
-                        backgroundColor: isDark ? 'rgba(28, 28, 30, 0.94)' : 'rgba(255, 255, 255, 0.96)',
-                        titleColor: isDark ? '#f5f5f7' : '#1d1d1f',
-                        bodyColor: isDark ? '#a1a1a6' : '#6e6e73',
-                        borderColor: 'transparent',
-                        borderWidth: 0,
-                        cornerRadius: 10,
-                        padding: 10,
-                        titleFont: { family: appleFontStack, weight: '600' },
-                        bodyFont: { family: appleFontStack },
-                        callbacks: {
-                            label: function(context) {
-                                return ` ${context.label}: ${formatVND(context.raw)}`;
-                            }
-                        }
-                    }
-                },
-                cutout: '74%'
-            }
-        });
+                    cutout: '74%'
+                }
+            });
+        }
     }
 
     // -- CHART 2: DAILY/WEEKLY TRENDS (RESTORE GREEN/RED) --
@@ -1677,83 +1711,102 @@ function renderCharts(categoryExpenses = null) {
     if (displayDates.length === 0) {
         trendCanvas.style.display = "none";
         trendNoData.style.display = "block";
+        if (trendChartInstance) {
+            trendChartInstance.destroy();
+            trendChartInstance = null;
+        }
     } else {
         trendCanvas.style.display = "block";
         trendNoData.style.display = "none";
 
-        trendChartInstance = new Chart(trendCanvas, {
-            type: 'bar',
-            data: {
-                labels: displayDates,
-                datasets: [
-                    {
-                        label: 'Thu nhập',
-                        data: trendIncome,
-                        backgroundColor: '#10b981',
-                        borderRadius: 8,
-                        maxBarThickness: 28
-                    },
-                    {
-                        label: 'Chi tiêu',
-                        data: trendExpense,
-                        backgroundColor: '#ef4444',
-                        borderRadius: 8,
-                        maxBarThickness: 28
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: textThemeColor, font: { family: appleFontStack, size: 11 } }
-                    },
-                    y: {
-                        grid: { color: gridThemeColor },
-                        ticks: {
-                            color: textThemeColor,
-                            font: { family: appleFontStack, size: 10 },
-                            callback: function(value) {
-                                return value >= 1000000 ? (value / 1000000) + 'Mđ' : (value / 1000) + 'kđ';
+        // In-place update if instance exists and valid (0ms re-render)
+        if (trendChartInstance && trendChartInstance.ctx) {
+            trendChartInstance.data.labels = displayDates;
+            trendChartInstance.data.datasets[0].data = trendIncome;
+            trendChartInstance.data.datasets[1].data = trendExpense;
+            trendChartInstance.options.scales.x.ticks.color = textThemeColor;
+            trendChartInstance.options.scales.y.ticks.color = textThemeColor;
+            trendChartInstance.options.scales.y.grid.color = gridThemeColor;
+            trendChartInstance.options.plugins.legend.labels.color = textThemeColor;
+            trendChartInstance.update('none');
+        } else {
+            if (trendChartInstance) trendChartInstance.destroy();
+            trendChartInstance = new Chart(trendCanvas, {
+                type: 'bar',
+                data: {
+                    labels: displayDates,
+                    datasets: [
+                        {
+                            label: 'Thu nhập',
+                            data: trendIncome,
+                            backgroundColor: '#10b981',
+                            borderRadius: 8,
+                            maxBarThickness: 28
+                        },
+                        {
+                            label: 'Chi tiêu',
+                            data: trendExpense,
+                            backgroundColor: '#ef4444',
+                            borderRadius: 8,
+                            maxBarThickness: 28
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 250 },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: textThemeColor, font: { family: appleFontStack, size: 11 } }
+                        },
+                        y: {
+                            grid: { color: gridThemeColor },
+                            ticks: {
+                                color: textThemeColor,
+                                font: { family: appleFontStack, size: 10 },
+                                callback: function(value) {
+                                    return value >= 1000000 ? (value / 1000000) + 'Mđ' : (value / 1000) + 'kđ';
+                                }
                             }
                         }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: textThemeColor,
-                            font: { family: appleFontStack, size: 11 },
-                            padding: 14,
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            boxWidth: 7
-                        }
                     },
-                    tooltip: {
-                        backgroundColor: isDark ? 'rgba(28, 28, 30, 0.94)' : 'rgba(255, 255, 255, 0.96)',
-                        titleColor: isDark ? '#f5f5f7' : '#1d1d1f',
-                        bodyColor: isDark ? '#a1a1a6' : '#6e6e73',
-                        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-                        borderWidth: 1,
-                        cornerRadius: 10,
-                        padding: 10,
-                        titleFont: { family: appleFontStack, weight: '600' },
-                        bodyFont: { family: appleFontStack },
-                        callbacks: {
-                            label: function(context) {
-                                return ` ${context.dataset.label}: ${formatVND(context.raw)}`;
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: textThemeColor,
+                                font: { family: appleFontStack, size: 11 },
+                                padding: 14,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                boxWidth: 7
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: isDark ? 'rgba(28, 28, 30, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+                            titleColor: isDark ? '#f5f5f7' : '#1d1d1f',
+                            bodyColor: isDark ? '#a1a1a6' : '#6e6e73',
+                            borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                            borderWidth: 1,
+                            cornerRadius: 10,
+                            padding: 10,
+                            titleFont: { family: appleFontStack, weight: '600' },
+                            bodyFont: { family: appleFontStack },
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.dataset.label}: ${formatVND(context.raw)}`;
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 }
+
 
 // --- 6. TOAST NOTIFICATIONS ---
 function showToast(message, type = "info") {
@@ -1771,7 +1824,7 @@ function showToast(message, type = "info") {
         info: "info"
     };
     toastIcon.setAttribute("data-lucide", icons[type] || "info");
-    lucide.createIcons();
+    renderScopedIcons(toast);
 
     toast.classList.add("show");
 
@@ -1945,9 +1998,7 @@ function toggleSettingsDropdown() {
         
         positionSettingsDropdown();
         
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
+        renderScopedIcons(dropdown);
         
         // Asynchronously refresh in background without blocking UI
         refreshNotificationSettingsFromServer();
@@ -2153,7 +2204,7 @@ function handleTestZaloClick() {
                 const link = data.zalo_link || `https://zalo.me/${phoneVal.replace(/\D/g, '')}`;
                 openZaloBtn.href = link;
                 openZaloBtn.style.display = "flex";
-                if (typeof lucide !== 'undefined') lucide.createIcons();
+                renderScopedIcons(openZaloBtn);
             }
         } else {
             showToast("Lỗi gửi tin: " + (data.message || "Thất bại"), "error");
@@ -2166,7 +2217,7 @@ function handleTestZaloClick() {
         if (btn) {
             btn.disabled = false;
             btn.innerHTML = originalContent;
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            renderScopedIcons(btn);
         }
     });
 }

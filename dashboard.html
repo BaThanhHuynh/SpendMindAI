@@ -9,17 +9,13 @@
     <link rel="icon" type="image/png" href="images/logoapp.png?v=20260911_v8">
     <link rel="shortcut icon" href="favicon.ico?v=20260911_v8">
 
-    <!-- Preload critical CSS & Fonts -->
-    <link rel="preload" href="css/styles.css?v=20260913_v6" as="style">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..700;1,14..32,300..700&display=swap" as="style">
-
     <!-- Google Fonts: Inter (Apple SF Pro Equivalent) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..700;1,14..32,300..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Lucide Icons CDN (pinned version for consistent + faster loading) -->
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js" defer></script>
 
     <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
@@ -36,8 +32,8 @@
     <link rel="apple-touch-icon" href="images/logoapp.png?v=20260911_v8">
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/styles.css?v=20260913_v6">
-    <link rel="stylesheet" href="css/mobile.css?v=20260913_v6">
+    <link rel="stylesheet" href="css/styles.css?v=20260913_v7">
+    <link rel="stylesheet" href="css/mobile.css?v=20260913_v7">
     
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -54,7 +50,7 @@
         <header class="app-header">
             <div class="logo-area">
                 <div class="logo-icon has-image">
-                    <img src="images/logoapp.png?v=20260911_v8" alt="SpendMindAI Logo" width="38" height="38" loading="lazy">
+                    <img src="images/logoapp.webp?v=20260911_v8" alt="SpendMindAI Logo" width="38" height="38" loading="lazy">
                 </div>
                 <div>
                     <h1>Xin chào, <strong id="user-display-name">...</strong>!</h1>
@@ -634,7 +630,7 @@
             <div class="chatbot-header">
                 <div class="chatbot-bot-info">
                     <div class="chatbot-avatar" style="overflow: hidden; padding: 2px;">
-                        <img src="images/logoapp.png?v=20260911_v8" alt="SpendMindAI Logo" width="28" height="28" style="border-radius: 50%; object-fit: contain;">
+                        <img src="images/logoapp.webp?v=20260911_v8" alt="SpendMindAI Logo" width="28" height="28" style="border-radius: 50%; object-fit: contain;">
                     </div>
                     <div>
                         <h4 style="margin: 0;">Trợ Lý Tài Chính SpendMindAI</h4>
@@ -692,14 +688,14 @@
     </nav>
 
     <!-- Main Dashboard script -->
-    <script src="js/chatbot.js?v=20260913_v6"></script>
-    <script src="js/dashboard.js?v=20260913_v6"></script>
+    <script src="js/chatbot.js?v=20260913_v7"></script>
+    <script src="js/dashboard.js?v=20260913_v7"></script>
     <!-- Cookie Consent & Preferences System -->
-    <script src="js/cookie-consent.js?v=20260913_v6"></script>
+    <script src="js/cookie-consent.js?v=20260913_v7"></script>
     <!-- PWA Install Manager (Android & iOS) -->
-    <script src="js/pwa-install.js?v=20260913_v6"></script>
+    <script src="js/pwa-install.js?v=20260913_v7"></script>
     <!-- In-App Device Notifications & Scheduled Reminders -->
-    <script src="js/app-notification.js?v=20260913_v6"></script>
+    <script src="js/app-notification.js?v=20260913_v7"></script>
 
     <!-- Service Worker Registration for PWA & Offline Support -->
     <script>

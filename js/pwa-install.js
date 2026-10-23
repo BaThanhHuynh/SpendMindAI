@@ -183,7 +183,7 @@
         if (modal && backdrop) {
             backdrop.classList.remove('hidden');
             modal.classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
         }
     }
 
@@ -203,7 +203,7 @@
             <div id="ios-install-modal" class="ios-install-sheet hidden">
                 <div class="ios-sheet-header">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <img src="images/logoapp.png?v=20260911_v8" alt="SpendMindAI" style="width: 36px; height: 36px; border-radius: 9px;">
+                        <img src="images/logoapp.webp?v=20260911_v8" alt="SpendMindAI" style="width: 36px; height: 36px; border-radius: 9px;">
                         <div>
                             <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">Cài Đặt SpendMindAI</h4>
                             <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--text-secondary);">Thêm vào màn hình chính như ứng dụng</p>
@@ -259,7 +259,7 @@
         banner.className = 'pwa-floating-banner';
         banner.innerHTML = `
             <div class="pwa-banner-content">
-                <img src="images/logoapp.png?v=20260911_v8" alt="SpendMindAI" class="pwa-banner-icon">
+                <img src="images/logoapp.webp?v=20260911_v8" alt="SpendMindAI" class="pwa-banner-icon">
                 <div class="pwa-banner-info">
                     <div class="pwa-banner-title">Cài đặt SpendMindAI</div>
                     <div class="pwa-banner-desc">Lưu về máy dùng mượt mà toàn màn hình</div>

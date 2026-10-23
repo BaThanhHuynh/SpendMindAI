@@ -531,7 +531,7 @@
                 } finally {
                     testBtn.disabled = false;
                     testBtn.innerHTML = oldHtml;
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    if (typeof lucide !== 'undefined') lucide.createIcons({ root: testBtn });
                 }
             });
         }

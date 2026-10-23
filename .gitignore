@@ -123,3 +123,7 @@ build/
 BaoCaoDoAn*.docx
 BaoCaoDoAn*.md
 BaoCaoDoAn*.pdf
+
+# 14. Testing & Browser Tools
+.playwright-mcp/
+CLAUDE.md

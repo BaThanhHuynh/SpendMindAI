@@ -2,7 +2,7 @@
    SPENDMINDAI - SERVICE WORKER (PWA & Offline Resilience)
    ========================================================================== */
 
-const CACHE_NAME = 'spendmind-v4.0';
+const CACHE_NAME = 'spendmind-v4.1';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -70,8 +70,8 @@ self.addEventListener('fetch', (event) => {
     if (event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request).catch(() => {
-                return caches.match(event.request).then((cached) => {
-                    return cached || caches.match('/index.html') || caches.match('/');
+                return caches.match(event.request, { ignoreSearch: true }).then((cached) => {
+                    return cached || caches.match('/index.html', { ignoreSearch: true }) || caches.match('/', { ignoreSearch: true });
                 });
             })
         );
@@ -80,7 +80,7 @@ self.addEventListener('fetch', (event) => {
 
     // Cache-First strategy for static assets (CSS, JS, Images), fallback to Network
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
+        caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
             if (cachedResponse) {
                 // Fetch in background to revalidate cache without blocking UI
                 fetch(event.request).then((networkResponse) => {
