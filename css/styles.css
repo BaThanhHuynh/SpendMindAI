@@ -3733,30 +3733,103 @@ html[data-theme="light"] .daily-header {
     background: var(--text-muted);
 }
 
+/* Container for Swipeable Daily Transaction Item */
+.daily-item-swipe-wrapper {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--calendar-border);
+    background: transparent;
+    touch-action: pan-y;
+}
+.daily-item-swipe-wrapper:last-child {
+    border-bottom: none;
+}
+
+/* Background Reveal Action */
+.daily-item-swipe-action {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 80px;
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+    z-index: 1;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.daily-item-swipe-wrapper.is-swiping .daily-item-swipe-action,
+.daily-item-swipe-wrapper.is-swiped .daily-item-swipe-action {
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.btn-swipe-delete {
+    width: 80px;
+    background: #ef4444;
+    color: #ffffff;
+    border: none;
+    outline: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+.btn-swipe-delete:hover,
+.btn-swipe-delete:active {
+    background: #dc2626;
+}
+.btn-swipe-delete svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Foreground Item Content */
 .daily-item {
+    position: relative;
+    z-index: 2;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 14px 16px;
-    background: transparent !important;
+    background: var(--surface-raised, #1c1c1e) !important;
     border-radius: 0 !important;
-    border-bottom: 1px solid var(--calendar-border);
+    border-bottom: none !important;
     margin: 0;
     cursor: pointer;
-    transition: background var(--transition-fast);
     box-shadow: none !important;
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), background var(--transition-fast);
 }
 
-.daily-item:last-child {
-    border-bottom: none;
+html[data-theme="light"] .daily-item {
+    background: #ffffff !important;
 }
 
 .daily-item:hover {
-    background: rgba(255, 255, 255, 0.02) !important;
-    transform: none !important;
+    background: #252528 !important;
 }
 html[data-theme="light"] .daily-item:hover {
-    background: rgba(0, 0, 0, 0.015) !important;
+    background: #f7f7f9 !important;
+}
+
+.daily-item-swipe-wrapper.is-swiped .daily-item {
+    transform: translate3d(-80px, 0, 0) !important;
 }
 
 .daily-item-left {
@@ -3828,9 +3901,33 @@ html[data-theme="light"] .daily-item:hover {
 }
 
 .chevron-arrow {
-    color: var(--text-muted);
-    width: 16px;
-    height: 16px;
+    display: none !important;
+}
+
+/* Delete Button on Desktop/Inline (Replaces chevron arrow with SVG trash can) */
+.btn-daily-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm, 8px);
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #86868b);
+    cursor: pointer;
+    transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    padding: 0;
+    margin: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+.btn-daily-delete:hover {
+    color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.12) !important;
+    transform: scale(1.08);
+}
+.btn-daily-delete:active {
+    transform: scale(0.95);
 }
 
 /* Dangerous Action Buttons (Red button for delete) */

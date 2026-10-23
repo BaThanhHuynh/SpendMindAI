@@ -472,7 +472,36 @@ function initEventListeners() {
 
     const dailyTransactionsList = document.getElementById("daily-transactions-list");
     if (dailyTransactionsList) {
+        initDailySwipeToDelete(dailyTransactionsList);
+
         dailyTransactionsList.addEventListener("click", (e) => {
+            // 1. Click on revealed swipe delete button
+            const btnSwipe = e.target.closest(".btn-swipe-delete");
+            if (btnSwipe && btnSwipe.dataset.id) {
+                e.stopPropagation();
+                deleteTransaction(btnSwipe.dataset.id);
+                return;
+            }
+
+            // 2. Click on desktop/inline trash button
+            const btnDelete = e.target.closest(".btn-daily-delete");
+            if (btnDelete && btnDelete.dataset.id) {
+                e.stopPropagation();
+                deleteTransaction(btnDelete.dataset.id);
+                return;
+            }
+
+            // 3. Click on swiped wrapper/item -> close swipe instead of opening edit
+            const wrapper = e.target.closest(".daily-item-swipe-wrapper");
+            if (wrapper && wrapper.classList.contains("is-swiped")) {
+                e.stopPropagation();
+                wrapper.classList.remove("is-swiped");
+                const item = wrapper.querySelector(".daily-item");
+                if (item) item.style.transform = "translate3d(0, 0, 0)";
+                return;
+            }
+
+            // 4. Click on normal item -> open edit modal
             const item = e.target.closest(".daily-item");
             if (item && item.dataset.id) {
                 editTransaction(item.dataset.id);
@@ -1337,6 +1366,130 @@ function renderCalendarView(filteredTransactions = null) {
     updateDailyTransactionsView({ filteredTransactions });
 }
 
+// Mobile Swipe-To-Delete Gesture Controller (Apple iOS List Item Style)
+function initDailySwipeToDelete(container) {
+    let activeWrapper = null;
+    let startX = 0;
+    let startY = 0;
+    let currentX = 0;
+    let isSwiping = false;
+    let isHorizontal = null;
+    const maxSwipe = 80;
+
+    function closeAllSwiped(exceptWrapper = null) {
+        container.querySelectorAll(".daily-item-swipe-wrapper.is-swiped").forEach(w => {
+            if (w !== exceptWrapper) {
+                w.classList.remove("is-swiped");
+                const item = w.querySelector(".daily-item");
+                if (item) {
+                    item.style.transition = "transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)";
+                    item.style.transform = "translate3d(0, 0, 0)";
+                }
+            }
+        });
+    }
+
+    container.addEventListener("touchstart", (e) => {
+        const wrapper = e.target.closest(".daily-item-swipe-wrapper");
+        if (!wrapper) {
+            closeAllSwiped();
+            return;
+        }
+
+        closeAllSwiped(wrapper);
+
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        currentX = startX;
+        activeWrapper = wrapper;
+        isSwiping = false;
+        isHorizontal = null;
+
+        const item = wrapper.querySelector(".daily-item");
+        if (item) {
+            item.style.transition = "none";
+        }
+    }, { passive: true });
+
+    container.addEventListener("touchmove", (e) => {
+        if (!activeWrapper) return;
+        const touch = e.touches[0];
+        currentX = touch.clientX;
+        const diffX = currentX - startX;
+        const diffY = touch.clientY - startY;
+
+        if (isHorizontal === null) {
+            if (Math.abs(diffX) > 6 || Math.abs(diffY) > 6) {
+                isHorizontal = Math.abs(diffX) > Math.abs(diffY);
+            }
+        }
+
+        if (!isHorizontal) return;
+
+        isSwiping = true;
+        activeWrapper.classList.add("is-swiping");
+        const item = activeWrapper.querySelector(".daily-item");
+        if (!item) return;
+
+        const isCurrentlySwiped = activeWrapper.classList.contains("is-swiped");
+        let offset;
+        if (isCurrentlySwiped) {
+            offset = -maxSwipe + diffX;
+            if (offset > 0) offset = 0;
+            if (offset < -maxSwipe) offset = -maxSwipe + (offset + maxSwipe) * 0.25;
+        } else {
+            offset = diffX;
+            if (offset > 0) offset = 0;
+            if (offset < -maxSwipe) offset = -maxSwipe + (offset + maxSwipe) * 0.25;
+        }
+
+        item.style.transform = `translate3d(${offset}px, 0, 0)`;
+    }, { passive: true });
+
+    container.addEventListener("touchend", () => {
+        if (!activeWrapper) return;
+        activeWrapper.classList.remove("is-swiping");
+        const item = activeWrapper.querySelector(".daily-item");
+        const diffX = currentX - startX;
+        const isCurrentlySwiped = activeWrapper.classList.contains("is-swiped");
+
+        if (item) {
+            item.style.transition = "transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)";
+        }
+
+        if (isSwiping) {
+            if (isCurrentlySwiped) {
+                if (diffX > 25) {
+                    activeWrapper.classList.remove("is-swiped");
+                    if (item) item.style.transform = "translate3d(0, 0, 0)";
+                } else {
+                    activeWrapper.classList.add("is-swiped");
+                    if (item) item.style.transform = `translate3d(-${maxSwipe}px, 0, 0)`;
+                }
+            } else {
+                if (diffX < -30) {
+                    activeWrapper.classList.add("is-swiped");
+                    if (item) item.style.transform = `translate3d(-${maxSwipe}px, 0, 0)`;
+                } else {
+                    activeWrapper.classList.remove("is-swiped");
+                    if (item) item.style.transform = "translate3d(0, 0, 0)";
+                }
+            }
+        }
+
+        activeWrapper = null;
+        isSwiping = false;
+        isHorizontal = null;
+    }, { passive: true });
+
+    document.addEventListener("click", (e) => {
+        if (!e.target.closest("#daily-transactions-list")) {
+            closeAllSwiped();
+        }
+    });
+}
+
 function updateDailyTransactionsView(cachedStats = null) {
     const stats = cachedStats || calculateFinanceStats();
     const filteredTransactions = stats.filteredTransactions;
@@ -1383,31 +1536,44 @@ function updateDailyTransactionsView(cachedStats = null) {
         dailyEmptyState.style.display = "none";
         dailyTransactionsList.style.display = "flex";
 
+        const trashIconSvg = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>`;
+        const swipeDeleteIconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>`;
+
         const dailyFragment = document.createDocumentFragment();
         selectedDayTransactions.forEach(t => {
             const cat = CATEGORIES[t.category] || { label: t.category, icon: "help-circle", colorClass: "badge-color-mint" };
-            const item = document.createElement("div");
-            item.className = "daily-item";
-            item.dataset.id = t.id;
+            const wrapper = document.createElement("div");
+            wrapper.className = "daily-item-swipe-wrapper";
+            wrapper.dataset.id = t.id;
 
-            item.innerHTML = `
-                <div class="daily-item-left">
-                    <div class="daily-icon-wrapper ${cat.colorClass}">
-                        <i data-lucide="${cat.icon}"></i>
-                    </div>
-                    <div class="daily-item-info">
-                        <span class="daily-item-title">${cat.label}</span>
-                        ${t.description ? `<span class="daily-item-desc">${escapeHTML(t.description)}</span>` : ''}
-                    </div>
+            wrapper.innerHTML = `
+                <div class="daily-item-swipe-action">
+                    <button type="button" class="btn-swipe-delete" data-id="${t.id}" aria-label="Xóa giao dịch" title="Xóa giao dịch">
+                        ${swipeDeleteIconSvg}
+                        <span>Xóa</span>
+                    </button>
                 </div>
-                <div class="daily-item-right">
-                    <span class="daily-item-amount">${formatNumberWithCommas(t.amount)}đ</span>
-                    <div class="daily-actions">
-                        <i data-lucide="chevron-right" class="chevron-arrow" style="width:15px; height:15px;"></i>
+                <div class="daily-item" data-id="${t.id}">
+                    <div class="daily-item-left">
+                        <div class="daily-icon-wrapper ${cat.colorClass}">
+                            <i data-lucide="${cat.icon}"></i>
+                        </div>
+                        <div class="daily-item-info">
+                            <span class="daily-item-title">${cat.label}</span>
+                            ${t.description ? `<span class="daily-item-desc">${escapeHTML(t.description)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="daily-item-right">
+                        <span class="daily-item-amount">${formatNumberWithCommas(t.amount)}đ</span>
+                        <div class="daily-actions">
+                            <button type="button" class="btn-daily-delete" data-id="${t.id}" title="Xóa giao dịch" aria-label="Xóa giao dịch">
+                                ${trashIconSvg}
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
-            dailyFragment.appendChild(item);
+            dailyFragment.appendChild(wrapper);
         });
 
         dailyTransactionsList.appendChild(dailyFragment);
