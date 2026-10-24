@@ -437,6 +437,27 @@
       - **Service Worker & Cache:** Nâng cấp Service Worker lên `spendmind-v6.3` và bump query string asset lên `?v=20261024_v21`.
     - **Trạng thái:** [x] RESOLVED. Khung chat đạt chuẩn mực giao diện cao cấp của Claude (Ảnh 2 & Ảnh 3), loại bỏ 100% hiện tượng lộ biểu đồ Dashboard.
 
+36. **[P0] Mobile Viewport & Virtual Keyboard Auto-Resize (Khắc Phục Lỗi Hở Khoảng Trống To Dưới Đáy Khi Đóng/Mở Bàn Phím Ảo)**
+    - **File:** `dashboard.html`, `js/chatbot.js`, `css/mobile.css`, `css/styles.css`, `sw.js`
+    - **Yêu cầu & Vấn đề (Ảnh 1 & Ảnh 2):**
+      1. **Hở khoảng trống lớn dưới đáy khi đóng bàn phím (Ảnh 1):** Khung chat dừng ở khoảng 760px-790px, để lộ một khoảng trống to ~250px phía dưới đáy màn hình với màu nền Dashboard (`#f5f4fa`).
+         - *Nguyên nhân kỹ thuật:* Desktop `.chatbot-container` có luật `max-height: calc(85vh - 80px)`. Trên mobile, luật này không bị ghi đè bằng `max-height: none !important`, khiến container bị kẹt ở mức tối đa 790px (85% của màn hình 1024px trừ 80px). Đồng thời, việc tính toán `keyboardHeight = window.innerHeight - vv.height` trên Safari iOS bị sai lệch do thanh Safari toolbar (~184px) ngay cả khi không có bàn phím nào mở.
+      2. **Input bị đẩy quá cao khi bật bàn phím ảo (Ảnh 2):** Khung nhập tin nhắn bị đẩy tít lên giữa/đầu màn hình, để lộ khoảng trống khổng lồ ~260px giữa input và bàn phím ảo.
+         - *Nguyên nhân kỹ thuật:* Trình duyệt đã tự co ngắn khung nhìn thông qua `interactive-widget=resizes-content`, nhưng thanh input lại cộng thêm một lần nữa `padding-bottom: calc(var(--keyboard-inset, 0px))` (~260px) dẫn đến hiệu ứng đẩy 2 lần (double push).
+    3. **Giải pháp thực hiện:**
+      - **Loại bỏ giới hạn chiều cao & phủ kín 100% màn hình:**
+        - Bổ sung `inset: 0 !important; height: 100% !important; height: 100dvh !important; max-height: none !important; min-height: 100% !important; min-height: 100dvh !important;` vào `#chatbot-container` ở cả `css/mobile.css` và `css/styles.css`.
+        - Đặt nền light mode cho container và thanh input thành `#ffffff !important` đồng nhất hoàn toàn với `.chatbot-messages` và header, loại bỏ mọi mảng màu chắp vá.
+        - Ẩn hoàn toàn `.bg-glow` khi mở chat (`body.chatbot-open .bg-glow { display: none !important; }`).
+      - **Cơ chế co giãn tự động linh hoạt (Dynamic Visual Viewport Resizing):**
+        - Trong `js/chatbot.js`, hàm `handleVisualViewport()` nhận diện chính xác trạng thái bàn phím ảo: Bàn phím CHỈ được coi là mở khi `document.activeElement === inputField` VÀ `visibleHeight < (window.innerHeight - 100)`.
+        - Khi bàn phím MỞ: Gán trực tiếp `top: ${offsetTop}px !important`, `height: ${visibleHeight}px !important`, `bottom: auto !important` vào container, và kích hoạt `.keyboard-open` (`padding-bottom: 8px !important`). Container co ngắn đúng bằng khoảng nhìn thấy phía trên bàn phím, đưa ô nhập nằm khít ngay trên bàn phím với 0px khoảng hở.
+        - Khi bàn phím ĐÓNG: Xóa sạch các thuộc tính inline `top`, `height`, `bottom`, `--keyboard-inset`. Container tức thì bung ra toàn màn hình (`100dvh`) và thanh input áp sát dải Home Indicator (`max(env(safe-area-inset-bottom), 14px)`) mà không để lại bất kỳ khoảng trống nào.
+        - Xóa lệnh `scrollIntoView()` gây giật màn hình trên iOS Safari.
+      - **Bảo toàn Desktop:** Kiểm tra `window.innerWidth > 1024` bỏ qua mọi can thiệp mobile, giữ nguyên widget nổi góc phải trên desktop.
+      - **Service Worker & Cache:** Nâng cấp Service Worker lên `spendmind-v6.4` và bump query string asset lên `?v=20261024_v22`.
+    - **Trạng thái:** [x] RESOLVED. Khung chat co giãn tự động mượt mà, phẳng phiu, không còn khoảng hở dưới đáy khi đóng bàn phím và nằm sát ngay trên bàn phím khi mở trên mọi thiết bị di động iOS và Android.
+
 
 
 

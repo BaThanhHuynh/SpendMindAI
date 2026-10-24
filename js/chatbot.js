@@ -52,6 +52,14 @@ function initChatbot() {
             }
         }
 
+        // Clean up any stale inline styles
+        container.style.removeProperty("height");
+        container.style.removeProperty("top");
+        container.style.removeProperty("bottom");
+        container.style.removeProperty("--keyboard-inset");
+        const inputBar = container.querySelector(".chatbot-input-bar");
+        if (inputBar) inputBar.classList.remove("keyboard-open");
+
         // Mobile / Tablet full page: push history state so native back button returns to dashboard
         if (window.innerWidth <= 1024 && (!history.state || !history.state.chatOpen)) {
             history.pushState({ chatOpen: true }, "");
@@ -197,46 +205,45 @@ function initChatbot() {
 
     // Rock-solid visualViewport handler for iOS / Android virtual keyboards (Claude & Telegram model)
     function handleVisualViewport() {
-        if (!document.body.classList.contains("chatbot-open")) return;
-        if (window.innerWidth > 1024) {
-            container.style.removeProperty("--keyboard-inset");
+        if (!document.body.classList.contains("chatbot-open") || window.innerWidth > 1024) {
             container.style.removeProperty("height");
             container.style.removeProperty("top");
             container.style.removeProperty("bottom");
+            container.style.removeProperty("--keyboard-inset");
             const inputBar = container.querySelector(".chatbot-input-bar");
             if (inputBar) inputBar.classList.remove("keyboard-open");
             return;
         }
-        if (window.visualViewport) {
-            const vv = window.visualViewport;
-            if (window.scrollY !== 0) {
-                window.scrollTo(0, 0);
-            }
-            const offsetTop = vv.offsetTop || 0;
-            const visibleHeight = vv.height;
-            const keyboardHeight = Math.max(0, window.innerHeight - (offsetTop + visibleHeight));
-            const isKeyboardOpen = keyboardHeight > 50 || visibleHeight < (window.innerHeight - 80);
 
-            // Container ALWAYS remains 100% full screen - NEVER shrink or lift the container!
-            container.style.removeProperty("height");
+        const inputBar = container.querySelector(".chatbot-input-bar");
+        const vv = window.visualViewport;
+        if (!vv) return;
+
+        if (window.scrollY !== 0) {
+            window.scrollTo(0, 0);
+        }
+
+        const visibleHeight = Math.round(vv.height);
+        const offsetTop = Math.round(vv.offsetTop || 0);
+        const isInputFocused = (document.activeElement === inputField);
+        // Virtual keyboard is open ONLY if input is focused and the visible height has shrunk
+        const isKeyboardOpen = isInputFocused && (visibleHeight < (window.innerHeight - 100));
+
+        if (isKeyboardOpen) {
+            container.style.setProperty("top", `${offsetTop}px`, "important");
+            container.style.setProperty("height", `${visibleHeight}px`, "important");
+            container.style.setProperty("bottom", "auto", "important");
+            if (inputBar) inputBar.classList.add("keyboard-open");
+        } else {
             container.style.removeProperty("top");
+            container.style.removeProperty("height");
             container.style.removeProperty("bottom");
+            container.style.removeProperty("--keyboard-inset");
+            if (inputBar) inputBar.classList.remove("keyboard-open");
+        }
 
-            // Pass exact keyboard inset to input bar to push input card above keyboard
-            container.style.setProperty("--keyboard-inset", `${keyboardHeight}px`);
-
-            const inputBar = container.querySelector(".chatbot-input-bar");
-            if (inputBar) {
-                if (isKeyboardOpen) {
-                    inputBar.classList.add("keyboard-open");
-                } else {
-                    inputBar.classList.remove("keyboard-open");
-                }
-            }
-
-            if (messagesContainer) {
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
     }
 
@@ -261,20 +268,17 @@ function initChatbot() {
         inputField.addEventListener("focus", () => {
             if (window.innerWidth <= 1024) {
                 handleVisualViewport();
-                setTimeout(handleVisualViewport, 50);
-                setTimeout(handleVisualViewport, 150);
-                setTimeout(handleVisualViewport, 300);
-                setTimeout(handleVisualViewport, 500);
-                setTimeout(() => {
-                    if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                    inputField.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                }, 350);
+                setTimeout(handleVisualViewport, 80);
+                setTimeout(handleVisualViewport, 200);
+                setTimeout(handleVisualViewport, 400);
             }
         });
         inputField.addEventListener("blur", () => {
             if (window.innerWidth <= 1024) {
-                setTimeout(handleVisualViewport, 50);
+                handleVisualViewport();
+                setTimeout(handleVisualViewport, 60);
                 setTimeout(handleVisualViewport, 200);
+                setTimeout(handleVisualViewport, 350);
             }
         });
     }
