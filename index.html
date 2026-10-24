@@ -153,21 +153,21 @@
             <!-- Backdrop for Mobile Navigation -->
             <div id="mobile-nav-backdrop" class="mobile-nav-backdrop"></div>
 
-            <!-- Mobile Navigation Overlay Dropdown -->
-            <div id="mobile-nav-dropdown" class="mobile-nav-dropdown">
-                <a href="#section-cashflow" class="mobile-menu-link">
+            <!-- Mobile Navigation Overlay Dropdown (Apple-style compact popover) -->
+            <div id="mobile-nav-dropdown" class="mobile-nav-dropdown" role="navigation" aria-label="Mobile Navigation">
+                <a href="#section-cashflow" class="mobile-menu-link" style="--i: 0;">
                     <i data-lucide="sparkles"></i> <span>Tính năng</span>
                 </a>
-                <a href="#section-chatbot" class="mobile-menu-link">
+                <a href="#section-chatbot" class="mobile-menu-link" style="--i: 1;">
                     <i data-lucide="lightbulb"></i> <span>Giải pháp</span>
                 </a>
-                <a href="#section-budget" class="mobile-menu-link">
+                <a href="#section-budget" class="mobile-menu-link" style="--i: 2;">
                     <i data-lucide="tag"></i> <span>Bảng giá</span>
                 </a>
-                <a href="#section-charts" class="mobile-menu-link">
+                <a href="#section-charts" class="mobile-menu-link" style="--i: 3;">
                     <i data-lucide="book-open"></i> <span>Blog</span>
                 </a>
-                <a href="#section-app-install" class="mobile-menu-link">
+                <a href="#section-app-install" class="mobile-menu-link" style="--i: 4;">
                     <i data-lucide="folder-open"></i> <span>Tài nguyên</span>
                 </a>
             </div>
@@ -183,10 +183,10 @@
 
             <!-- Centered Action Buttons -->
             <div class="hero-actions">
-                <a href="login" class="btn btn-primary btn-hero">
+                <a href="login" class="btn btn-primary btn-hero" style="border-radius: 50px;">
                     <i data-lucide="log-in"></i> Đăng nhập ngay
                 </a>
-                <a href="register" class="btn btn-secondary btn-hero">
+                <a href="register" class="btn btn-secondary btn-hero" style="border-radius: 50px;">
                     <i data-lucide="user-plus"></i> Đăng ký tài khoản
                 </a>
             </div>
