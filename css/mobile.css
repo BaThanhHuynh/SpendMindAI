@@ -243,15 +243,55 @@
     }
 
     .modal-content.form-card .form-actions {
+        display: flex !important;
+        align-items: stretch !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+        width: 100% !important;
         margin-top: 24px !important;
         margin-bottom: 8px !important;
+        box-sizing: border-box !important;
     }
 
     .modal-content.form-card #btn-submit {
-        min-height: 50px !important;
+        min-height: 48px !important;
+        flex: 1 1 100% !important;
         width: 100% !important;
-        font-size: 1rem !important;
+        font-size: 0.95rem !important;
         font-weight: 600 !important;
+        border-radius: var(--radius-pill) !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+    }
+
+    .modal-content.form-card.is-editing .form-actions,
+    .modal-content.form-card .form-actions:has(#btn-cancel-edit:not([style*="display: none"])) {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+    }
+
+    .modal-content.form-card.is-editing #btn-submit,
+    .modal-content.form-card .form-actions:has(#btn-cancel-edit:not([style*="display: none"])) #btn-submit {
+        flex: 1.3 1 0 !important;
+        width: auto !important;
+        min-height: 48px !important;
+        padding: 10px 10px !important;
+        font-size: 0.88rem !important;
+    }
+
+    .modal-content.form-card.is-editing #btn-cancel-edit,
+    .modal-content.form-card.is-editing #btn-delete-edit,
+    .modal-content.form-card .form-actions:has(#btn-cancel-edit:not([style*="display: none"])) #btn-cancel-edit,
+    .modal-content.form-card .form-actions:has(#btn-cancel-edit:not([style*="display: none"])) #btn-delete-edit {
+        flex: 1 1 0 !important;
+        width: auto !important;
+        min-height: 48px !important;
+        padding: 10px 8px !important;
+        font-size: 0.88rem !important;
+        border-radius: var(--radius-pill) !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
     }
 
     @keyframes slideUpMobile {
@@ -1218,6 +1258,15 @@
     .modal-overlay.closing .modal-content.form-card,
     .modal-overlay.closing .day-edit-card {
         animation: sheet-slide-down 0.26s var(--ease-sheet) forwards !important;
+    }
+
+    /* Toast Notification on Mobile: Float elegantly below sticky header, never clipped by notch */
+    .toast {
+        top: calc(max(env(safe-area-inset-top, 0px), 44px) + 68px) !important;
+        max-width: min(92vw, 380px) !important;
+        padding: 9px 18px !important;
+        font-size: 0.84rem !important;
+        z-index: 100020 !important;
     }
 }
 

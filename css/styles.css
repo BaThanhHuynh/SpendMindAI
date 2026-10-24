@@ -731,6 +731,58 @@ html[data-theme="light"] #btn-settings.active {
     color: var(--text-primary);
 }
 
+/* ==========================================================================
+   FORM ACTIONS & SUBMIT BUTTONS (BALANCED LAYOUT ON ALL DEVICES)
+   ========================================================================== */
+.form-actions {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    margin-top: 24px;
+    box-sizing: border-box;
+}
+
+.form-actions .btn {
+    min-height: 48px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    justify-content: center;
+    text-align: center;
+    border-radius: var(--radius-pill);
+    box-sizing: border-box;
+    transition: transform var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+}
+
+/* Add Mode (Default): Single submit button spans 100% full width */
+.form-actions #btn-submit {
+    flex: 1 1 100%;
+    width: 100%;
+}
+
+/* Edit Mode: When cancel and delete buttons are active */
+.form-card.is-editing .form-actions,
+.form-actions:has(#btn-cancel-edit:not([style*="display: none"])) {
+    display: flex;
+    gap: 10px;
+}
+
+.form-card.is-editing .form-actions #btn-submit,
+.form-actions:has(#btn-cancel-edit:not([style*="display: none"])) #btn-submit {
+    flex: 1.4 1 0;
+    width: auto;
+}
+
+.form-card.is-editing .form-actions #btn-cancel-edit,
+.form-card.is-editing .form-actions #btn-delete-edit,
+.form-actions:has(#btn-cancel-edit:not([style*="display: none"])) #btn-cancel-edit,
+.form-actions:has(#btn-cancel-edit:not([style*="display: none"])) #btn-delete-edit {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+}
+
 /* Buttons — Apple Button Grammars */
 .btn {
     display: inline-flex;
@@ -1254,40 +1306,41 @@ html[data-theme="light"] .btn-secondary:hover {
    ========================================================================== */
 .toast {
     position: fixed;
-    top: 24px;
+    top: calc(max(env(safe-area-inset-top, 0px), 24px) + 12px);
     bottom: auto !important;
     left: 50%;
     transform: translate(-50%, -150%) scale(0.92);
     background: rgba(28, 28, 30, 0.94);
     border: none !important;
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.15);
-    padding: 8px 18px !important;
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 2px 10px rgba(0, 0, 0, 0.15);
+    padding: 10px 22px !important;
     border-radius: var(--radius-pill) !important;
     color: #f5f5f7;
     display: flex;
     align-items: center;
     gap: 10px;
-    z-index: 99999;
+    z-index: 100020 !important;
     opacity: 0;
     pointer-events: none !important;
-    font-size: 0.84rem;
+    font-size: 0.88rem;
     font-weight: 500;
     letter-spacing: -0.01em;
     width: fit-content !important;
-    max-width: min(90vw, 420px) !important;
+    max-width: min(92vw, 440px) !important;
     height: auto !important;
     min-height: unset !important;
     box-sizing: border-box;
-    transition: transform 0.35s var(--ease-sheet), opacity 0.25s var(--ease-out);
+    transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s var(--ease-out);
+    white-space: nowrap;
 }
 
 html[data-theme="light"] .toast {
     background: rgba(255, 255, 255, 0.96);
     border: none !important;
     color: #1d1d1f;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .toast.show {
@@ -7213,14 +7266,28 @@ html[data-theme="light"] .ios-icon-box {
 
 .spinner-inline {
     display: inline-block;
-    width: 12px;
-    height: 12px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
     border-top-color: currentColor;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: spin 0.75s linear infinite;
     vertical-align: middle;
+    margin-right: 6px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.btn-sm .spinner-inline {
+    width: 12px;
+    height: 12px;
+    border-width: 1.8px;
     margin-right: 4px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* ==========================================================================

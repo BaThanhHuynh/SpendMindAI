@@ -541,30 +541,45 @@
         if (form) {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const subToggle = document.getElementById('settings-app-notif-active');
-                const timeInput = document.getElementById('settings-app-notif-time');
-                const onlyEmptyInput = document.getElementById('settings-app-notif-only-empty');
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const oldSubmitHtml = submitBtn ? submitBtn.innerHTML : '';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = `<span class="spinner-inline"></span> Đang lưu cài đặt...`;
+                }
 
-                const enabled = subToggle ? subToggle.checked : state.enabled;
-                const time = timeInput && timeInput.value ? timeInput.value : state.time;
-                const onlyIfNoExpenses = onlyEmptyInput ? onlyEmptyInput.checked : state.onlyIfNoExpenses;
+                try {
+                    const subToggle = document.getElementById('settings-app-notif-active');
+                    const timeInput = document.getElementById('settings-app-notif-time');
+                    const onlyEmptyInput = document.getElementById('settings-app-notif-only-empty');
 
-                if (enabled && getPermissionStatus() !== 'granted') {
-                    const res = await requestPermission();
-                    if (res !== 'granted') {
-                        if (subToggle) subToggle.checked = false;
-                        return;
+                    const enabled = subToggle ? subToggle.checked : state.enabled;
+                    const time = timeInput && timeInput.value ? timeInput.value : state.time;
+                    const onlyIfNoExpenses = onlyEmptyInput ? onlyEmptyInput.checked : state.onlyIfNoExpenses;
+
+                    if (enabled && getPermissionStatus() !== 'granted') {
+                        const res = await requestPermission();
+                        if (res !== 'granted') {
+                            if (subToggle) subToggle.checked = false;
+                            return;
+                        }
+                    }
+
+                    if (enabled) {
+                        await subscribeDevicePush();
+                    } else {
+                        await unsubscribeDevicePush();
+                    }
+
+                    updateSettings({ enabled, time, onlyIfNoExpenses });
+                    await syncSettingsToServer(true);
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = oldSubmitHtml;
+                        if (typeof lucide !== 'undefined') lucide.createIcons({ root: submitBtn });
                     }
                 }
-
-                if (enabled) {
-                    await subscribeDevicePush();
-                } else {
-                    await unsubscribeDevicePush();
-                }
-
-                updateSettings({ enabled, time, onlyIfNoExpenses });
-                syncSettingsToServer(true);
             });
         }
 

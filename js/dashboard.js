@@ -1420,6 +1420,20 @@ function handleFormSubmit(e) {
         description: description || (CATEGORIES[category] ? CATEGORIES[category].label : category)
     };
 
+    const btnSubmit = document.getElementById("btn-submit");
+    const oldBtnHtml = btnSubmit ? btnSubmit.innerHTML : '';
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = `<span class="spinner-inline"></span> <span>${transactionId ? 'Đang cập nhật...' : 'Đang lưu...'}</span>`;
+    }
+    const restoreSubmitBtn = () => {
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = oldBtnHtml;
+            renderScopedIcons(btnSubmit);
+        }
+    };
+
     fetch(`${API_URL}?action=save_transaction`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1442,6 +1456,13 @@ function handleFormSubmit(e) {
     .catch(err => {
         showToast(err.message, "error");
         console.error(err);
+        restoreSubmitBtn();
+    })
+    .finally(() => {
+        const modal = document.getElementById("transaction-modal");
+        if (modal && !modal.classList.contains("hidden")) {
+            restoreSubmitBtn();
+        }
     });
 }
 
@@ -1465,10 +1486,16 @@ function resetTransactionForm() {
     document.getElementById("type-expense").checked = true;
     populateCategorySelectors();
 
+    document.getElementById("btn-submit").disabled = false;
     document.getElementById("btn-submit").innerHTML = '<i data-lucide="save"></i> <span>Thêm giao dịch</span>';
     document.getElementById("btn-cancel-edit").style.display = "none";
     document.getElementById("btn-delete-edit").style.display = "none";
+    document.getElementById("btn-delete-edit").disabled = false;
     document.getElementById("form-title").textContent = "Giao dịch mới";
+    
+    const formCard = document.querySelector(".form-card");
+    if (formCard) formCard.classList.remove("is-editing");
+    
     renderScopedIcons(document.getElementById("btn-submit"));
 }
 
@@ -1482,6 +1509,7 @@ function editTransaction(id) {
     // On mobile, scroll smoothly without layout disruption
     const formCard = document.querySelector(".form-card");
     if (formCard) {
+        formCard.classList.add("is-editing");
         formCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
@@ -1499,9 +1527,12 @@ function editTransaction(id) {
     document.getElementById("description").value = transaction.description;
 
     document.getElementById("form-title").textContent = "Sửa giao dịch";
+    document.getElementById("btn-submit").disabled = false;
     document.getElementById("btn-submit").innerHTML = '<i data-lucide="check-circle"></i> <span>Cập nhật</span>';
     document.getElementById("btn-cancel-edit").style.display = "inline-flex";
     document.getElementById("btn-delete-edit").style.display = "inline-flex";
+    document.getElementById("btn-delete-edit").disabled = false;
+    document.getElementById("btn-delete-edit").innerHTML = 'Xóa';
     document.getElementById("btn-delete-edit").onclick = () => deleteTransaction(transaction.id);
     renderScopedIcons(document.getElementById("btn-submit"));
 }
@@ -1509,6 +1540,19 @@ function editTransaction(id) {
 // Delete transaction trigger
 function deleteTransaction(id) {
     if (confirm("Bạn có chắc chắn muốn xóa giao dịch này không?")) {
+        const btnDelete = document.getElementById("btn-delete-edit");
+        const oldDeleteHtml = btnDelete ? btnDelete.innerHTML : '';
+        if (btnDelete) {
+            btnDelete.disabled = true;
+            btnDelete.innerHTML = `<span class="spinner-inline"></span> <span>Đang xóa...</span>`;
+        }
+        const restoreDeleteBtn = () => {
+            if (btnDelete) {
+                btnDelete.disabled = false;
+                btnDelete.innerHTML = oldDeleteHtml;
+            }
+        };
+
         fetch(`${API_URL}?action=delete_transaction`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1524,6 +1568,7 @@ function deleteTransaction(id) {
             if (data.success) {
                 showToast("Đã xóa giao dịch thành công", "success");
                 resetTransactionForm();
+                closeTransactionModal();
                 fetchStateFromServer();
                 if (currentDayEditTime) {
                     renderDayEditModalContent(currentDayEditTime);
@@ -1533,6 +1578,13 @@ function deleteTransaction(id) {
         .catch(err => {
             showToast(err.message, "error");
             console.error(err);
+            restoreDeleteBtn();
+        })
+        .finally(() => {
+            const modal = document.getElementById("transaction-modal");
+            if (modal && !modal.classList.contains("hidden")) {
+                restoreDeleteBtn();
+            }
         });
     }
 }
@@ -1546,6 +1598,20 @@ function handleBudgetSubmit(e) {
     inputs.forEach(input => {
         updatedBudgets[input.name] = parseFloat(input.value) || 0;
     });
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const oldSubmitHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="spinner-inline"></span> <span>Đang lưu hạn mức...</span>`;
+    }
+    const restoreBudgetBtn = () => {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = oldSubmitHtml;
+            renderScopedIcons(submitBtn);
+        }
+    };
 
     fetch(`${API_URL}?action=save_budgets`, {
         method: "POST",
@@ -1568,6 +1634,9 @@ function handleBudgetSubmit(e) {
     .catch(err => {
         showToast(err.message, "error");
         console.error(err);
+    })
+    .finally(() => {
+        restoreBudgetBtn();
     });
 }
 
@@ -2936,6 +3005,20 @@ function handleSettingsSubmit(e) {
         return;
     }
     
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const oldSubmitHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="spinner-inline"></span> <span>Đang lưu cài đặt...</span>`;
+    }
+    const restoreSettingsBtn = () => {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = oldSubmitHtml;
+            renderScopedIcons(submitBtn);
+        }
+    };
+
     fetch(`${API_URL}?action=save_notification_settings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2974,6 +3057,9 @@ function handleSettingsSubmit(e) {
     })
     .catch(err => {
         showToast(err.message, "error");
+    })
+    .finally(() => {
+        restoreSettingsBtn();
     });
 }
 

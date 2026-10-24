@@ -714,6 +714,36 @@
     - **Kiểm chứng:** Cú pháp Node.js `node --check` đạt 100% không lỗi; ngắt kết nối mạng không còn bất kỳ hiện tượng giật màn hình hay tải lại liên tục nào; banner Apple hiện ra êm ái và tự động reload đồng bộ ngay khi bật lại mạng; deploy Vercel / GitHub thành công.
     - **Trạng thái:** [x] RESOLVED.
 
+55. **[P1] UI/UX & Feedback - Sửa Lỗi Lệch Nút Cửa Sổ Nhập Liệu (Tất Cả Màn Hình), Định Vị Toast Tránh Bị Che Khuất, Khôi Phục Dấu 3 Chấm Chatbot & Bổ Sung Vòng Tròn Loading Cho Các Nút Nhập Liệu**
+    - **File:** `css/styles.css`, `css/mobile.css`, `js/dashboard.js`, `js/chatbot.js`, `js/app-notification.js`, `js/auth.js`, `dashboard.html`, `index.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:**
+      1. **Lệch nút cửa sổ nhập liệu:** Cửa sổ thêm/sửa giao dịch (`#transaction-form`) bị lệch nút trên mọi kích thước màn hình (mobile, tablet, desktop). Khi ở chế độ "Thêm giao dịch", nút `#btn-submit` chỉ chiếm một phần chiều rộng bên trái để trống khoảng lớn bên phải; khi ở chế độ "Sửa giao dịch", ba nút (Cập nhật, Hủy sửa, Xóa) bị dồn cục lệch trái và không đều nhau.
+      2. **Thông báo Toast bị che khuất:** Trên mobile/tablet, thông báo toast xuất hiện ở vị trí `top: 24px` bị phần tai thỏ / notch / thanh địa chỉ và `.app-header` dính (sticky) đè lên và che mất nửa trên của thông báo.
+      3. **Chatbot typing indicator:** Người dùng yêu cầu khôi phục lại hiệu ứng dấu 3 chấm chuyển động nhấp nhô nguyên bản thay vì khối skeleton loading khi chatbot trả lời.
+      4. **Thiếu phản hồi đang lưu (Loading feedback):** Khi người dùng bấm lưu giao dịch, cập nhật hạn mức ngân sách, lưu cài đặt Zalo, lưu cài đặt thông báo Web Push, hoặc đăng nhập/đăng ký, các nút bấm không có vòng tròn loading xoay báo hiệu cho người dùng biết dữ liệu đang được lưu vào hệ thống.
+    - **Thay đổi & Giải pháp:**
+      1. **Cân Bằng Tuyệt Đối Cụm Nút Cửa Sổ Nhập Liệu (.form-actions):**
+         - Trong `css/styles.css` và `css/mobile.css`: Thiết lập `.form-actions` chuẩn Flexbox `display: flex; gap: 12px; width: 100%; box-sizing: border-box; align-items: stretch;`.
+         - Khi ở chế độ "Thêm giao dịch": Nút `#btn-submit` tự động giãn đều `flex: 1 1 100%; width: 100%`, thẳng hàng cân đối 1:1 với các ô input bên trên.
+         - Khi ở chế độ "Sửa giao dịch": Bổ sung class `.is-editing` tự động trong `editTransaction()` / `resetTransactionForm()`; bộ ba nút được phân bổ cân đối toàn dải: `#btn-submit` (Cập nhật) chiếm `flex: 1.4 1 0` (ưu tiên hành động chính), `#btn-cancel-edit` (Hủy sửa) và `#btn-delete-edit` (Xóa) chiếm `flex: 1 1 0`. Trên mobile các nút căn đều với padding và cỡ chữ tinh tế, không bao giờ bị lệch hay dồn cục.
+      2. **Khắc Phục Lỗi Che Khuất Thông Báo Toast (.toast):**
+         - Trong `css/styles.css`: Nâng `z-index: 100020 !important;` và cập nhật vị trí thích ứng an toàn `top: calc(max(env(safe-area-inset-top, 0px), 24px) + 12px);`.
+         - Trong `css/mobile.css`: Đặt vị trí toast trượt xuống ngay bên dưới sticky `.app-header` tại `top: calc(max(env(safe-area-inset-top, 0px), 44px) + 68px) !important;`. Thông báo hiển thị trọn vẹn 100% ở vùng nhìn thấy được, không bao giờ bị notch, tai thỏ hay header đè khuất.
+      3. **Khôi Phục Trạng Thái Chatbot 3 Chấm Bouncing:**
+         - Trong `js/chatbot.js`: Khôi phục hàm `showTypingIndicator()` trở về cấu trúc thẻ `.typing-indicator` gồm 3 chấm `<span></span>` với hiệu ứng nảy nhịp nhàng `@keyframes typing-bounce` như người dùng mong muốn.
+      4. **Bổ Sung Vòng Tròn Loading Xoay Cho Mọi Nút Nhập Liệu / Lưu Trữ:**
+         - Bổ sung định nghĩa `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }` trong `css/styles.css` và chuẩn hóa class `.spinner-inline`.
+         - Form Giao dịch (`#transaction-form`): Khi bấm lưu/cập nhật, `#btn-submit` chuyển sang trạng thái disabled và hiển thị `<span class="spinner-inline"></span> Đang lưu...` / `Đang cập nhật...`.
+         - Nút Xóa giao dịch (`#btn-delete-edit`): Hiển thị `<span class="spinner-inline"></span> Đang xóa...` và disabled.
+         - Form Ngân sách (`#budget-form`): Hiển thị `<span class="spinner-inline"></span> Đang lưu hạn mức...` và disabled.
+         - Form Cài đặt Zalo (`#settings-form`): Hiển thị `<span class="spinner-inline"></span> Đang lưu cài đặt...` và disabled.
+         - Form Cài đặt Thông báo Web Push (`#form-app-notification-settings`): Nút "Lưu cài đặt thông báo" hiển thị `<span class="spinner-inline"></span> Đang lưu cài đặt...` và disabled.
+         - Form Đăng nhập & Đăng ký (`#login-form`, `#register-form`): Nút submit hiển thị `<span class="spinner-inline"></span> Đang đăng nhập...` và `Đang tạo tài khoản...`.
+         - Tất cả nút tự động khôi phục icon và nhãn gốc khi quá trình hoàn tất hoặc phát sinh lỗi.
+      5. Nâng cấp `CACHE_NAME` lên `spendmind-v7.15` trong `sw.js` và đồng bộ versioning trên toàn bộ HTML.
+    - **Kiểm chứng:** Cú pháp Node.js `node --check` 100% không lỗi; kiểm thử nút modal căn chỉnh hoàn hảo ở cả desktop, tablet, mobile; toast hiển thị thoáng đãng không bị che khuất; chatbot hiển thị 3 chấm loading; mọi nút bấm đều có vòng tròn xoay phản hồi người dùng rõ ràng.
+    - **Trạng thái:** [x] RESOLVED.
+
 
 
 

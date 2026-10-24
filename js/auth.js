@@ -222,9 +222,24 @@ async function parseApiResponse(res) {
 
 function handleLoginSubmit(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const oldBtnHtml = btn ? btn.innerHTML : '';
+    const restoreBtn = () => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = oldBtnHtml;
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
+        }
+    };
+
     const username = document.getElementById("login-username").value.trim();
     const password = document.getElementById("login-password").value;
     const remember = document.getElementById("login-remember") ? document.getElementById("login-remember").checked : false;
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-inline"></span> Đang đăng nhập...`;
+    }
 
     fetch(`${API_URL}?action=login`, {
         method: "POST",
@@ -236,11 +251,24 @@ function handleLoginSubmit(e) {
         showToast(data.message, "success");
         setTimeout(() => { window.location.href = "dashboard"; }, 1000);
     })
-    .catch(err => showToast(err.message, "error"));
+    .catch(err => {
+        showToast(err.message, "error");
+        restoreBtn();
+    });
 }
 
 function handleRegisterSubmit(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const oldBtnHtml = btn ? btn.innerHTML : '';
+    const restoreBtn = () => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = oldBtnHtml;
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
+        }
+    };
+
     const username = document.getElementById("register-username").value.trim();
     const email = document.getElementById("register-email").value.trim();
     const password = document.getElementById("register-password").value;
@@ -249,6 +277,11 @@ function handleRegisterSubmit(e) {
     if (password !== confirm) {
         showToast("Mật khẩu xác nhận không khớp!", "error");
         return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-inline"></span> Đang tạo tài khoản...`;
     }
 
     fetch(`${API_URL}?action=register`, {
@@ -261,7 +294,10 @@ function handleRegisterSubmit(e) {
         showToast(data.message, "success");
         setTimeout(() => { window.location.href = "login"; }, 1500);
     })
-    .catch(err => showToast(err.message, "error"));
+    .catch(err => {
+        showToast(err.message, "error");
+        restoreBtn();
+    });
 }
 
 // 4. Shared Utilities (Session, Theme, Toast)
