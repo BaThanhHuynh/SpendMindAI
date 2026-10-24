@@ -535,3 +535,10 @@
     - **Kiểm chứng:** Browser pane 375×812: rule được trình duyệt parse; `.calendar-section`, `.form-card`, `.day-edit-card` và 4 thẻ dashboard không còn khớp selector nhấn; `.settings-list-item` vẫn khớp; không lỗi console.
     - **Còn tồn:** `.auth-card` ở `login.html` / `register.html` (`.card.glass-card`) vẫn co 0.96 khi chạm bên trong.
     - **Trạng thái:** [x] RESOLVED.
+
+43. **[P3] UX - Bỏ Hẳn Hiệu Ứng Nhấn Co Trên Mọi Khung Thẻ (Gồm Khung Đăng Nhập/Đăng Ký)**
+    - **File:** `css/styles.css`, `dashboard.html`, `index.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** `.auth-card` (`login.html`, `register.html`) vẫn co 0.96 khi chạm ô nhập bên trong (còn tồn của mục 42).
+    - **Thay đổi:** Quét mọi HTML/JS: tất cả phần tử có `.card` / `.glass-card` / `.balance-card` đều là khung chứa (thẻ dashboard, thẻ lịch, form, sheet, khung đăng nhập/đăng ký). Xoá hẳn 3 selector này khỏi rule nhấn chung thay vì nối dài `:not(...)` (thay cho cách loại trừ ở mục 40, 42). Các mục bấm được (`.settings-list-item`, `.theme-option-item`, `.suggestion-chip`, nút chat, `.day-edit-tx-item`, ô lịch) giữ nguyên. Bump `styles.css?v=20261024_v30`, `CACHE_NAME` → `spendmind-v7.3`.
+    - **Kiểm chứng:** Rule mới được trình duyệt parse; 0/9 khung thẻ khớp selector nhấn (8 khung trên dashboard + `.auth-card`); `.settings-list-item` vẫn khớp; không còn rule `:active` nào khác trên các lớp khung thẻ.
+    - **Trạng thái:** [x] RESOLVED.

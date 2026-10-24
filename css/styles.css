@@ -7392,10 +7392,7 @@ html[data-theme="light"] .landing-install-card:hover {
    ========================================================================== */
 
 /* Universal Apple spring tactile press on interactive components
-   (thẻ trong lưới .dashboard-section, thẻ lịch, form/sheet .modal-content không co khi nhấn) */
-.card:not(.dashboard-section *, .calendar-section, .modal-content):active,
-.glass-card:not(.dashboard-section *, .calendar-section, .modal-content):active,
-.balance-card:not(.dashboard-section *):active,
+   (không áp cho .card / .glass-card / .balance-card: đó là khung chứa, chạm ô bên trong sẽ làm cả khung co) */
 .settings-list-item:active,
 .theme-option-item:active,
 .suggestion-chip:active,
