@@ -3146,7 +3146,8 @@ html[data-theme="light"] .chat-message.bot {
     transform: scale(0.95);
 }
 
-/* Welcome Hero Screen & 2x2 Grid (No emojis, 2 cards on top, 2 cards below) */
+/* Claude-Style Welcome Hero Screen & 2x2 Quick Grid (Images 2 & 3) */
+.claude-welcome-hero,
 .welcome-hero-container,
 .gemini-welcome-hero {
     margin: auto;
@@ -3157,7 +3158,7 @@ html[data-theme="light"] .chat-message.bot {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     box-sizing: border-box;
     animation: fadeInHero 0.3s ease forwards;
 }
@@ -3167,6 +3168,7 @@ html[data-theme="light"] .chat-message.bot {
     to { opacity: 1; transform: translateY(0); }
 }
 
+.claude-sunburst-badge,
 .welcome-logo-badge,
 .gemini-star-badge {
     width: 48px;
@@ -3177,31 +3179,16 @@ html[data-theme="light"] .chat-message.bot {
     margin-bottom: 2px;
 }
 
-.welcome-logo-img {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    box-shadow: 0 3px 10px rgba(0, 113, 227, 0.25);
-    object-fit: cover;
-}
-
+.claude-welcome-heading,
 .welcome-hero-heading,
 .gemini-welcome-heading {
-    font-size: 1.35rem;
-    font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, "Newsreader", "Charter", "Georgia", "Merriweather", serif;
+    font-size: 1.45rem;
+    font-weight: 500;
     color: var(--text-primary);
     margin: 0;
     line-height: 1.3;
-    letter-spacing: -0.02em;
-}
-
-.welcome-hero-desc,
-.gemini-welcome-desc {
-    font-size: 0.82rem;
-    color: var(--text-secondary, #94a3b8);
-    margin: 0;
-    line-height: 1.4;
-    max-width: 280px;
+    letter-spacing: -0.01em;
 }
 
 /* 2x2 Grid: 2 cards on top, 2 cards below */
@@ -3277,38 +3264,115 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
     box-sizing: border-box;
 }
 
+/* Claude-Style Floating Action Card */
+.claude-input-card,
 .chatbot-input-capsule {
     display: flex;
-    align-items: center;
-    gap: 6px;
+    flex-direction: column;
     width: 100%;
-    padding: 4px 6px 4px 10px;
+    padding: 10px 12px 8px 12px;
     box-sizing: border-box;
-    border-radius: var(--radius-pill);
+    border-radius: 18px;
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
+.claude-input-card:focus-within,
 .chatbot-input-capsule:focus-within {
     border-color: var(--accent-color);
     box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
+.claude-input-row-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.claude-textarea {
+    width: 100%;
+    min-height: 22px;
+    max-height: 100px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.92rem;
+    color: var(--text-primary);
+    resize: none;
+    padding: 2px 0 4px 0;
+    box-sizing: border-box;
+}
+
+.claude-input-row-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.claude-actions-left,
+.claude-actions-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.claude-circle-btn,
 .btn-capsule-action {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.08);
     border: none;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    flex-shrink: 0;
+    transition: transform 0.12s ease, background 0.12s ease;
     padding: 0;
-    transition: all var(--transition-fast);
+}
+
+.claude-circle-btn i,
+.btn-capsule-action i {
+    width: 15px;
+    height: 15px;
+}
+
+.claude-model-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+
+.claude-send-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #18181b;
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+    padding: 0;
+}
+
+.claude-send-btn i {
+    width: 15px;
+    height: 15px;
 }
 
 .btn-capsule-action:hover {
@@ -5576,6 +5640,10 @@ body {
 
     body.chatbot-open {
         overflow: hidden !important;
+    }
+
+    body.chatbot-open #app-dashboard {
+        visibility: hidden !important;
     }
 }
 

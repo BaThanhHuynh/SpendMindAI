@@ -44,6 +44,14 @@ function initChatbot() {
         }
         document.body.classList.add("chatbot-open");
 
+        // Mobile / Tablet full page: hide app-dashboard so nothing can ever leak through from underneath
+        if (window.innerWidth <= 1024) {
+            const dashboard = document.getElementById("app-dashboard");
+            if (dashboard) {
+                dashboard.style.setProperty("visibility", "hidden", "important");
+            }
+        }
+
         // Mobile / Tablet full page: push history state so native back button returns to dashboard
         if (window.innerWidth <= 1024 && (!history.state || !history.state.chatOpen)) {
             history.pushState({ chatOpen: true }, "");
@@ -84,7 +92,14 @@ function initChatbot() {
         if (backdrop) backdrop.classList.add("hidden");
         document.body.classList.remove("chatbot-open");
 
+        // Restore dashboard visibility
+        const dashboard = document.getElementById("app-dashboard");
+        if (dashboard) {
+            dashboard.style.removeProperty("visibility");
+        }
+
         // Clean up inline styles from visualViewport resize
+        container.style.removeProperty("--keyboard-inset");
         container.style.removeProperty("height");
         container.style.removeProperty("top");
         container.style.removeProperty("bottom");
@@ -180,10 +195,11 @@ function initChatbot() {
         });
     }
 
-    // Rock-solid visualViewport handler for iOS / Android virtual keyboards
+    // Rock-solid visualViewport handler for iOS / Android virtual keyboards (Claude & Telegram model)
     function handleVisualViewport() {
         if (!document.body.classList.contains("chatbot-open")) return;
         if (window.innerWidth > 1024) {
+            container.style.removeProperty("--keyboard-inset");
             container.style.removeProperty("height");
             container.style.removeProperty("top");
             container.style.removeProperty("bottom");
@@ -201,9 +217,13 @@ function initChatbot() {
             const keyboardHeight = Math.max(0, window.innerHeight - (offsetTop + visibleHeight));
             const isKeyboardOpen = keyboardHeight > 50 || visibleHeight < (window.innerHeight - 80);
 
-            container.style.setProperty("top", `${offsetTop}px`, "important");
-            container.style.setProperty("bottom", `${keyboardHeight}px`, "important");
-            container.style.setProperty("height", `${visibleHeight}px`, "important");
+            // Container ALWAYS remains 100% full screen - NEVER shrink or lift the container!
+            container.style.removeProperty("height");
+            container.style.removeProperty("top");
+            container.style.removeProperty("bottom");
+
+            // Pass exact keyboard inset to input bar to push input card above keyboard
+            container.style.setProperty("--keyboard-inset", `${keyboardHeight}px`);
 
             const inputBar = container.querySelector(".chatbot-input-bar");
             if (inputBar) {
@@ -226,6 +246,18 @@ function initChatbot() {
     }
 
     if (inputField) {
+        // Auto-expand textarea & Enter to send like Claude
+        inputField.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                inputForm.dispatchEvent(new Event("submit", { cancelable: true }));
+            }
+        });
+        inputField.addEventListener("input", () => {
+            inputField.style.height = "auto";
+            inputField.style.height = `${Math.min(inputField.scrollHeight, 120)}px`;
+        });
+
         inputField.addEventListener("focus", () => {
             if (window.innerWidth <= 1024) {
                 handleVisualViewport();
@@ -245,6 +277,55 @@ function initChatbot() {
                 setTimeout(handleVisualViewport, 200);
             }
         });
+    }
+
+    // Voice dictation using SpeechRecognition on mic button
+    const micBtn = document.getElementById("btn-input-mic");
+    if (micBtn) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            let recognition = new SpeechRecognition();
+            recognition.lang = 'vi-VN';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            let isListening = false;
+
+            micBtn.addEventListener("click", () => {
+                if (isListening) {
+                    recognition.stop();
+                    return;
+                }
+                try {
+                    recognition.start();
+                    isListening = true;
+                    micBtn.classList.add("listening");
+                } catch (err) {
+                    console.error("Mic error:", err);
+                }
+            });
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                if (transcript && inputField) {
+                    inputField.value = transcript;
+                    inputField.style.height = "auto";
+                    inputField.style.height = `${Math.min(inputField.scrollHeight, 120)}px`;
+                    inputField.focus();
+                }
+            };
+            recognition.onend = () => {
+                isListening = false;
+                micBtn.classList.remove("listening");
+            };
+            recognition.onerror = () => {
+                isListening = false;
+                micBtn.classList.remove("listening");
+            };
+        } else {
+            micBtn.addEventListener("click", () => {
+                if (inputField) inputField.focus();
+            });
+        }
     }
 
     document.addEventListener("keydown", (e) => {
@@ -277,6 +358,7 @@ function initChatbot() {
         if (!text) return;
 
         inputField.value = "";
+        inputField.style.height = "auto";
         handleUserMessage(text);
     });
 
@@ -325,13 +407,24 @@ function initChatbot() {
         const displayName = document.getElementById("user-display-name")?.textContent || "";
         const cleanName = getFriendlyName(displayName);
 
+        const hour = new Date().getHours();
+        let timeGreeting = "Chào buổi sáng";
+        if (hour >= 12 && hour < 18) {
+            timeGreeting = "Chào buổi chiều";
+        } else if (hour >= 18 || hour < 4) {
+            timeGreeting = "Chào buổi tối";
+        }
+
         const welcomeHtml = `
-            <div class="welcome-hero-container">
-                <div class="welcome-logo-badge">
-                    <img src="images/logoapp.webp?v=20260911_v8" alt="Logo" width="48" height="48" class="welcome-logo-img">
+            <div class="claude-welcome-hero">
+                <div class="claude-sunburst-badge">
+                    <svg class="claude-sunburst-icon" viewBox="0 0 48 48" width="46" height="46" fill="none">
+                        <circle cx="24" cy="24" r="3.5" fill="#d97757"/>
+                        <path d="M24 6v8M24 34v8M6 24h8M34 24h8M11.27 11.27l5.66 5.66M31.07 31.07l5.66 5.66M11.27 36.73l5.66-5.66M31.07 16.93l5.66-5.66M8.6 17.6l7.4 2.7M32 27.7l7.4 2.7M17.6 8.6l2.7 7.4M27.7 32l2.7 7.4M39.4 17.6l-7.4 2.7M16 27.7l-7.4 2.7M39.4 30.4l-7.4-2.7M16 20.3l-7.4-2.7" 
+                              stroke="#d97757" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
                 </div>
-                <h1 class="welcome-hero-heading">Chào ${cleanName},<br>tiếp theo mình làm gì?</h1>
-                <p class="welcome-hero-desc">Trợ lý AI phân tích số dư, chi tiêu & quản lý ngân sách cá nhân</p>
+                <h1 class="claude-welcome-heading">${timeGreeting}, ${cleanName}</h1>
                 <div class="chatbot-quick-grid">
                     <button type="button" class="quick-prompt-card" data-query="số dư">
                         <span class="card-title">Số dư khả dụng</span>
@@ -498,7 +591,7 @@ function initChatbot() {
 
     function handleUserMessage(text) {
         clearActiveTyping();
-        const welcomeHero = messagesContainer.querySelector(".welcome-hero-container, .gemini-welcome-hero, .chatbot-welcome-intro");
+        const welcomeHero = messagesContainer.querySelector(".claude-welcome-hero, .welcome-hero-container, .gemini-welcome-hero, .chatbot-welcome-intro");
         if (welcomeHero) {
             messagesContainer.innerHTML = "";
         }

@@ -503,18 +503,19 @@
         gap: 14px !important;
     }
 
-    /* Welcome Hero Screen & 2x2 Grid (No emojis, 2 cards on top, 2 cards below) */
+    /* Claude-Style Welcome Hero Screen & 2x2 Quick Grid (Images 2 & 3) */
+    .claude-welcome-hero,
     .welcome-hero-container,
     .gemini-welcome-hero {
         margin: auto !important;
         max-width: 440px !important;
         width: 100% !important;
-        padding: 20px 16px !important;
+        padding: 24px 16px !important;
         text-align: center !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        gap: 12px !important;
+        gap: 16px !important;
         box-sizing: border-box !important;
         animation: fadeInHero 0.3s ease forwards !important;
     }
@@ -524,41 +525,27 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
+    .claude-sunburst-badge,
     .welcome-logo-badge,
     .gemini-star-badge {
-        width: 54px !important;
-        height: 54px !important;
+        width: 52px !important;
+        height: 52px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         margin-bottom: 2px !important;
     }
 
-    .welcome-logo-img {
-        width: 48px !important;
-        height: 48px !important;
-        border-radius: 14px !important;
-        box-shadow: 0 4px 14px rgba(0, 113, 227, 0.3) !important;
-        object-fit: cover !important;
-    }
-
+    .claude-welcome-heading,
     .welcome-hero-heading,
     .gemini-welcome-heading {
-        font-size: 1.55rem !important;
-        font-weight: 700 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Newsreader", "Charter", "Georgia", "Merriweather", serif !important;
+        font-size: 1.65rem !important;
+        font-weight: 500 !important;
         color: var(--text-primary) !important;
         margin: 0 !important;
         line-height: 1.3 !important;
-        letter-spacing: -0.02em !important;
-    }
-
-    .welcome-hero-desc,
-    .gemini-welcome-desc {
-        font-size: 0.88rem !important;
-        color: var(--text-secondary, #94a3b8) !important;
-        margin: 0 !important;
-        line-height: 1.4 !important;
-        max-width: 320px !important;
+        letter-spacing: -0.01em !important;
     }
 
     /* 2x2 Grid: 2 cards on top, 2 cards below */
@@ -613,7 +600,7 @@
         text-overflow: ellipsis !important;
     }
 
-    /* Floating Capsule Input Bar */
+    /* Claude-Style Input Bar (Pinned securely, 100% Opaque solid background) */
     .chatbot-input-bar {
         position: sticky !important;
         bottom: 0 !important;
@@ -622,24 +609,24 @@
         width: 100% !important;
         z-index: 30 !important;
         padding-top: 6px !important;
-        padding-bottom: max(env(safe-area-inset-bottom, 0px), 12px) !important;
+        padding-bottom: calc(var(--keyboard-inset, 0px) + max(env(safe-area-inset-bottom, 0px), 14px)) !important;
         padding-left: max(16px, env(safe-area-inset-left, 0px)) !important;
         padding-right: max(16px, env(safe-area-inset-right, 0px)) !important;
-        background: linear-gradient(to top, var(--bg-primary, #0c0c0e) 75%, transparent 100%) !important;
+        background: var(--bg-primary, #0c0c0e) !important;
         display: flex !important;
         flex-direction: column !important;
         gap: 8px !important;
         box-sizing: border-box !important;
         flex-shrink: 0 !important;
-        transition: padding-bottom 0.15s ease !important;
-    }
-
-    .chatbot-input-bar.keyboard-open {
-        padding-bottom: 6px !important;
+        transition: padding-bottom 0.15s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
     }
 
     [data-theme="light"] .chatbot-input-bar {
-        background: linear-gradient(to top, var(--bg-primary, #f5f5f7) 75%, transparent 100%) !important;
+        background: #faf9f5 !important;
+    }
+
+    .chatbot-input-bar.keyboard-open {
+        padding-bottom: calc(var(--keyboard-inset, 0px) + 6px) !important;
     }
 
     .chatbot-suggestions {
@@ -679,41 +666,96 @@
         border: 1px solid rgba(0, 0, 0, 0.08) !important;
     }
 
-    /* Floating Capsule Card */
+    /* Claude-Style Floating Action Card (Images 2 & 3) */
+    .claude-input-card,
     .chatbot-input-capsule {
         display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
+        flex-direction: column !important;
         width: 100% !important;
         max-width: 680px !important;
         margin: 0 auto !important;
-        padding: 5px 6px 5px 10px !important;
+        padding: 12px 14px 10px 14px !important;
+        border-radius: 22px !important;
+        background: rgba(28, 28, 30, 0.98) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
         box-sizing: border-box !important;
-        border-radius: 28px !important;
-        background: rgba(28, 28, 30, 0.95) !important;
-        backdrop-filter: blur(24px) saturate(180%) !important;
-        -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.14) !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
     }
 
+    [data-theme="light"] .claude-input-card,
     [data-theme="light"] .chatbot-input-capsule {
-        background: rgba(255, 255, 255, 0.95) !important;
+        background: #ffffff !important;
         border: 1px solid rgba(0, 0, 0, 0.1) !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
     }
 
+    .claude-input-card:focus-within,
     .chatbot-input-capsule:focus-within {
-        border-color: var(--accent-color) !important;
-        box-shadow: 0 4px 24px var(--accent-glow) !important;
+        border-color: rgba(255, 255, 255, 0.28) !important;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35) !important;
     }
 
+    [data-theme="light"] .claude-input-card:focus-within,
+    [data-theme="light"] .chatbot-input-capsule:focus-within {
+        border-color: rgba(0, 0, 0, 0.22) !important;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .claude-input-row-top {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .claude-textarea,
+    .chatbot-input-capsule input {
+        width: 100% !important;
+        flex: 1 1 auto !important;
+        min-height: 24px !important;
+        max-height: 120px !important;
+        border: none !important;
+        outline: none !important;
+        background: transparent !important;
+        font-family: inherit !important;
+        font-size: 16px !important; /* Critical to prevent iOS Safari auto-zoom */
+        line-height: 1.4 !important;
+        color: var(--text-primary) !important;
+        resize: none !important;
+        padding: 2px 2px 6px 2px !important;
+        box-sizing: border-box !important;
+        box-shadow: none !important;
+    }
+
+    .claude-textarea::placeholder,
+    .chatbot-input-capsule input::placeholder {
+        color: var(--text-secondary, #8e8e93) !important;
+        opacity: 0.8 !important;
+        font-size: 0.95rem !important;
+    }
+
+    .claude-input-row-bottom {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+        width: 100% !important;
+        margin-top: 6px !important;
+    }
+
+    .claude-actions-left,
+    .claude-actions-right {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    .claude-circle-btn,
     .btn-capsule-action {
-        width: 34px !important;
-        height: 34px !important;
-        min-width: 34px !important;
-        min-height: 34px !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
         border-radius: 50% !important;
         background: rgba(255, 255, 255, 0.08) !important;
         border: none !important;
@@ -722,78 +764,113 @@
         align-items: center !important;
         justify-content: center !important;
         cursor: pointer !important;
-        flex-shrink: 0 !important;
+        transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease !important;
         padding: 0 !important;
-        transition: transform 0.15s ease, background 0.15s ease !important;
+        flex-shrink: 0 !important;
     }
 
+    [data-theme="light"] .claude-circle-btn,
     [data-theme="light"] .btn-capsule-action {
         background: rgba(0, 0, 0, 0.05) !important;
         color: var(--text-secondary) !important;
     }
 
+    .claude-circle-btn:active,
     .btn-capsule-action:active {
-        transform: scale(0.9) !important;
+        transform: scale(0.92) !important;
     }
 
+    .claude-circle-btn.listening {
+        background: #ef4444 !important;
+        color: #ffffff !important;
+        animation: micPulse 1s infinite alternate !important;
+    }
+
+    @keyframes micPulse {
+        from { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+        to { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    }
+
+    .claude-circle-btn i,
     .btn-capsule-action i {
-        width: 18px !important;
-        height: 18px !important;
+        width: 17px !important;
+        height: 17px !important;
         stroke-width: 2.2 !important;
     }
 
-    .chatbot-input-capsule input {
-        flex: 1 1 0% !important;
-        min-width: 0 !important;
-        width: 0 !important;
-        height: 38px !important;
-        border: none !important;
-        outline: none !important;
-        background: transparent !important;
+    .claude-model-badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        padding: 4px 10px !important;
+        border-radius: 9999px !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        font-size: 0.76rem !important;
+        color: var(--text-secondary) !important;
+        user-select: none !important;
+    }
+
+    [data-theme="light"] .claude-model-badge {
+        background: rgba(0, 0, 0, 0.04) !important;
+        border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    }
+
+    .claude-model-badge .model-name {
+        font-weight: 600 !important;
         color: var(--text-primary) !important;
-        font-size: 16px !important; /* Critical for iOS Safari to avoid zoom */
-        font-family: inherit !important;
-        padding: 0 4px !important;
-        box-shadow: none !important;
     }
 
-    .chatbot-input-capsule input::placeholder {
-        color: var(--text-muted, #71717a) !important;
-        font-size: 0.95rem !important;
+    .claude-model-badge .model-variant {
+        font-size: 0.72rem !important;
+        color: var(--text-secondary) !important;
     }
 
+    .claude-send-btn,
     .chatbot-input-capsule button[type="submit"] {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        min-height: 36px !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
         border-radius: 50% !important;
-        background: var(--accent-color) !important;
+        background: #18181b !important;
         color: #ffffff !important;
         border: none !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         cursor: pointer !important;
-        flex-shrink: 0 !important;
-        box-shadow: 0 2px 8px var(--accent-glow) !important;
-        transition: transform 0.15s ease, background 0.15s ease !important;
+        transition: transform 0.12s ease, background 0.12s ease !important;
         padding: 0 !important;
+        flex-shrink: 0 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
     }
 
+    [data-theme="light"] .claude-send-btn,
+    [data-theme="light"] .chatbot-input-capsule button[type="submit"] {
+        background: #18181b !important;
+        color: #ffffff !important;
+    }
+
+    .claude-send-btn:active,
     .chatbot-input-capsule button[type="submit"]:active {
         transform: scale(0.92) !important;
     }
 
+    .claude-send-btn i,
     .chatbot-input-capsule button[type="submit"] i {
-        width: 18px !important;
-        height: 18px !important;
-        stroke-width: 2.4 !important;
+        width: 17px !important;
+        height: 17px !important;
+        stroke-width: 2.5 !important;
     }
 
-    /* Prevent body background scrolling when chat is open on mobile */
+    /* Prevent body background scrolling & HIDE DASHBOARD when chat is open on mobile (eliminates chart bleed) */
     body.chatbot-open {
         overflow: hidden !important;
+    }
+
+    body.chatbot-open #app-dashboard {
+        visibility: hidden !important;
     }
 
     /* Hide mobile bottom navigation bar when chat page is open */

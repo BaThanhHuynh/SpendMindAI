@@ -410,6 +410,33 @@
       - **Service Worker & Cache Invalidation:** Nâng cấp `CACHE_NAME` lên `'spendmind-v6.2'` và cập nhật query string version trong `dashboard.html` lên `?v=20261024_v20`.
     - **Trạng thái:** [x] RESOLVED. Khung chat tự động đẩy mượt mà lên trên bàn phím ảo, không che mất thanh nhập liệu, giao diện "Trợ lý tài chính" chuẩn mực, thanh lịch và sạch bóng icon Gemini/emoji.
 
+35. **[P0] UI/UX Overhaul & Bug Fix - Thiết Kế Lại Toàn Diện Theo Phong Cách Claude (Ảnh 2 & Ảnh 3), Khắc Phục Triệt Để Lỗi Lộ Biểu Đồ Dashboard Dưới Đáy**
+    - **File:** `dashboard.html`, `js/chatbot.js`, `css/mobile.css`, `css/styles.css`, `sw.js`
+    - **Yêu cầu & Vấn đề (Ảnh 1 vs Ảnh 2 & Ảnh 3):**
+      1. **Lỗi lộ biểu đồ Dashboard (Ảnh 1):** Khi mở chat trên thiết bị di động, phần dưới của khung chat bị co rút hoặc nâng lên khỏi đáy màn hình, làm lộ hoàn toàn biểu đồ tròn danh mục (`#categoryChart`) của trang Dashboard bên dưới.
+         - *Nguyên nhân kỹ thuật:* Ở phiên bản trước, hàm `handleVisualViewport()` đã gán trực tiếp `container.style.height = visibleHeight` và `container.style.bottom = keyboardHeight` lên chính `#chatbot-container`. Khi tính toán trên mobile, container bị co ngắn chiều cao (ví dụ chỉ còn 500px), khiến nửa dưới màn hình hoàn toàn trống rỗng và để lộ Dashboard phía sau.
+      2. **Chuẩn hóa theo trải nghiệm ứng dụng Claude (Ảnh 2 & Ảnh 3):**
+         - Màn hình chào mừng sang trọng: Biểu tượng hoa mặt trời (Sunburst) màu đất nung (`#d97757`), lời chào cá nhân hóa theo buổi trong ngày bằng font có chân thanh lịch ("Chào buổi chiều, Bá Thành" / "Chào buổi sáng, Bá Thành" / "Chào buổi tối, Bá Thành").
+         - Khung nhập tin nhắn dạng **Thẻ nổi Claude (Claude Floating Action Card)**: Bo góc 22px, nền thẻ đặc biệt, chia 2 tầng:
+           - Tầng trên: Ô nhập văn bản dạng textarea tự co giãn hàng, font 16px chống auto-zoom.
+           - Tầng dưới: Nhóm nút hành động cân xứng - Bên trái có nút tròn `+` mở gợi ý câu hỏi & huy hiệu mô hình `SpendMind AI Flash`; bên phải có nút mic đàm thoại tiếng Việt và nút gửi tròn $\uparrow$.
+         - Khi bật bàn phím ảo (Ảnh 3): Cả khối thẻ nổi Claude trượt lên êm ái và nằm khít ngay phía trên bàn phím ảo, không che mất ô nhập và nền trang chat tuyệt đối 100% che kín toàn bộ Dashboard bên dưới.
+    - **Giải pháp thực hiện:**
+      - **Khóa hoàn toàn Dashboard bên dưới (Zero Bleed-Through):**
+        - Áp dụng `body.chatbot-open #app-dashboard { visibility: hidden !important; }` để trình duyệt ngưng vẽ hoàn toàn trang Dashboard khi trang chat đang mở.
+        - Giữ nguyên `#chatbot-container` ở trạng thái cố định toàn màn hình (`position: fixed; inset: 0; width: 100%; height: 100%; background: var(--bg-primary); z-index: 10010;`), không bao giờ thu nhỏ hay nâng đáy container.
+      - **Cơ chế đẩy bàn phím ảo mượt mà không co container:**
+        - Sử dụng biến CSS `--keyboard-inset` truyền từ `handleVisualViewport()` sang `.chatbot-input-bar`.
+        - Đẩy thẻ nhập liệu lên bằng `padding-bottom: calc(var(--keyboard-inset, 0px) + max(env(safe-area-inset-bottom, 0px), 14px))`. Khoảng không phía sau bàn phím được phủ kín 100% bởi màu nền đặc của thanh input, không bao giờ lộ trang bên dưới.
+      - **Tái thiết kế Thẻ nhập liệu Claude (`.claude-input-card`):**
+        - Chuyển `#chatbot-input` sang `<textarea>` tự động co giãn chiều cao theo nội dung và gửi tin nhắn khi bấm `Enter` (không kèm `Shift`).
+        - Tích hợp giọng nói Web Speech API (`SpeechRecognition`) cho nút micro, hỗ trợ đọc tiếng Việt (`vi-VN`) trực tiếp vào ô chat.
+      - **Cập nhật màn hình chào mừng Claude (`.claude-welcome-hero`):**
+        - Biểu tượng Sunburst 12 cánh terracotta SVG tinh tế.
+        - Lời chào thời gian thực (`getTimeGreeting`) bằng font chữ Serif đẳng cấp.
+      - **Service Worker & Cache:** Nâng cấp Service Worker lên `spendmind-v6.3` và bump query string asset lên `?v=20261024_v21`.
+    - **Trạng thái:** [x] RESOLVED. Khung chat đạt chuẩn mực giao diện cao cấp của Claude (Ảnh 2 & Ảnh 3), loại bỏ 100% hiện tượng lộ biểu đồ Dashboard.
+
 
 
 
