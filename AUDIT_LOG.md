@@ -575,7 +575,26 @@
       7. Tinh chỉnh `IntersectionObserver` với `rootMargin: "0px 0px -40px 0px"` và `threshold: 0.1` để kích hoạt hiệu ứng nhanh nhạy, tự nhiên cả trên mobile và desktop.
       8. Bump `styles.css?v=20261024_v33`, `index.js?v=20261024_v17`, `CACHE_NAME` → `spendmind-v7.6`.
     - **Kiểm chứng:** Node syntax check pass; CSS parse hợp lệ; cuộn trang mượt mà; các mockup và tiêu đề xuất hiện nhịp nhàng; deploy Vercel thành công.
+47. **[P2] UX - Nâng Cỡ Chữ Hero Slogan, Tối Giản Nút CTA, Bỏ Chỉ Báo Cuộn & Nâng Cấp Hamburger Menu Chuẩn Apple (Circular Control, Popover Sheet & Spring Motion)**
+    - **File:** `css/styles.css`, `index.html`, `js/index.js`, `dashboard.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** 
+      1. Tiêu đề hero slogan "Định hình tư duy chi tiêu - Làm chủ tương lai tài chính" trên mobile bị giới hạn 1.6rem quá nhỏ, chưa tạo được ấn tượng thị giác mạnh mẽ.
+      2. Hai nút "Đăng nhập ngay" và "Đăng ký tài khoản" chiếm diện tích quá lớn và cồng kềnh trên mobile.
+      3. Phần tử "Cuộn để khám phá" chiếm thêm không gian màn hình đầu trang, người dùng muốn để trải nghiệm cuộn tự nhiên.
+      4. Menu hamburger chứa 2 nút đăng nhập/bắt đầu gây thừa thãi, thẻ menu to chiếm diện tích và thiếu hiệu ứng đóng mở mượt mà chuẩn Apple.
+    - **Thay đổi:**
+      1. Tăng mạnh kích cỡ chữ `.hero-title`: trên mobile dùng `clamp(2rem, 8.5vw, 2.6rem)` (tăng từ 1.6rem), trên desktop lên đến `clamp(2.6rem, 6.2vw, 4.4rem)`, font-weight 600, line-height 1.15-1.2 chuẩn Apple Display headline.
+      2. Tinh chỉnh 2 nút CTA `.btn-hero` nhỏ gọn, thanh thoát: giảm padding xuống `8px 20px`, font-size `0.88rem`, icon 15px, bo tròn pill `9999px`, trên mobile giới hạn `max-width: 220px` cân đối đẹp mắt.
+      3. Loại bỏ hoàn toàn phần tử `#hero-scroll-indicator` và các logic lắng nghe liên quan trong HTML, CSS và JS.
+      4. Nâng cấp toàn diện hamburger menu theo chuẩn Apple iOS/macOS popover:
+         - Nút hamburger tròn (`38x38px`, `border-radius: 50%`) với hiệu ứng morph 3 thanh sang 'X' mượt mà (`cubic-bezier(0.16, 1, 0.3, 1)`).
+         - Cửa sổ menu thu gọn tinh tế (`width: min(270px, calc(100vw - 32px))`), neo gọn bên góc phải ngay dưới nút bấm, nền kính mờ Gaussian sâu (`backdrop-filter: blur(32px) saturate(190%)`), viền hairline mỏng nhẹ và bóng specular.
+         - Loại bỏ 2 nút đăng nhập/bắt đầu và thanh chia, chỉ giữ 5 liên kết điều hướng sạch sẽ.
+         - Hiệu ứng đóng mở mượt mà kết hợp scale + fade (`scale(0.95) -> scale(1)`) và hiệu ứng xuất hiện so le phân tầng (staggered cascade) cho từng mục menu khi mở.
+      5. Bump `styles.css?v=20261024_v34`, `index.js?v=20261024_v18`, `CACHE_NAME` → `spendmind-v7.7`.
+    - **Kiểm chứng:** Node syntax check pass; CSS parse hợp lệ; chữ hero to nổi bật; nút bấm thanh mảnh; menu mở đóng popover chuẩn Apple mượt mà; deploy Vercel thành công.
     - **Trạng thái:** [x] RESOLVED.
+
 
 
 
