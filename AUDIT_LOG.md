@@ -542,3 +542,11 @@
     - **Thay đổi:** Quét mọi HTML/JS: tất cả phần tử có `.card` / `.glass-card` / `.balance-card` đều là khung chứa (thẻ dashboard, thẻ lịch, form, sheet, khung đăng nhập/đăng ký). Xoá hẳn 3 selector này khỏi rule nhấn chung thay vì nối dài `:not(...)` (thay cho cách loại trừ ở mục 40, 42). Các mục bấm được (`.settings-list-item`, `.theme-option-item`, `.suggestion-chip`, nút chat, `.day-edit-tx-item`, ô lịch) giữ nguyên. Bump `styles.css?v=20261024_v30`, `CACHE_NAME` → `spendmind-v7.3`.
     - **Kiểm chứng:** Rule mới được trình duyệt parse; 0/9 khung thẻ khớp selector nhấn (8 khung trên dashboard + `.auth-card`); `.settings-list-item` vẫn khớp; không còn rule `:active` nào khác trên các lớp khung thẻ.
     - **Trạng thái:** [x] RESOLVED.
+
+44. **[P3] UX - Loại Bỏ Hiệu Ứng Sáng Nhẹ & Nhấc Thẻ Khi Di Chuột Vào Khung Thẻ (Grid, Section, Modal, Auth)**
+    - **File:** `css/styles.css`, `dashboard.html`, `index.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** Khi di chuột vào các khung thẻ `.glass-card` (thẻ ngân sách, thẻ lịch, form modal giao dịch, biểu đồ phân bổ/xu hướng, khung đăng nhập/đăng ký), thẻ bị đổi nền sang `--card-hover-bg` (`rgba(44, 44, 46, 0.9)` sáng hơn nền thường), nhấc lên 3px (`transform: translateY(-3px)`) và viền bóng phát sáng (`inset 0 1px 0 rgba(255, 255, 255, 0.04)`). Người dùng muốn di chuột bình thường, không bị sáng nhẹ hay xê dịch khung thẻ.
+    - **Thay đổi:** Đồng bộ `--card-hover-bg` bằng `--card-bg` (`rgba(28, 28, 30, 0.85)`). Reset `.glass-card:hover` và `.balance-card:hover` giữ nguyên màu nền `var(--card-bg)`, viền `var(--card-border)`, bóng mặc định và `transform: none`. Các nút bấm, ô ngày lịch, hàng giao dịch bên trong vẫn giữ hiệu ứng hover riêng tương ứng. Bump `styles.css?v=20261024_v31`, `CACHE_NAME` → `spendmind-v7.4`.
+    - **Kiểm chứng:** CSS parse hợp lệ; khi rê chuột vào thẻ ngân sách, lịch, biểu đồ, form modal hay khung đăng nhập, màu nền và vị trí không đổi; di chuột hoàn toàn tự nhiên và ổn định.
+    - **Trạng thái:** [x] RESOLVED.
+
