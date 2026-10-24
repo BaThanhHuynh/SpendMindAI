@@ -503,3 +503,15 @@
       - Bump `chatbot.js`/`styles.css` `?v=20261024_v26`, `CACHE_NAME` → `spendmind-v6.9`.
     - **Kiểm chứng:** Trình duyệt giả lập 375×812: bấm nút chat → `#chatbot-input` được focus, `opacity: 0` chỉ tồn tại 5.7ms rồi gỡ, không lỗi JS; container có `transition-property: height, top` với `cubic-bezier(0.32, 0.72, 0, 1)`. `node --check js/chatbot.js` pass. **Chưa kiểm trên iPhone thật** (trình duyệt máy tính không có bàn phím ảo iOS).
     - **Trạng thái:** [ ] CHỜ KIỂM TRÊN IPHONE.
+
+40. **[P3] UX - Bỏ Hiệu Ứng Nhấn Co Thẻ Trong Lưới Dashboard + Rà Soát Tổng Thể Motion Kiểu Apple**
+    - **File:** `css/styles.css`, `dashboard.html`, `sw.js`
+    - **Thay đổi:** Rule nhấn chung (`transform: scale(0.96)` khi `:active`) loại trừ thẻ trong `.dashboard-section` bằng `:not(.dashboard-section *)` (thẻ số dư, 2 biểu đồ, ngân sách). Thẻ lịch và các thành phần khác giữ nguyên; hover nhấc thẻ trên desktop giữ nguyên. Bump `styles.css?v=20261024_v27`, `CACHE_NAME` → `spendmind-v7.0`.
+    - **Kiểm chứng:** Trình duyệt 375×812: 0/4 thẻ dashboard còn khớp selector nhấn, `.calendar-section` vẫn khớp, rule được trình duyệt parse.
+    - **Rà soát motion (còn tồn):**
+      - [P2] Mọi sheet/modal/dropdown đóng tức thì: `.modal-overlay.hidden`, `.settings-dropdown-menu.hidden`, `.settings-backdrop.hidden`, `.day-edit-modal-overlay.hidden`, `.ios-install-sheet.hidden`, `.ios-modal-backdrop.hidden`, `.google-modal-overlay.hidden` đều `display: none !important` → mở có trượt/phóng (`slideUpMobile`, `slideUpDayEdit`, `scale-up`) nhưng đóng 0 animation (đo: 20ms sau khi bấm đóng đã `display: none`).
+      - [P3] `scrollIntoView({ behavior: "smooth" })` trong `js/dashboard.js` (1112, 1122, 1379) không theo «Giảm chuyển động».
+      - [P3] Nét chữ «hello» ở splash dùng đường cong Material `cubic-bezier(0.4, 0, 0.2, 1)` (`js/index.js:224, 228`); vuốt dòng giao dịch dùng literal `cubic-bezier(0.16, 1, 0.3, 1)` thay vì token (`js/dashboard.js:1802, 1875`).
+      - [P3] `pulse-danger` chạy vô hạn trên cảnh báo vượt ngân sách — Apple tránh chuyển động lặp mãi để gây chú ý.
+      - Mã chết: laser-cut, `typewriter-blink`, `cursor-blink` không còn được dùng.
+    - **Trạng thái:** [x] RESOLVED (phần bỏ nhấn); các mục tồn ở trên chưa xử lý.

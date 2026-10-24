@@ -7391,10 +7391,11 @@ html[data-theme="light"] .landing-install-card:hover {
    APPLE MOTION GRAPHICS & TACTILE SPRING MICRO-INTERACTIONS
    ========================================================================== */
 
-/* Universal Apple spring tactile press on interactive components */
-.card:active,
-.glass-card:active,
-.balance-card:active,
+/* Universal Apple spring tactile press on interactive components
+   (thẻ trong lưới .dashboard-section không co khi nhấn) */
+.card:not(.dashboard-section *):active,
+.glass-card:not(.dashboard-section *):active,
+.balance-card:not(.dashboard-section *):active,
 .settings-list-item:active,
 .theme-option-item:active,
 .suggestion-chip:active,
