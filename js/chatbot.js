@@ -10,6 +10,8 @@ function initChatbot() {
     const triggerBtn = document.getElementById("chatbot-trigger-btn");
     const closeBtn = document.getElementById("chatbot-close-btn");
     const backBtn = document.getElementById("chatbot-back-btn");
+    const newChatBtn = document.getElementById("chatbot-new-btn");
+    const plusBtn = document.getElementById("btn-input-plus");
     const container = document.getElementById("chatbot-container");
     const backdrop = document.getElementById("chatbot-backdrop");
     const inputForm = document.getElementById("chatbot-input-form");
@@ -71,14 +73,20 @@ function initChatbot() {
             });
         }
 
-        // Focus input
-        if (inputField) inputField.focus();
+        // Focus input only on desktop (on mobile/tablet let user see the greeting first)
+        if (inputField && window.innerWidth > 1024) {
+            inputField.focus();
+        }
     }
 
     function closeChatbot(fromPopState = false) {
         container.classList.add("hidden");
         if (backdrop) backdrop.classList.add("hidden");
         document.body.classList.remove("chatbot-open");
+
+        // Clean up inline styles from visualViewport resize
+        container.style.removeProperty("height");
+        container.style.removeProperty("top");
 
         if (triggerBtn) {
             const chatIcon = triggerBtn.querySelector(".chat-icon");
@@ -139,14 +147,73 @@ function initChatbot() {
         }
     });
 
-    // Handle mobile virtual keyboard resize
+    // New Chat Action (Gemini / Claude style fresh conversation)
+    if (newChatBtn) {
+        newChatBtn.addEventListener("click", () => {
+            clearActiveTyping();
+            if (activeChatAbortController) {
+                activeChatAbortController.abort();
+                activeChatAbortController = null;
+            }
+            messagesContainer.innerHTML = "";
+            sendWelcomeMessage();
+            if (inputField) {
+                inputField.value = "";
+                inputField.disabled = false;
+            }
+            const sendBtn = document.getElementById("chatbot-send-btn");
+            if (sendBtn) sendBtn.disabled = false;
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons({ root: container });
+            }
+        });
+    }
+
+    // Toggle suggestions via Plus button
+    if (plusBtn && suggestionsContainer) {
+        plusBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            suggestionsContainer.classList.toggle("hidden");
+        });
+    }
+
+    // Rock-solid visualViewport handler for iOS / Android virtual keyboards
+    function handleVisualViewport() {
+        if (!document.body.classList.contains("chatbot-open")) return;
+        if (window.innerWidth > 1024) {
+            container.style.removeProperty("height");
+            container.style.removeProperty("top");
+            return;
+        }
+        if (window.visualViewport) {
+            const vv = window.visualViewport;
+            // Prevent iOS Safari from scrolling background page
+            if (window.scrollY !== 0) {
+                window.scrollTo(0, 0);
+            }
+            container.style.setProperty("height", `${vv.height}px`, "important");
+            container.style.setProperty("top", `${vv.offsetTop}px`, "important");
+            if (messagesContainer) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+    }
+
     if (window.visualViewport) {
-        window.visualViewport.addEventListener("resize", () => {
-            if (document.body.classList.contains("chatbot-open") && window.innerWidth <= 1024) {
-                container.style.height = `${window.visualViewport.height}px`;
-                if (messagesContainer) {
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                }
+        window.visualViewport.addEventListener("resize", handleVisualViewport);
+        window.visualViewport.addEventListener("scroll", handleVisualViewport);
+    }
+
+    if (inputField) {
+        inputField.addEventListener("focus", () => {
+            if (window.innerWidth <= 1024) {
+                setTimeout(handleVisualViewport, 50);
+                setTimeout(handleVisualViewport, 250);
+            }
+        });
+        inputField.addEventListener("blur", () => {
+            if (window.innerWidth <= 1024) {
+                setTimeout(handleVisualViewport, 50);
             }
         });
     }
@@ -162,14 +229,15 @@ function initChatbot() {
     window.closeChatbot = closeChatbot;
     window.toggleChatbot = toggleChatbot;
 
-    // Handle suggestion chips click
-    suggestionsContainer.addEventListener("click", (e) => {
-        const chip = e.target.closest(".suggestion-chip");
+    // Handle suggestion chips click (works for both Gemini hero pills and dropdown chips)
+    container.addEventListener("click", (e) => {
+        const chip = e.target.closest(".suggestion-chip, .gemini-prompt-pill");
         if (!chip) return;
 
         const query = chip.getAttribute("data-query");
         if (query) {
             handleUserMessage(query);
+            if (suggestionsContainer) suggestionsContainer.classList.add("hidden");
         }
     });
 
@@ -229,12 +297,35 @@ function initChatbot() {
         const cleanName = getFriendlyName(displayName);
 
         const welcomeHtml = `
-            <div class="chatbot-welcome-intro" style="text-align: center; padding: 12px 8px;">
-                <div style="display: inline-flex; justify-content: center; align-items: center; width: 56px; height: 56px; border-radius: 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); margin-bottom: 12px; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.15);">
-                    <img src="images/logoapp.webp?v=20260911_v8" alt="SpendMindAI Logo" width="44" height="44" style="border-radius: 12px; object-fit: contain;">
+            <div class="gemini-welcome-hero">
+                <div class="gemini-star-badge">
+                    <svg class="gemini-star-icon" viewBox="0 0 24 24" width="46" height="46" fill="none">
+                        <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" fill="url(#gemini-sparkle-grad)"/>
+                        <defs>
+                            <linearGradient id="gemini-sparkle-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#38bdf8"/>
+                                <stop offset="0.5" stop-color="#10b981"/>
+                                <stop offset="1" stop-color="#f59e0b"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
                 </div>
-                <h2 style="margin: 0 0 6px 0;">Xin chào, ${cleanName}</h2>
-                <p style="margin: 0; color: var(--text-secondary, #94a3b8);">Hỏi tôi về số dư, chi tiêu hoặc phân tích tài chính cá nhân của bạn.</p>
+                <h1 class="gemini-welcome-heading">Chào ${cleanName},<br>tiếp theo mình làm gì?</h1>
+                <p class="gemini-welcome-desc">Trợ lý AI phân tích số dư, chi tiêu & quản lý ngân sách cá nhân</p>
+                <div class="gemini-pills-grid">
+                    <button type="button" class="gemini-prompt-pill" data-query="số dư">
+                        <span>💰 Số dư khả dụng</span>
+                    </button>
+                    <button type="button" class="gemini-prompt-pill" data-query="tổng quan chi tiêu">
+                        <span>📊 Tổng quan tháng</span>
+                    </button>
+                    <button type="button" class="gemini-prompt-pill" data-query="ngân sách còn lại">
+                        <span>🎯 Ngân sách còn lại</span>
+                    </button>
+                    <button type="button" class="gemini-prompt-pill" data-query="lời khuyên tiết kiệm">
+                        <span>💡 Lời khuyên tài chính</span>
+                    </button>
+                </div>
             </div>
         `;
         messagesContainer.innerHTML = welcomeHtml;
@@ -387,8 +478,8 @@ function initChatbot() {
 
     function handleUserMessage(text) {
         clearActiveTyping();
-        const welcomeIntro = messagesContainer.querySelector(".chatbot-welcome-intro");
-        if (welcomeIntro) {
+        const welcomeHero = messagesContainer.querySelector(".gemini-welcome-hero, .chatbot-welcome-intro");
+        if (welcomeHero) {
             messagesContainer.innerHTML = "";
         }
 

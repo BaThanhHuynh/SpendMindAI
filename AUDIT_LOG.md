@@ -364,7 +364,29 @@
         - Nâng cấp Service Worker cache lên `spendmind-v6.0` trong `sw.js` để tự động xóa sạch cache tĩnh cũ trên thiết bị di động.
         - Bump query string phiên bản asset lên `?v=20261024_v18` trong `dashboard.html` để ép trình duyệt mobile tải ngay CSS/JS mới mà không bị dính cache cũ.
       - **Desktop:** Giữ nguyên 100% widget chat nổi góc phải màn hình (`> 1024px`), ẩn nút quay lại $\leftarrow$.
-    - **Trạng thái:** [x] RESOLVED. Tối ưu UX xuất sắc, giao diện chat toàn màn hình như ứng dụng gốc Native App, xóa bỏ cache cũ triệt để.
+33. **[P0] UI/UX & Layout Repair - Tái thiết kế Giao diện Chat Mobile theo chuẩn Gemini & Claude, Sửa Lỗi Vỡ Layout & Bàn phím iOS**
+    - **File:** `dashboard.html`, `js/chatbot.js`, `css/mobile.css`, `css/styles.css`, `sw.js`
+    - **Yêu cầu & Vấn đề:**
+      - Trên giao diện iPhone/mobile (Hình 1), khi bật bàn phím ảo, layout bị vỡ nghiêm trọng:
+        1. Tiêu đề "Xin chào, Bá Thành" bị đẩy lên sát tai thỏ và bị cắt nửa chữ, toàn bộ header chứa nút quay lại bị cuộn mất khỏi màn hình.
+        2. Khoảng trống trắng mênh mông, thiếu sự cân đối.
+        3. Ô nhập tin nhắn bị tràn ngang sang mép phải, đẩy nút Gửi lọt ra ngoài màn hình.
+      - Người dùng cung cấp ảnh tham khảo cách bố trí layout đỉnh cao của **Gemini (Hình 2)** và **Claude (Hình 3)**:
+        - Header tinh tế, gọn gàng với nút Back $\leftarrow$, huy hiệu model ở giữa, và nút tạo đoạn chat mới $\square\kern-3pt\raisebox{2pt}{\tiny✎}$.
+        - Màn hình chào mừng chính giữa trang nhã: Biểu tượng ngôi sao lấp lánh (Sparkle Star) gradient, câu chào cá nhân hoá ("Chào Bá Thành, tiếp theo mình làm gì?"), cùng các viên con nhộng gợi ý (Prompt Pills) bo tròn mềm mại.
+        - Thanh nhập câu hỏi dạng **Viên con nhộng nổi (Floating Capsule)**: Bo tròn 28px, đệm biên trái phải tinh tế, không bao giờ tràn ngang, nút `+` mở gợi ý bên trái và nút gửi $\uparrow$ bên phải bên trong viên con nhộng.
+    - **Giải pháp:**
+      - **Khắc phục lỗi bàn phím & cuộn trang iOS:**
+        - Cố định `body.chatbot-open { position: fixed; inset: 0; overflow: hidden; touch-action: none; }` để ngăn hoàn toàn Safari cuộn trang nền khi bàn phím ảo xuất hiện.
+        - Tinh chỉnh `window.visualViewport` listener: Cập nhật đồng bộ `container.style.height = visualViewport.height` và `container.style.top = visualViewport.offsetTop` giúp header luôn ghim cố định ở đỉnh màn hình nhìn thấy, không bị đẩy mất.
+        - Đặt `font-size: 16px` cho input để chặn trình duyệt iOS Safari tự động phóng to (auto-zoom) làm lệch layout.
+        - Không tự động bật bàn phím ngay khi vừa mở trang chat trên mobile, để người dùng thưởng thức trọn vẹn màn hình chào đón.
+      - **Tái thiết kế theo phong cách Gemini & Claude:**
+        - **Header:** Bổ sung huy hiệu `.chatbot-model-badge` ("✦ SpendMind AI • Gemini Flash") ở trung tâm, nút Back $\leftarrow$ bên trái, nút New Chat (`#chatbot-new-btn`) bên phải.
+        - **Hero chào mừng (`.gemini-welcome-hero`):** Biểu tượng Sparkle gradient đa sắc, heading chào hỏi hiện đại, phụ đề tinh tế và cụm pill suggestions (Số dư khả dụng, Tổng quan tháng, Ngân sách tháng, Lời khuyên tài chính) bo tròn chuẩn Gemini.
+        - **Thanh nhập liệu viên thuốc nổi (`.chatbot-input-capsule`):** Khung card bo cong 28px nổi trên nền gradient mờ (`linear-gradient(to top, ...)`), nút `+` bên trái toggle gợi ý nhanh, input co giãn flex: 1 1 0% với min-width: 0 (loại bỏ hoàn toàn lỗi tràn ngang), nút gửi mũi tên $\uparrow$ phát sáng xanh khi nhập liệu.
+      - **Cache & Service Worker:** Nâng cấp Service Worker lên `spendmind-v6.1` và bump query string asset lên `?v=20261024_v19` để thiết bị di động nhận diện và cập nhật giao diện mới ngay lập tức.
+    - **Trạng thái:** [x] RESOLVED. Layout hoàn toàn chuẩn mực, không vỡ hạt, trải nghiệm sánh ngang Gemini và Claude trên di động.
 
 
 
