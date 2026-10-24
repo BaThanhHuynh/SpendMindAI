@@ -600,7 +600,16 @@
       2. Tinh chỉnh `line-height: 1.25 !important` và `letter-spacing: -0.02em !important` giúp các chữ cái và dấu tiếng Việt hiển thị thông thoáng, sắc sảo và thanh lịch.
       3. Bump `styles.css?v=20261024_v35`, `CACHE_NAME` → `spendmind-v7.8`.
     - **Kiểm chứng:** CSS parse hợp lệ; chữ tiêu đề slogan không còn bị đậm nét mà hiển thị mượt mà, thanh thoát và sang trọng trên mọi kích cỡ điện thoại; deploy Vercel thành công.
+49. **[P3] Animation - Loại Bỏ Hiệu Ứng Con Trỏ Nhấp Nháy (|) Khỏi Hoạt Ảnh Gõ Chữ Typewriter**
+    - **File:** `js/index.js`, `css/styles.css`, `index.html`, `dashboard.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** Trong hiệu ứng gõ chữ typewriter ở cả Hero Slogan và các đoạn mô tả cuộn trang, thanh con trỏ nhấp nháy (`|`) xuất hiện ở cuối chuỗi văn bản gây rối mắt. Người dùng yêu cầu loại bỏ hoàn toàn con trỏ để chữ hiển thị tự nhiên, mượt mà và tập trung vào nội dung.
+    - **Thay đổi:**
+      1. Trong [js/index.js](file:///d:/codevstdio/repo/SpendMindAI/js/index.js): loại bỏ thẻ `<span class="typewriter-cursor">|</span>` trong cả hàm `runTypewriter()` (Hero) và `typeWriterEffect()` (các section khi cuộn). Duy trì thẻ ẩn `<span style="opacity: 0;">` đối với phần văn bản chưa gõ nhằm đảm bảo không có dịch chuyển layout (zero CLS).
+      2. Trong [css/styles.css](file:///d:/codevstdio/repo/SpendMindAI/css/styles.css): đặt `.typewriter-cursor { display: none !important; }` và dọn dẹp các keyframe animation chớp nháy con trỏ.
+      3. Bump `styles.css?v=20261024_v36`, `index.js?v=20261024_v19`, `CACHE_NAME` → `spendmind-v7.9`.
+    - **Kiểm chứng:** Node syntax check pass; CSS parse hợp lệ; chữ xuất hiện từng ký tự mượt mà mà không có ký hiệu `|` nhấp nháy đi kèm; deploy Vercel thành công.
     - **Trạng thái:** [x] RESOLVED.
+
 
 
 

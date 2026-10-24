@@ -1748,20 +1748,7 @@ html[data-theme="light"] .toast {
 }
 
 .typewriter-cursor {
-    animation: typewriter-blink 0.8s infinite;
-    color: var(--text-primary);
-    -webkit-text-fill-color: var(--text-primary);
-    font-weight: 300;
-    margin-left: 4px;
-}
-
-.cursor-hidden {
     display: none !important;
-}
-
-@keyframes typewriter-blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
 }
 
 /* Subtitle description */
@@ -5401,18 +5388,9 @@ html[data-theme="light"] .mobile-menu-link:active {
     }
 }
 
-/* Typewriter Cursor styling */
+/* Typewriter Cursor (Hidden per design request) */
 .typewriter-cursor {
-    display: inline-block;
-    color: var(--accent-color);
-    margin-left: 4px;
-    animation: cursor-blink 1s infinite;
-    font-weight: 300;
-}
-
-@keyframes cursor-blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
+    display: none !important;
 }
 
 /* Scroll Fade In */

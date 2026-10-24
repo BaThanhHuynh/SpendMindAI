@@ -40,12 +40,12 @@ function runTypewriter() {
     if (typewriterCharIdx < currentPhrase.length) {
         const typedText = currentPhrase.substring(0, typewriterCharIdx + 1);
         const untypedText = currentPhrase.substring(typewriterCharIdx + 1);
-        target.innerHTML = typedText + '<span class="typewriter-cursor">|</span><span style="opacity: 0;">' + untypedText + '</span>';
+        target.innerHTML = typedText + '<span style="opacity: 0;">' + untypedText + '</span>';
         
         typewriterCharIdx++;
         setTimeout(runTypewriter, Math.random() * 25 + 25);
     } else {
-        target.innerHTML = currentPhrase + '<span class="typewriter-cursor">|</span>';
+        target.innerHTML = currentPhrase;
         // Make hero items fade in
         const heroActions = document.querySelector(".hero-actions");
         if (heroActions) {
@@ -377,7 +377,7 @@ function typeWriterEffect(element, text, charIdx, callback) {
     if (charIdx < text.length) {
         const typedText = text.substring(0, charIdx + 1);
         const untypedText = text.substring(charIdx + 1);
-        element.innerHTML = typedText + '<span class="typewriter-cursor">|</span><span style="opacity: 0;">' + untypedText + '</span>';
+        element.innerHTML = typedText + '<span style="opacity: 0;">' + untypedText + '</span>';
         
         setTimeout(() => {
             typeWriterEffect(element, text, charIdx + 1, callback);
