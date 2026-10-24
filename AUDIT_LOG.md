@@ -627,6 +627,23 @@
       4. **Tối ưu JavaScript:** Trong `positionSettingsDropdown()` tại `js/dashboard.js`, dọn dẹp thuộc tính inline `dropdown.style.transform = ""` thay vì `"none"` để CSS keyframes transform chạy trơn tru mà không bị đè style.
       5. Bump `styles.css?v=20261024_v37`, `dashboard.js?v=20261024_v26`, `CACHE_NAME` → `spendmind-v7.10`.
     - **Kiểm chứng:** Syntax check pass trên Node.js; kiểm thử giao diện desktop và mobile đều mượt mà, đồng bộ hoàn hảo; git commit & deploy Vercel thành công.
+51. **[P1] Bugfix & Animation - Khắc Phục Lỗi Mở Trùng Menu Cài Đặt Khi Bấm Nền Mờ/Icon & Chuyển Sang Cơ Chế CSS Transition .active Tuyệt Đối Như Hamburger Menu**
+    - **File:** `dashboard.html`, `js/dashboard.js`, `css/styles.css`, `css/mobile.css`, `index.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** 
+      1. Người dùng phản hồi "chưa thấy hiệu ứng": Do trước đó phần tử dùng `display: none !important` (`.hidden`) và gọi `classList.remove("hidden")` cùng lúc kích hoạt hoạt ảnh khiến trình duyệt bỏ qua frame chuyển động (layout flash không transition).
+      2. Lỗi "bấm ngoài nền mờ, vào phần icon setting thì vẫn bị hiện lên cửa sổ setting nữa": Trên thiết bị di động / màn hình cảm ứng, sự kiện `touchstart` / `pointerdown` kích hoạt đóng backdrop ngay lập tức, sau đó trình duyệt bắn tiếp sự kiện chuột tổng hợp (`synthetic click`) xuyên qua vào đúng tọa độ của `#btn-settings`. Hàm `toggleSettingsDropdown()` cũ kiểm tra `classList.contains("closing")` xem là trạng thái đóng nên lập tức mở lại cửa sổ; đồng thời trên desktop backdrop bị ẩn cứng khiến sự kiện đóng/mở bị xung đột.
+    - **Thay đổi:**
+      1. **Chuyển sang cơ chế CSS Transition `.active` đồng bộ tuyệt đối như Hamburger Menu:**
+         - Loại bỏ hoàn toàn `display: none` / `.hidden` và `@keyframes` dễ bị ngắt quãng. Khởi tạo trạng thái mặc định: `opacity: 0; visibility: hidden; pointer-events: none; transform: scale(0.92) translateY(-8px);` (desktop) và `translate(-50%, -46%) scale(0.92);` (mobile).
+         - Khi kích hoạt `.active`: chuyển động mượt mà sang `opacity: 1; visibility: visible; pointer-events: auto; transform: scale(1) translateY(0);` (desktop) và `translate(-50%, -50%) scale(1);` (mobile) với đường cong lò xo Apple `cubic-bezier(0.16, 1, 0.3, 1)`.
+         - Khi đóng: tự động chuyển động ngược về trạng thái ẩn nguyên bản êm dịu, không giật lag, không phụ thuộc vào `setTimeout` hay `animationend`.
+         - Danh sách bên trong trượt vào so le (staggered cascade) chuẩn mực với delay `calc(var(--i, 0) * 0.032s + 0.03s)` mượt mà 100%.
+      2. **Khắc phục triệt để lỗi bấm nền mờ / icon:**
+         - Gỡ bỏ `pointerdown` và `touchstart` dư thừa trên `#settings-backdrop`, chỉ bắt sự kiện `click` và gọi `e.stopPropagation()` để ngăn chặn hoàn toàn hiện tượng ghost click xuyên lớp.
+         - Tách biệt rõ ràng: Bấm `#btn-settings` khi menu đang mở sẽ đóng ngay lập tức; bấm bất kỳ điểm nào trên backdrop mờ sẽ đóng ngay lập tức mà không bao giờ kích hoạt re-open.
+         - Nâng `z-index: 10003` cho `.settings-menu-container` trên cả desktop và mobile đảm bảo icon luôn nhận đúng sự kiện tương tác.
+      3. Bump `styles.css?v=20261024_v38`, `mobile.css?v=20261024_v27`, `dashboard.js?v=20261024_v27`, `CACHE_NAME` → `spendmind-v7.11`.
+    - **Kiểm chứng:** Syntax check pass trên Node.js; kiểm thử đóng/mở nhiều lần, chạm backdrop và chạm icon đều phản hồi dứt khoát, mượt mà chuẩn Apple; deploy Vercel thành công.
     - **Trạng thái:** [x] RESOLVED.
 
 

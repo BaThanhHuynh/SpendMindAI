@@ -4461,9 +4461,11 @@ html[data-theme="light"] .daily-item:hover {
 .settings-menu-container {
     position: relative;
     display: inline-block;
+    z-index: 10003;
 }
 
 .settings-backdrop {
+    display: block;
     position: fixed;
     top: 0;
     left: 0;
@@ -4475,21 +4477,16 @@ html[data-theme="light"] .daily-item:hover {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     z-index: 10001 !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.26s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.settings-backdrop.active {
     opacity: 1;
     visibility: visible;
-    animation: apple-fade-in 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.settings-backdrop.hidden {
-    display: none !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-}
-
-.settings-backdrop.closing {
-    animation: apple-fade-out 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-    pointer-events: none;
+    pointer-events: auto;
 }
 
 .settings-dropdown-menu {
@@ -4497,11 +4494,9 @@ html[data-theme="light"] .daily-item:hover {
     z-index: 10002 !important;
     display: flex;
     gap: 8px;
-    pointer-events: auto;
-}
-
-.settings-dropdown-menu.hidden {
-    display: none !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 /* Individual Settings Panel */
@@ -4640,11 +4635,11 @@ html[data-theme="light"] .btn-close-dropdown:active {
     -webkit-tap-highlight-color: transparent;
 }
 
-.settings-dropdown-menu:not(.hidden):not(.closing) .settings-list-item,
-.settings-dropdown-menu:not(.hidden):not(.closing) .theme-option-item {
+.settings-dropdown-menu.active .settings-list-item,
+.settings-dropdown-menu.active .theme-option-item {
     opacity: 1;
     transform: translateY(0);
-    transition-delay: calc(var(--i, 0) * 0.028s + 0.03s);
+    transition-delay: calc(var(--i, 0) * 0.032s + 0.03s);
 }
 
 .settings-list-item:hover, 
@@ -4794,10 +4789,6 @@ html[data-theme="light"] .zalo-tip-card {
 
 /* Sub-panel and Desktop Dropdown Positioning */
 @media (min-width: 769px) {
-    .settings-backdrop {
-        display: none !important;
-    }
-
     .settings-dropdown-menu {
         position: fixed !important;
         overflow: visible !important;
@@ -4809,15 +4800,20 @@ html[data-theme="light"] .zalo-tip-card {
         width: auto !important;
         z-index: 10002 !important;
         transform-origin: top right;
-    }
-
-    .settings-dropdown-menu.animate-scale-up {
-        animation: apple-popover-open 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    .settings-dropdown-menu.closing {
-        animation: apple-popover-close 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        opacity: 0;
+        visibility: hidden;
         pointer-events: none;
+        transform: scale(0.92) translateY(-8px);
+        transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+                    visibility 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .settings-dropdown-menu.active {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: scale(1) translateY(0);
     }
 
     .settings-panel {
@@ -4878,6 +4874,14 @@ html[data-theme="light"] .zalo-tip-card {
         -webkit-overflow-scrolling: touch;
         padding: 0 !important;
         z-index: 10002 !important;
+        transform-origin: center center;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translate(-50%, -46%) scale(0.92);
+        transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                    visibility 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     html[data-theme="light"] .settings-dropdown-menu {
@@ -4886,14 +4890,11 @@ html[data-theme="light"] .zalo-tip-card {
         box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.20), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
     }
     
-    .settings-dropdown-menu.animate-scale-up {
-        animation: apple-modal-open 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-    }
-    
-    .settings-dropdown-menu.animate-scale-up.closing,
-    .settings-dropdown-menu.closing {
-        animation: apple-modal-close 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-        pointer-events: none;
+    .settings-dropdown-menu.active {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translate(-50%, -50%) scale(1);
     }
     
     .settings-panel {
@@ -7916,11 +7917,6 @@ html[data-theme="light"] .landing-install-card:hover {
     pointer-events: none;
 }
 
-.settings-backdrop.closing {
-    animation: apple-fade-out 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-    pointer-events: none;
-}
-
 .ios-modal-backdrop.closing {
     animation: sheet-fade-out 0.26s var(--ease-sheet) forwards;
     pointer-events: none;
@@ -7933,19 +7929,6 @@ html[data-theme="light"] .landing-install-card:hover {
 .ios-install-sheet.closing {
     animation: sheet-slide-down 0.26s var(--ease-sheet) forwards;
     pointer-events: none;
-}
-
-.settings-dropdown-menu.closing {
-    animation: apple-popover-close 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-    pointer-events: none;
-}
-
-@media (max-width: 768px) {
-    .settings-dropdown-menu.animate-scale-up.closing,
-    .settings-dropdown-menu.closing {
-        animation: apple-modal-close 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-        pointer-events: none;
-    }
 }
 
 /* Tôn trọng «Giảm chuyển động» của hệ điều hành (Apple HIG).

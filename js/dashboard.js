@@ -903,13 +903,10 @@ function initEventListeners() {
 
     const settingsBackdrop = document.getElementById("settings-backdrop");
     if (settingsBackdrop) {
-        const dismissBackdrop = (e) => {
+        settingsBackdrop.addEventListener("click", (e) => {
             e.stopPropagation();
             closeSettingsDropdown();
-        };
-        settingsBackdrop.addEventListener("click", dismissBackdrop);
-        settingsBackdrop.addEventListener("pointerdown", dismissBackdrop);
-        settingsBackdrop.addEventListener("touchstart", dismissBackdrop, { passive: true });
+        });
     }
 
     const settingsForm = document.getElementById("settings-notification-form");
@@ -1084,7 +1081,7 @@ function initEventListeners() {
         const dropdown = document.getElementById("settings-dropdown");
         const btnSettingsEl = document.getElementById("btn-settings");
         const navBtnSettingsEl = document.getElementById("nav-btn-settings");
-        if (dropdown && !dropdown.classList.contains("hidden")) {
+        if (dropdown && dropdown.classList.contains("active")) {
             const isInside = dropdown.contains(e.target);
             const isTopBtn = btnSettingsEl && btnSettingsEl.contains(e.target);
             const isNavBtn = navBtnSettingsEl && navBtnSettingsEl.contains(e.target);
@@ -1108,7 +1105,7 @@ function initEventListeners() {
                 return;
             }
             const dropdown = document.getElementById("settings-dropdown");
-            if (dropdown && !dropdown.classList.contains("hidden")) {
+            if (dropdown && dropdown.classList.contains("active")) {
                 closeSettingsDropdown();
             }
         }
@@ -2534,7 +2531,7 @@ function importData(e) {
 function positionSettingsDropdown() {
     const dropdown = document.getElementById("settings-dropdown");
     const btnSettings = document.getElementById("btn-settings");
-    if (!dropdown || dropdown.classList.contains("hidden")) return;
+    if (!dropdown) return;
     
     if (window.innerWidth > 768) {
         if (btnSettings) {
@@ -2544,7 +2541,6 @@ function positionSettingsDropdown() {
             dropdown.style.right = Math.max(16, Math.round(window.innerWidth - rect.right)) + "px";
             dropdown.style.left = "auto";
             dropdown.style.bottom = "auto";
-            dropdown.style.transform = "";
         }
     } else {
         dropdown.style.position = "";
@@ -2552,22 +2548,21 @@ function positionSettingsDropdown() {
         dropdown.style.left = "";
         dropdown.style.right = "";
         dropdown.style.bottom = "";
-        dropdown.style.transform = "";
     }
 }
 
-// Toggle Settings Dropdown & Load Data (Instant 0ms response like Chatbot AI)
-function toggleSettingsDropdown() {
+// Toggle Settings Dropdown & Load Data (Apple-style Popover & Modal Sheet)
+function toggleSettingsDropdown(forceOpen) {
     const dropdown = document.getElementById("settings-dropdown");
     const backdrop = document.getElementById("settings-backdrop");
     const navBtnSettings = document.getElementById("nav-btn-settings");
     const btnSettings = document.getElementById("btn-settings");
     if (!dropdown) return;
-    const isHidden = dropdown.classList.contains("hidden") || dropdown.classList.contains("closing");
-    if (isHidden) {
-        finishClosing(dropdown);
-        finishClosing(backdrop);
 
+    const isCurrentlyActive = dropdown.classList.contains("active");
+    const shouldOpen = forceOpen !== undefined ? forceOpen : !isCurrentlyActive;
+
+    if (shouldOpen) {
         // Close any open sub panels first
         closeSubPanels();
         
@@ -2612,19 +2607,15 @@ function toggleSettingsDropdown() {
         updateThemeSubPanelUI();
         updateSettingsStatusBadges();
         
-        if (window.innerWidth <= 768) {
-            if (backdrop) backdrop.classList.remove("hidden");
-            document.body.classList.add("settings-open");
-        } else {
-            if (backdrop) backdrop.classList.add("hidden");
-        }
+        // Calculate coordinate position before starting Apple spring transition
+        positionSettingsDropdown();
         
-        // Display settings dropdown INSTANTLY (0ms latency, matching AI Chatbot)
-        dropdown.classList.remove("hidden");
+        // Trigger Apple transition
+        dropdown.classList.add("active");
+        if (backdrop) backdrop.classList.add("active");
         if (btnSettings) btnSettings.classList.add("active");
         if (navBtnSettings) navBtnSettings.classList.add("active");
-        
-        positionSettingsDropdown();
+        document.body.classList.add("settings-open");
         
         renderScopedIcons(dropdown);
         
@@ -2639,26 +2630,15 @@ function toggleSettingsDropdown() {
 function closeSettingsDropdown() {
     const dropdown = document.getElementById("settings-dropdown");
     const backdrop = document.getElementById("settings-backdrop");
-    // Vị trí, panel con và khoá cuộn chỉ dọn sau khi hiệu ứng đóng chạy xong, để menu không nhảy chỗ
-    closeWithAnimation(dropdown, () => {
-        dropdown.style.position = "";
-        dropdown.style.top = "";
-        dropdown.style.left = "";
-        dropdown.style.right = "";
-        dropdown.style.bottom = "";
-        dropdown.style.transform = "";
-        document.body.classList.remove("settings-open");
-        closeSubPanels();
-    });
-    closeWithAnimation(backdrop);
     const btnSettings = document.getElementById("btn-settings");
-    if (btnSettings) {
-        btnSettings.classList.remove("active");
-    }
     const navBtnSettings = document.getElementById("nav-btn-settings");
-    if (navBtnSettings) {
-        navBtnSettings.classList.remove("active");
-    }
+
+    if (dropdown) dropdown.classList.remove("active");
+    if (backdrop) backdrop.classList.remove("active");
+    if (btnSettings) btnSettings.classList.remove("active");
+    if (navBtnSettings) navBtnSettings.classList.remove("active");
+    document.body.classList.remove("settings-open");
+    closeSubPanels();
 }
 
 // Background sync of notification settings without blocking user interaction

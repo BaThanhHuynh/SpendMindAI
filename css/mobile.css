@@ -1051,6 +1051,7 @@
 
     .settings-menu-container {
         position: relative !important;
+        z-index: 10003 !important;
     }
 
     .theme-toggle-btn#btn-settings {
