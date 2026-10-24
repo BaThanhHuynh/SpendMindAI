@@ -8,7 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function initChatbot() {
     const triggerBtn = document.getElementById("chatbot-trigger-btn");
+    const headerBtn = document.getElementById("btn-header-chatbot");
     const closeBtn = document.getElementById("chatbot-close-btn");
+    const backBtn = document.getElementById("chatbot-back-btn");
     const container = document.getElementById("chatbot-container");
     const backdrop = document.getElementById("chatbot-backdrop");
     const inputForm = document.getElementById("chatbot-input-form");
@@ -36,8 +38,16 @@ function initChatbot() {
 
     function openChatbot() {
         container.classList.remove("hidden");
-        if (backdrop) backdrop.classList.remove("hidden");
+        if (backdrop && window.innerWidth > 1024) {
+            backdrop.classList.remove("hidden");
+        }
         document.body.classList.add("chatbot-open");
+
+        // Mobile / Tablet full page: push history state so native back button returns to dashboard
+        if (window.innerWidth <= 1024 && (!history.state || !history.state.chatOpen)) {
+            history.pushState({ chatOpen: true }, "");
+        }
+
         if (triggerBtn) {
             const chatIcon = triggerBtn.querySelector(".chat-icon");
             const closeIcon = triggerBtn.querySelector(".close-icon");
@@ -49,20 +59,46 @@ function initChatbot() {
         if (messagesContainer && messagesContainer.children.length === 0) {
             sendWelcomeMessage();
         }
+
+        // Render any new icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons({ root: container });
+        }
+
+        // Scroll messages to bottom smoothly
+        if (messagesContainer) {
+            requestAnimationFrame(() => {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+        }
+
         // Focus input
         if (inputField) inputField.focus();
     }
 
-    function closeChatbot() {
+    function closeChatbot(fromPopState = false) {
         container.classList.add("hidden");
         if (backdrop) backdrop.classList.add("hidden");
         document.body.classList.remove("chatbot-open");
+
         if (triggerBtn) {
             const chatIcon = triggerBtn.querySelector(".chat-icon");
             const closeIcon = triggerBtn.querySelector(".close-icon");
             if (chatIcon) chatIcon.classList.remove("hidden");
             if (closeIcon) closeIcon.classList.add("hidden");
         }
+
+        // Clean up history state if closed via button
+        if (!fromPopState && history.state && history.state.chatOpen) {
+            history.back();
+        }
+
+        // Update mobile bottom nav active state if needed
+        const navChat = document.getElementById("nav-btn-chatbot");
+        if (navChat) navChat.classList.remove("active");
+        const navOverview = document.getElementById("nav-btn-overview") || document.getElementById("nav-btn-home");
+        if (navOverview) navOverview.classList.add("active");
+
         clearActiveTyping();
     }
 
@@ -79,21 +115,51 @@ function initChatbot() {
         triggerBtn.addEventListener("click", toggleChatbot);
     }
 
+    // Toggle open/close via header button
+    if (headerBtn) {
+        headerBtn.addEventListener("click", toggleChatbot);
+    }
+
+    // Close via close button (X)
     if (closeBtn) {
-        closeBtn.addEventListener("click", closeChatbot);
+        closeBtn.addEventListener("click", () => closeChatbot(false));
+    }
+
+    // Close via back button (←) on mobile/tablet dedicated page
+    if (backBtn) {
+        backBtn.addEventListener("click", () => closeChatbot(false));
     }
 
     if (backdrop) {
-        backdrop.addEventListener("click", closeChatbot);
+        backdrop.addEventListener("click", () => closeChatbot(false));
         backdrop.addEventListener("touchstart", (e) => {
             e.preventDefault();
-            closeChatbot();
+            closeChatbot(false);
         }, { passive: false });
+    }
+
+    // Listen to native browser back button (swipe back / Android back)
+    window.addEventListener("popstate", () => {
+        if (document.body.classList.contains("chatbot-open")) {
+            closeChatbot(true);
+        }
+    });
+
+    // Handle mobile virtual keyboard resize
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", () => {
+            if (document.body.classList.contains("chatbot-open") && window.innerWidth <= 1024) {
+                container.style.height = `${window.visualViewport.height}px`;
+                if (messagesContainer) {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            }
+        });
     }
 
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && container && !container.classList.contains("hidden")) {
-            closeChatbot();
+            closeChatbot(false);
         }
     });
 
