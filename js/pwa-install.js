@@ -95,6 +95,8 @@
         const iosBackdrop = document.getElementById('ios-install-backdrop');
         if (iosCloseBtn) iosCloseBtn.addEventListener('click', closeIosModal);
         if (iosBackdrop) iosBackdrop.addEventListener('click', closeIosModal);
+        const iosDoneBtn = document.getElementById('btn-ios-install-done');
+        if (iosDoneBtn) iosDoneBtn.addEventListener('click', closeIosModal);
     }
 
     function promptInstallFlow() {
@@ -181,17 +183,29 @@
         const modal = document.getElementById('ios-install-modal');
         const backdrop = document.getElementById('ios-install-backdrop');
         if (modal && backdrop) {
-            backdrop.classList.remove('hidden');
-            modal.classList.remove('hidden');
+            backdrop.classList.remove('hidden', 'closing');
+            modal.classList.remove('hidden', 'closing');
             if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
         }
     }
 
     function closeIosModal() {
-        const modal = document.getElementById('ios-install-modal');
-        const backdrop = document.getElementById('ios-install-backdrop');
-        if (modal) modal.classList.add('hidden');
-        if (backdrop) backdrop.classList.add('hidden');
+        // Đóng kiểu Apple: .closing chạy hiệu ứng trong CSS, hết hiệu ứng mới .hidden (hẹn giờ dự phòng)
+        ['ios-install-modal', 'ios-install-backdrop'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el || el.classList.contains('hidden') || el.classList.contains('closing')) return;
+            const finish = (e) => {
+                if (e && e.target !== el) return;
+                el.removeEventListener('animationend', finish);
+                clearTimeout(timer);
+                if (!el.classList.contains('closing')) return; // đã mở lại giữa chừng
+                el.classList.remove('closing');
+                el.classList.add('hidden');
+            };
+            const timer = setTimeout(() => finish(), 400);
+            el.addEventListener('animationend', finish);
+            el.classList.add('closing');
+        });
     }
 
     function injectIosModalHTML() {
@@ -242,7 +256,7 @@
                     </div>
                 </div>
                 <div class="ios-sheet-footer">
-                    <button type="button" class="btn btn-sm btn-primary w-full" onclick="document.getElementById('ios-install-backdrop').classList.add('hidden'); document.getElementById('ios-install-modal').classList.add('hidden');">
+                    <button type="button" id="btn-ios-install-done" class="btn btn-sm btn-primary w-full">
                         Đã hiểu
                     </button>
                 </div>

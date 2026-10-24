@@ -1212,5 +1212,11 @@
             opacity: 1;
         }
     }
+
+    /* Đóng: trượt xuống, đối xứng slideUpMobile / slideUpDayEdit (keyframes ở styles.css) */
+    .modal-overlay.closing .modal-content.form-card,
+    .modal-overlay.closing .day-edit-card {
+        animation: sheet-slide-down 0.26s var(--ease-sheet) forwards !important;
+    }
 }
 

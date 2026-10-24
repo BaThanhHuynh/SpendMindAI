@@ -515,3 +515,15 @@
       - [P3] `pulse-danger` chạy vô hạn trên cảnh báo vượt ngân sách — Apple tránh chuyển động lặp mãi để gây chú ý.
       - Mã chết: laser-cut, `typewriter-blink`, `cursor-blink` không còn được dùng.
     - **Trạng thái:** [x] RESOLVED (phần bỏ nhấn); các mục tồn ở trên chưa xử lý.
+
+41. **[P2] UX - Hiệu Ứng Đóng Kiểu Apple Cho Mọi Sheet/Modal/Dropdown (Đối Xứng Lúc Mở)**
+    - **File:** `css/styles.css`, `css/mobile.css`, `js/dashboard.js`, `js/pwa-install.js`, `dashboard.html`, `index.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** Đóng form giao dịch, sheet sửa ngày, menu cài đặt, sheet cài iOS đều tức thì vì `.hidden` là `display: none !important` (mục 40).
+    - **Thay đổi:**
+      - `closeWithAnimation(el, onHidden)` trong `dashboard.js` (giống `closeChatbot`): thêm `.closing`, đợi `animationend` của chính phần tử (hẹn giờ dự phòng 400ms) rồi mới `.hidden`. Phần dọn dẹp (reset form, gỡ `modal-open`/`settings-open`, xoá vị trí inline, đóng panel con) chạy sau hiệu ứng để thẻ không đổi nội dung hay nhảy chỗ khi đang đóng. Mở lại khi đang đóng dở → `finishClosing()` chạy dọn dẹp trước rồi mở bình thường.
+      - CSS: overlay chỉ tan màu nền + độ nhoè (`overlay-clear`) để thẻ không mờ theo; thẻ trên mobile trượt xuống (`sheet-slide-down`, đối xứng `slideUpMobile`/`slideUpDayEdit`), trên desktop thu nhỏ + mờ (`card-scale-down`); menu cài đặt `scale-down` / `scale-down-centered`; nền mờ `sheet-fade-out`. 0.26s (menu 0.2s), `var(--ease-sheet)`. Bổ sung 3 selector `!important` vào khối «Giảm chuyển động».
+      - `pwa-install.js`: `closeIosModal` cùng cơ chế; nút «Đã hiểu» bỏ `onclick` inline (ẩn tức thì) → gọi `closeIosModal`.
+      - Bump `styles.css?v=20261024_v28`, `mobile.css?v=20261024_v26`, `dashboard.js`/`pwa-install.js?v=20261024_v25` ở mọi HTML dùng chúng; `CACHE_NAME` → `spendmind-v7.1`.
+    - **Kiểm chứng:** Browser pane 375×812 và 1280×800, mọi đường đóng (nút X, chạm nền, Esc, «Đã hiểu», lưu/sửa): có hiệu ứng `.closing` đúng tên/thời lượng/đường cong, tua giữa chừng thấy thẻ đang trượt/thu nhỏ, cuối cùng `display: none`; mở vẫn chạy `slideUpMobile`/`slideUpDayEdit`/`scale-up(-centered)`/`slide-up` như cũ; luồng sửa ngày → sửa giao dịch giữ `modal-open` và đúng dữ liệu; «Giảm chuyển động» bật → 0.01ms; không lỗi console. `node --check` pass 2 tệp JS. **Chưa xem bằng mắt chuyển động thật:** khung trình duyệt thử bị ẩn nên không chạy khung hình (hiệu ứng treo ở trạng thái chờ, đóng nhờ hẹn giờ dự phòng); đã kiểm bằng cách tua hiệu ứng và bắn `animationend`.
+    - **Còn tồn:** Menu cài đặt trên mobile chỉ mờ, không co (cả lúc mở lẫn đóng) vì `transform: translate(-50%, -50%) !important` thắng transform của animation. Sheet iOS lúc mở không có hiệu ứng (chỉ có `transition`, không chạy khi bỏ `display: none`) nên hiện đóng mượt hơn mở. `.google-modal-overlay` là CSS chết (không phần tử nào dùng).
+    - **Trạng thái:** [ ] CHỜ XEM TRÊN THIẾT BỊ THẬT.

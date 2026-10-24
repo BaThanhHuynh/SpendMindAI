@@ -7518,6 +7518,64 @@ html[data-theme="light"] .landing-install-card:hover {
     }
 }
 
+/* Đóng kiểu Apple, đối xứng với lúc mở: JS thêm .closing, đợi animationend của chính
+   phần tử rồi mới thêm .hidden (closeWithAnimation trong dashboard.js, closeIosModal trong pwa-install.js). */
+@keyframes sheet-fade-out {
+    to { opacity: 0; }
+}
+
+@keyframes card-scale-down {
+    to { opacity: 0; transform: translateY(20px) scale(0.96); }
+}
+
+@keyframes sheet-slide-down {
+    to { opacity: 0.5; transform: translateY(100%); }
+}
+
+@keyframes scale-down {
+    to { opacity: 0; transform: translateY(-8px) scale(0.97); }
+}
+
+@keyframes scale-down-centered {
+    to { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+}
+
+/* Overlay chứa thẻ: chỉ tan màu nền + độ nhoè, để thẻ không mờ theo khi đang trượt xuống */
+@keyframes overlay-clear {
+    to { background-color: transparent; backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); }
+}
+
+.modal-overlay.closing {
+    animation: overlay-clear 0.26s var(--ease-sheet) forwards;
+    pointer-events: none;
+}
+
+.settings-backdrop.closing,
+.ios-modal-backdrop.closing {
+    animation: sheet-fade-out 0.26s var(--ease-sheet) forwards;
+    pointer-events: none;
+}
+
+.modal-overlay.closing .modal-content {
+    animation: card-scale-down 0.26s var(--ease-sheet) forwards;
+}
+
+.ios-install-sheet.closing {
+    animation: sheet-slide-down 0.26s var(--ease-sheet) forwards;
+    pointer-events: none;
+}
+
+.settings-dropdown-menu.closing {
+    animation: scale-down 0.2s var(--ease-sheet) forwards;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .settings-dropdown-menu.animate-scale-up.closing {
+        animation: scale-down-centered 0.2s var(--ease-sheet) forwards !important;
+    }
+}
+
 /* Tôn trọng «Giảm chuyển động» của hệ điều hành (Apple HIG).
    Các selector có html phía trước để thắng những rule animation đang dùng !important. */
 @media (prefers-reduced-motion: reduce) {
@@ -7528,6 +7586,9 @@ html[data-theme="light"] .landing-install-card:hover {
     html #chatbot-container.closing,
     html .calendar-cell.cell-pressed,
     html .settings-dropdown-menu.animate-scale-up,
+    html .settings-dropdown-menu.animate-scale-up.closing,
+    html .modal-overlay.closing .modal-content.form-card,
+    html .modal-overlay.closing .day-edit-card,
     html .modal-content.form-card,
     html .claude-welcome-hero,
     html .welcome-hero-container,

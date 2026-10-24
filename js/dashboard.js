@@ -363,9 +363,38 @@ function populateCategorySelectors() {
 }
 
 // --- MODAL FUNCTIONS ---
+// Đóng kiểu Apple (như closeChatbot): thêm .closing cho CSS chạy hiệu ứng đóng, đợi animationend
+// của chính phần tử (có hẹn giờ dự phòng) rồi mới .hidden và gọi onHidden.
+function closeWithAnimation(el, onHidden) {
+    if (!el || el._finishClose) return;
+    if (el.classList.contains("hidden")) {
+        if (onHidden) onHidden();
+        return;
+    }
+    const finish = (e) => {
+        if (e && e.target !== el) return;
+        el.removeEventListener("animationend", finish);
+        clearTimeout(timer);
+        el._finishClose = null;
+        el.classList.remove("closing");
+        el.classList.add("hidden");
+        if (onHidden) onHidden();
+    };
+    const timer = setTimeout(() => finish(), 400);
+    el._finishClose = finish;
+    el.addEventListener("animationend", finish);
+    el.classList.add("closing");
+}
+
+// Mở lại khi đang đóng dở: kết thúc ngay lần đóng đó để phần dọn dẹp chạy trước khi mở
+function finishClosing(el) {
+    if (el && el._finishClose) el._finishClose();
+}
+
 function openTransactionModal() {
     const modal = document.getElementById("transaction-modal");
     if (modal) {
+        finishClosing(modal);
         modal.classList.remove("hidden");
         document.body.classList.add("modal-open");
     }
@@ -373,15 +402,14 @@ function openTransactionModal() {
 
 function closeTransactionModal() {
     const modal = document.getElementById("transaction-modal");
-    if (modal) {
-        modal.classList.add("hidden");
+    closeWithAnimation(modal, () => {
         // Only remove modal-open if day-edit-modal is also closed
         const dayModal = document.getElementById("day-edit-modal");
         if (!dayModal || dayModal.classList.contains("hidden")) {
             document.body.classList.remove("modal-open");
         }
         resetTransactionForm();
-    }
+    });
 }
 
 // --- DAY EDIT MODAL FUNCTIONS (HỘP CỬA SỔ NHỎ "CHỈNH SỬA" TRÊN MOBILE & TABLET) ---
@@ -390,6 +418,7 @@ function openDayEditModal(time) {
     renderDayEditModalContent(time);
     const modal = document.getElementById("day-edit-modal");
     if (modal) {
+        finishClosing(modal);
         modal.classList.remove("hidden");
         document.body.classList.add("modal-open");
     }
@@ -397,13 +426,12 @@ function openDayEditModal(time) {
 
 function closeDayEditModal() {
     const modal = document.getElementById("day-edit-modal");
-    if (modal) {
-        modal.classList.add("hidden");
+    closeWithAnimation(modal, () => {
         const txModal = document.getElementById("transaction-modal");
         if (!txModal || txModal.classList.contains("hidden")) {
             document.body.classList.remove("modal-open");
         }
-    }
+    });
     currentDayEditTime = null;
 }
 
@@ -2535,8 +2563,11 @@ function toggleSettingsDropdown() {
     const navBtnSettings = document.getElementById("nav-btn-settings");
     const btnSettings = document.getElementById("btn-settings");
     if (!dropdown) return;
-    const isHidden = dropdown.classList.contains("hidden");
+    const isHidden = dropdown.classList.contains("hidden") || dropdown.classList.contains("closing");
     if (isHidden) {
+        finishClosing(dropdown);
+        finishClosing(backdrop);
+
         // Close any open sub panels first
         closeSubPanels();
         
@@ -2608,19 +2639,18 @@ function toggleSettingsDropdown() {
 function closeSettingsDropdown() {
     const dropdown = document.getElementById("settings-dropdown");
     const backdrop = document.getElementById("settings-backdrop");
-    if (dropdown) {
-        dropdown.classList.add("hidden");
+    // Vị trí, panel con và khoá cuộn chỉ dọn sau khi hiệu ứng đóng chạy xong, để menu không nhảy chỗ
+    closeWithAnimation(dropdown, () => {
         dropdown.style.position = "";
         dropdown.style.top = "";
         dropdown.style.left = "";
         dropdown.style.right = "";
         dropdown.style.bottom = "";
         dropdown.style.transform = "";
-    }
-    if (backdrop) {
-        backdrop.classList.add("hidden");
-    }
-    document.body.classList.remove("settings-open");
+        document.body.classList.remove("settings-open");
+        closeSubPanels();
+    });
+    closeWithAnimation(backdrop);
     const btnSettings = document.getElementById("btn-settings");
     if (btnSettings) {
         btnSettings.classList.remove("active");
@@ -2629,7 +2659,6 @@ function closeSettingsDropdown() {
     if (navBtnSettings) {
         navBtnSettings.classList.remove("active");
     }
-    closeSubPanels();
 }
 
 // Background sync of notification settings without blocking user interaction
