@@ -1738,9 +1738,9 @@ html[data-theme="light"] .toast {
 @media (max-width: 768px) {
     .hero-title {
         font-size: clamp(2.1rem, 7vw, 2.75rem) !important;
-        font-weight: 700 !important;
-        line-height: 1.2 !important;
-        letter-spacing: -0.035em !important;
+        font-weight: 400 !important;
+        line-height: 1.25 !important;
+        letter-spacing: -0.02em !important;
         min-height: 120px !important;
         margin-bottom: 20px !important;
         padding: 0 8px !important;
@@ -5657,9 +5657,9 @@ html[data-theme="light"] .contact-link-item i {
 @media (max-width: 480px) {
     .hero-title {
         font-size: clamp(1.95rem, 8.5vw, 2.5rem) !important;
-        font-weight: 700 !important;
-        line-height: 1.2 !important;
-        letter-spacing: -0.035em !important;
+        font-weight: 400 !important;
+        line-height: 1.25 !important;
+        letter-spacing: -0.02em !important;
         min-height: 110px !important;
         margin-bottom: 20px !important;
         padding: 0 4px !important;

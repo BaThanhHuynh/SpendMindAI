@@ -592,7 +592,16 @@
       6. Đảm bảo giao diện desktop (`min-width: 881px`) giữ nguyên 100%.
       7. Bump `styles.css?v=20261024_v34`, `index.js?v=20261024_v18`, `CACHE_NAME` → `spendmind-v7.7`.
     - **Kiểm chứng:** Node syntax check pass; CSS parse hợp lệ; thử nghiệm thu phóng màn hình mobile và desktop; deploy Vercel thành công.
+48. **[P3] Typography - Hạ Font-Weight Hero Title Slogan Xuống 400 (Không In Đậm) Chuẩn Apple Slender Typography**
+    - **File:** `css/styles.css`, `index.html`, `dashboard.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** Ở mục 47, font-weight của `.hero-title` trên mobile được đặt thành `700` (in đậm) khiến dòng chữ slogan *"Định hình tư duy chi tiêu - Làm chủ tương lai tài chính"* trông hơi nặng nề. Người dùng yêu cầu hạ font-weight xuống, không in đậm để dòng chữ hiển thị thanh mảnh, rõ ràng và sang trọng theo đúng phong cách thiết kế tối giản cao cấp.
+    - **Thay đổi:**
+      1. Hạ `font-weight: 700 !important` xuống `font-weight: 400 !important` (regular / không in đậm) ở cả 2 media queries `@media (max-width: 768px)` và `@media (max-width: 480px)` trong `css/styles.css`.
+      2. Tinh chỉnh `line-height: 1.25 !important` và `letter-spacing: -0.02em !important` giúp các chữ cái và dấu tiếng Việt hiển thị thông thoáng, sắc sảo và thanh lịch.
+      3. Bump `styles.css?v=20261024_v35`, `CACHE_NAME` → `spendmind-v7.8`.
+    - **Kiểm chứng:** CSS parse hợp lệ; chữ tiêu đề slogan không còn bị đậm nét mà hiển thị mượt mà, thanh thoát và sang trọng trên mọi kích cỡ điện thoại; deploy Vercel thành công.
     - **Trạng thái:** [x] RESOLVED.
+
 
 
 
