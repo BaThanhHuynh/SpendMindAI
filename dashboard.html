@@ -32,7 +32,7 @@
     <link rel="apple-touch-icon" href="images/logoapp.png?v=20260911_v8">
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/styles.css?v=20261024_v36">
+    <link rel="stylesheet" href="css/styles.css?v=20261024_v37">
     <link rel="stylesheet" href="css/mobile.css?v=20261024_v26">
     
     <!-- Google Identity Services SDK -->
@@ -416,7 +416,7 @@
             </div>
             <div class="dropdown-body" style="display: flex; flex-direction: column; gap: 4px;">
                 <!-- App notification row -->
-                <div class="settings-list-item" id="menu-item-app-notifications" role="button" tabindex="0">
+                <div class="settings-list-item" id="menu-item-app-notifications" role="button" tabindex="0" style="--i: 0;">
                     <div class="item-left">
                         <i data-lucide="bell" style="color: var(--accent-color);"></i>
                         <span>Thông báo ứng dụng</span>
@@ -432,7 +432,7 @@
                 </div>
 
                 <!-- Zalo reminder row -->
-                <div class="settings-list-item" id="menu-item-reminder" role="button" tabindex="0">
+                <div class="settings-list-item" id="menu-item-reminder" role="button" tabindex="0" style="--i: 1;">
                     <div class="item-left">
                         <span class="zalo-icon-badge" style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; background: #0068ff; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: -0.5px; flex-shrink: 0;">Z</span>
                         <span>Nhắc nhở qua Zalo</span>
@@ -448,7 +448,7 @@
                 </div>
 
                 <!-- Theme settings row -->
-                <button type="button" class="settings-list-item" id="menu-item-theme">
+                <button type="button" class="settings-list-item" id="menu-item-theme" style="--i: 2;">
                     <div class="item-left">
                         <i data-lucide="palette"></i>
                         <span>Giao diện</span>
@@ -460,7 +460,7 @@
                 </button>
 
                 <!-- Cookie preferences row -->
-                <button type="button" class="settings-list-item" id="menu-item-cookies">
+                <button type="button" class="settings-list-item" id="menu-item-cookies" style="--i: 3;">
                     <div class="item-left">
                         <i data-lucide="cookie"></i>
                         <span>Tùy chọn Cookie</span>
@@ -472,7 +472,7 @@
                 </button>
 
                 <!-- Install App row -->
-                <button type="button" class="settings-list-item" id="menu-item-install-pwa">
+                <button type="button" class="settings-list-item" id="menu-item-install-pwa" style="--i: 4;">
                     <div class="item-left">
                         <i data-lucide="smartphone"></i>
                         <span>Cài đặt ứng dụng</span>
@@ -486,14 +486,14 @@
                 <hr class="settings-divider">
 
                 <!-- Danger operations -->
-                <button type="button" id="btn-clear-all-data" class="settings-list-item danger-item">
+                <button type="button" id="btn-clear-all-data" class="settings-list-item danger-item" style="--i: 5;">
                     <div class="item-left">
                         <i data-lucide="alert-triangle"></i>
                         <span>Xóa toàn bộ dữ liệu</span>
                     </div>
                 </button>
 
-                <button type="button" id="btn-logout" class="settings-list-item logout-item">
+                <button type="button" id="btn-logout" class="settings-list-item logout-item" style="--i: 6;">
                     <div class="item-left">
                         <i data-lucide="log-out"></i>
                         <span>Đăng xuất tài khoản</span>
@@ -647,21 +647,21 @@
             </div>
             <div class="dropdown-body">
                 <div class="theme-option-list" style="display: flex; flex-direction: column; gap: 4px;">
-                    <div class="theme-option-item" id="opt-theme-light">
+                    <div class="theme-option-item" id="opt-theme-light" style="--i: 0;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <i data-lucide="sun"></i>
                             <span style="font-size: 0.8rem; font-weight: 500;">Giao diện Sáng</span>
                         </div>
                         <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
                     </div>
-                    <div class="theme-option-item" id="opt-theme-dark">
+                    <div class="theme-option-item" id="opt-theme-dark" style="--i: 1;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <i data-lucide="moon"></i>
                             <span style="font-size: 0.8rem; font-weight: 500;">Giao diện Tối</span>
                         </div>
                         <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
                     </div>
-                    <div class="theme-option-item" id="opt-theme-system">
+                    <div class="theme-option-item" id="opt-theme-system" style="--i: 2;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <i data-lucide="monitor"></i>
                             <span style="font-size: 0.8rem; font-weight: 500;">Tự động (Hệ thống)</span>
@@ -781,7 +781,7 @@
 
     <!-- Main Dashboard script -->
     <script src="js/chatbot.js?v=20261024_v26"></script>
-    <script src="js/dashboard.js?v=20261024_v25"></script>
+    <script src="js/dashboard.js?v=20261024_v26"></script>
     <!-- Cookie Consent & Preferences System -->
     <script src="js/cookie-consent.js?v=20261024_v24"></script>
     <!-- PWA Install Manager (Android & iOS) -->

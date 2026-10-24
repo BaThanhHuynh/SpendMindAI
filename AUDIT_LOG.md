@@ -608,6 +608,25 @@
       2. Trong [css/styles.css](file:///d:/codevstdio/repo/SpendMindAI/css/styles.css): đặt `.typewriter-cursor { display: none !important; }` và dọn dẹp các keyframe animation chớp nháy con trỏ.
       3. Bump `styles.css?v=20261024_v36`, `index.js?v=20261024_v19`, `CACHE_NAME` → `spendmind-v7.9`.
     - **Kiểm chứng:** Node syntax check pass; CSS parse hợp lệ; chữ xuất hiện từng ký tự mượt mà mà không có ký hiệu `|` nhấp nháy đi kèm; deploy Vercel thành công.
+50. **[P2] UX - Nâng Cấp Menu Cài Đặt Hệ Thống (Settings Dropdown/Modal) Chuẩn Apple UI & Fluid Spring Animation**
+    - **File:** `dashboard.html`, `js/dashboard.js`, `css/styles.css`, `index.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** Khi người dùng bấm vào icon tài khoản / cài đặt (`#btn-settings` ở header hoặc `#nav-btn-settings` ở thanh điều hướng mobile), menu cài đặt trước đây còn dùng animation tỉ lệ đơn giản (`scale-up 0.18s`), thiếu cảm giác kính mờ bo cong tự nhiên (squircle continuous curve) và các tương tác vật lý (controls, list elements staggered entrance, spring toggle switch) chuẩn Apple như đã thiết kế cho hamburger menu.
+    - **Thay đổi:**
+      1. **Cửa sổ (Window / Popover Card & Modal):**
+         - Thiết kế bo cong squircle cao cấp `border-radius: 20px`, bề mặt kính mờ frosted glass siêu mịn `backdrop-filter: blur(32px) saturate(190%)`, viền sáng tinh tế `1px solid rgba(255, 255, 255, 0.12)` (Dark mode) và `rgba(0, 0, 0, 0.08)` (Light mode), đổ bóng 2 lớp `box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05)`.
+         - Hiệu ứng mở/đóng lò xo Apple: trên desktop dùng `apple-popover-open` và `apple-popover-close` với `cubic-bezier(0.16, 1, 0.3, 1)`, trên mobile dùng `apple-modal-open` và `apple-modal-close` căn giữa màn hình mượt mà không bị giật hay khựng.
+         - Backdrop làm mờ toàn màn hình với `apple-fade-in` (0.26s) và `apple-fade-out` (0.2s) đồng bộ lúc đóng/mở.
+      2. **Nút điều khiển (Controls):**
+         - Nút kích hoạt `#btn-settings`: thiết kế kính bo cong 12px, phản hồi xúc giác `transform: scale(0.92)` khi bấm, xoay icon bánh răng 45° mượt mà khi menu đang mở (`#btn-settings.active i`).
+         - Nút đóng `.btn-close-dropdown`: thiết kế nút tròn kính Apple `28x28px`, bo tròn 50%, hover sáng nhẹ và phóng to 1.05x, bấm thu nhỏ 0.92x.
+         - Nút quay lại `.btn-back-settings`: đồng bộ nút tròn kính Apple `28x28px` với hiệu ứng xúc giác tương tự.
+         - Công tắc gạt `.switch` & `.slider`: nâng cấp thành toggle switch chuẩn iOS (viên thuốc bo tròn 999px, nút trượt tròn bóng 3D dịch chuyển đàn hồi với `cubic-bezier(0.16, 1, 0.3, 1)`, màu xanh lá Apple `#10b981`, hiệu ứng co dãn 23px khi chạm gạt).
+      3. **Các phần tử danh sách bên trong (Elements):**
+         - Hiệu ứng xuất hiện so le (staggered cascade entrance) qua thuộc tính CSS `--i` (từ 0 đến 6 ở menu chính và từ 0 đến 2 ở menu giao diện) kết hợp với đường cong `cubic-bezier(0.16, 1, 0.3, 1)`.
+         - Phản hồi chạm vuốt Apple: bấm giữ co lại `transform: scale(0.98)`, hover nền sáng nhẹ `rgba(255, 255, 255, 0.08)`, mũi tên chỉ báo dịch chuyển nhẹ sang phải.
+      4. **Tối ưu JavaScript:** Trong `positionSettingsDropdown()` tại `js/dashboard.js`, dọn dẹp thuộc tính inline `dropdown.style.transform = ""` thay vì `"none"` để CSS keyframes transform chạy trơn tru mà không bị đè style.
+      5. Bump `styles.css?v=20261024_v37`, `dashboard.js?v=20261024_v26`, `CACHE_NAME` → `spendmind-v7.10`.
+    - **Kiểm chứng:** Syntax check pass trên Node.js; kiểm thử giao diện desktop và mobile đều mượt mà, đồng bộ hoàn hảo; git commit & deploy Vercel thành công.
     - **Trạng thái:** [x] RESOLVED.
 
 

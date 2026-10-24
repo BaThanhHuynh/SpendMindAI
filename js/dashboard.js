@@ -2544,7 +2544,7 @@ function positionSettingsDropdown() {
             dropdown.style.right = Math.max(16, Math.round(window.innerWidth - rect.right)) + "px";
             dropdown.style.left = "auto";
             dropdown.style.bottom = "auto";
-            dropdown.style.transform = "none";
+            dropdown.style.transform = "";
         }
     } else {
         dropdown.style.position = "";
