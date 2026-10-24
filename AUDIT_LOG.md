@@ -642,9 +642,33 @@
          - Gỡ bỏ `pointerdown` và `touchstart` dư thừa trên `#settings-backdrop`, chỉ bắt sự kiện `click` và gọi `e.stopPropagation()` để ngăn chặn hoàn toàn hiện tượng ghost click xuyên lớp.
          - Tách biệt rõ ràng: Bấm `#btn-settings` khi menu đang mở sẽ đóng ngay lập tức; bấm bất kỳ điểm nào trên backdrop mờ sẽ đóng ngay lập tức mà không bao giờ kích hoạt re-open.
          - Nâng `z-index: 10003` cho `.settings-menu-container` trên cả desktop và mobile đảm bảo icon luôn nhận đúng sự kiện tương tác.
-      3. Bump `styles.css?v=20261024_v38`, `mobile.css?v=20261024_v27`, `dashboard.js?v=20261024_v27`, `CACHE_NAME` → `spendmind-v7.11`.
-    - **Kiểm chứng:** Syntax check pass trên Node.js; kiểm thử đóng/mở nhiều lần, chạm backdrop và chạm icon đều phản hồi dứt khoát, mượt mà chuẩn Apple; deploy Vercel thành công.
+52. **[P1] Feature & UX - Triển Khai Hệ Thống Skeleton Loading (Skeleton Screen & Shimmer Effect) Chuẩn Zero-CLS Toàn Bộ Dự Án**
+    - **File:** `css/skeleton.css`, `js/skeleton.js`, `dashboard.html`, `js/dashboard.js`, `js/chatbot.js`, `css/styles.css`, `index.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** Khi người dùng tải trang hoặc điều hướng giữa các tháng/tính năng, trang hiển thị màn hình trống hoặc các giá trị mặc định (0đ, ...) trước khi API trả về dữ liệu thật gây hiện tượng giật giụa bố cục (Cumulative Layout Shift - CLS) và làm giảm trải nghiệm người dùng. Người dùng yêu cầu triển khai hiệu ứng Skeleton Loading (Skeleton Screen) mô phỏng chính xác layout 1:1, tự viết CSS/JS thuần, tách module tái sử dụng, hiệu ứng shimmer ánh sáng lướt qua, hỗ trợ cả Dark và Light mode, và lặp lại danh sách mẫu từ 3 đến 5 items.
+    - **Thay đổi:**
+      1. **Hệ Thống Styling & Animation CSS Thuần (`css/skeleton.css`):**
+         - Thiết lập các Design Tokens chuyên biệt: Hỗ trợ linh hoạt Dark Mode (`rgba(255, 255, 255, 0.08)`) và Light Mode (`#e4e4e7` / `bg-gray-200`).
+         - Hiệu ứng ánh sáng lướt qua (Shimmer Effect): Keyframe `@keyframes skeleton-shimmer` chuyển động tịnh tiến `translateX(-100%)` → `translateX(100%)` vô tận với gradient trong suốt mượt mà, tăng tốc phần cứng GPU (`will-change: transform`).
+         - Tuân thủ khả năng tiếp cận (Accessibility): Tự động chuyển sang hiệu ứng nhịp thở nhẹ `@keyframes skeleton-pulse` khi người dùng bật `prefers-reduced-motion: reduce`.
+         - Bo góc tương đồng giao diện gốc: `border-radius: 6px` (text), `10px` (thẻ con), `16px/20px` (thẻ chính), `9999px` (nút/pill), `50%` (avatar).
+         - Cung cấp đầy đủ các thẻ composite mô phỏng 1:1 theo hình ảnh người dùng cung cấp: Media Card, Profile / Feed Card, Feature Banner Card, Compact Horizontal Card.
+      2. **Thư Viện Component Tái Sử Dụng (`js/skeleton.js` - `window.SkeletonRenderer`):**
+         - Tách riêng component theo chuẩn module: `renderFeedItemSkeleton()`, `renderFeedListSkeleton(count = 5)`, `renderBalanceCardSkeleton()`, `renderCalendarGridSkeleton(count = 35)`, `renderBudgetListSkeleton(count = 3)`, `renderChatbotMessageSkeleton()`, `renderChartCardSkeleton()`, `renderMediaCardSkeleton()`, `renderProfileCardSkeleton()`, `renderFeatureCardSkeleton()`, `renderCompactCardSkeleton()`.
+         - Cung cấp các helpers quản lý trạng thái: `mount(elementOrId, skeletonHtml)`, `unmount(elementOrId)`.
+      3. **Tích Hợp Khớp 1:1 Bố Cục Dự Án (Zero-CLS Layout Matching):**
+         - **Header:** Hiển thị khối chữ nhật bo góc `skeleton-title-sm` trong lúc tải tên người dùng.
+         - **Thẻ Số Dư Khả Dụng (`.balance-card`):** Khối số tiền lớn 180x38px, hai khối chỉ số thu nhập / chi tiêu 75x16px; khi dữ liệu về, hiệu ứng số lăn `animateValueRoll()` mượt mà thay thế skeleton không giật layout.
+         - **Biểu Đồ & Ngân Sách:** Khởi tạo sẵn 3 item ngân sách dạng thanh đo tiến độ shimmer và chart card placeholder.
+         - **Lưới Lịch (Calendar Grid):** 35 ô ngày skeleton với nhãn số ngày và badge giả lập khớp hoàn hảo 1:1 tỉ lệ aspect-ratio.
+         - **Danh Sách Giao Dịch Hàng Ngày (`#daily-transactions-list`):** Render 5 item skeleton mẫu (`<FeedItemSkeleton />`), mỗi item gồm avatar icon tròn 40x40px, dòng tiêu đề 55%, dòng mô tả 40%, và khối số tiền pill bên phải.
+         - **Chuyển Tháng:** Kích hoạt `showMonthSkeletonLoading()` tạo phản hồi chuyển động nhấp nháy sang trọng khi bấm tháng trước / tháng sau.
+         - **Trợ Lý Ảo Chatbot AI (`js/chatbot.js`):** Nâng cấp `showTypingIndicator()` từ 3 chấm đơn giản lên khối tin nhắn bot skeleton gồm avatar 32px và đoạn văn bản 3 dòng (100%, 82%, 46% - dòng cuối ngắn hơn theo đúng yêu cầu).
+      4. **Tối Ưu Service Worker & Cache PWA (`sw.js`):**
+         - Thêm `/css/skeleton.css` và `/js/skeleton.js` vào danh sách `STATIC_ASSETS`.
+         - Nâng cấp `CACHE_NAME` lên `spendmind-v7.12`, đồng thời cập nhật cache versioning cho toàn bộ file HTML.
+    - **Kiểm chứng:** Cú pháp Node.js `node --check` đạt 100% không lỗi; giao diện load tức thì không chớp màn hình đen/trắng, không giật layout (CLS = 0); deploy Vercel thành công.
     - **Trạng thái:** [x] RESOLVED.
+
 
 
 

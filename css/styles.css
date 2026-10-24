@@ -2,6 +2,8 @@
    CSS SYSTEM - APPLE HUMAN INTERFACE GUIDELINES & WEB DESIGN SYSTEM
    ========================================================================== */
 
+@import url('skeleton.css');
+
 /* Font & Global Setup */
 :root {
     /* Fonts — Apple SF Pro font stack with Inter / system-ui fallback */

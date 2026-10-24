@@ -30,7 +30,8 @@ const DEFAULT_BUDGETS = {
 let state = {
     transactions: [],
     budgets: { ...DEFAULT_BUDGETS },
-    theme: "dark"
+    theme: "dark",
+    isLoading: true
 };
 
 // User Settings State (Global)
@@ -87,6 +88,7 @@ const API_URL = "api";
 // --- 2. INITIALIZATION & ROUTING SECURITY ---
 document.addEventListener("DOMContentLoaded", () => {
     initTheme();
+    initInitialSkeletons();
     checkAuthSession(); // Session guard (Redirects to login.html if guest)
     populateCategorySelectors();
     initEventListeners();
@@ -94,6 +96,19 @@ document.addEventListener("DOMContentLoaded", () => {
         lucide.createIcons();
     }
 });
+
+function initInitialSkeletons() {
+    if (state.isLoading && window.SkeletonRenderer) {
+        const gridCells = document.getElementById("calendar-grid-cells");
+        if (gridCells && (!gridCells.children || gridCells.children.length === 0)) {
+            gridCells.innerHTML = window.SkeletonRenderer.renderCalendarGridSkeleton(35);
+        }
+        const dailyTransactionsList = document.getElementById("daily-transactions-list");
+        if (dailyTransactionsList && (!dailyTransactionsList.children || dailyTransactionsList.children.length === 0)) {
+            dailyTransactionsList.innerHTML = window.SkeletonRenderer.renderFeedListSkeleton(5);
+        }
+    }
+}
 
 // Re-verify session on back/forward browser cache navigation (bfcache)
 window.addEventListener("pageshow", (e) => {
@@ -1195,19 +1210,39 @@ function initEventListeners() {
         });
     }
 
+    function showMonthSkeletonLoading() {
+        if (window.SkeletonRenderer) {
+            const gridCells = document.getElementById("calendar-grid-cells");
+            const dailyList = document.getElementById("daily-transactions-list");
+            const dailyEmptyState = document.getElementById("daily-transactions-empty");
+            if (dailyEmptyState) dailyEmptyState.style.display = "none";
+            if (gridCells) gridCells.innerHTML = window.SkeletonRenderer.renderCalendarGridSkeleton(35);
+            if (dailyList) {
+                dailyList.style.display = "flex";
+                dailyList.innerHTML = window.SkeletonRenderer.renderFeedListSkeleton(4);
+            }
+        }
+    }
+
     // Calendar navigation
     const btnPrevMonth = document.getElementById("btn-prev-month");
     if (btnPrevMonth) {
         btnPrevMonth.addEventListener("click", () => {
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-            updateUI();
+            showMonthSkeletonLoading();
+            setTimeout(() => {
+                updateUI();
+            }, 80);
         });
     }
     const btnNextMonth = document.getElementById("btn-next-month");
     if (btnNextMonth) {
         btnNextMonth.addEventListener("click", () => {
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-            updateUI();
+            showMonthSkeletonLoading();
+            setTimeout(() => {
+                updateUI();
+            }, 80);
         });
     }
     const btnToggleSearch = document.getElementById("btn-toggle-search");
@@ -1493,6 +1528,7 @@ function handleBudgetSubmit(e) {
 // --- 4. RENDER & CALCULATE UI ---
 
 function updateUI(redrawCharts = true) {
+    state.isLoading = false;
     const stats = calculateFinanceStats();
     
     const balanceEl = document.getElementById("total-balance");

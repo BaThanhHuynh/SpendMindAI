@@ -490,13 +490,23 @@ function initChatbot() {
     function showTypingIndicator() {
         const indicator = document.createElement("div");
         indicator.className = "chat-message bot typing-indicator-wrapper";
-        indicator.innerHTML = `
-            <div class="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        `;
+        if (window.SkeletonRenderer && typeof window.SkeletonRenderer.renderChatbotMessageSkeleton === "function") {
+            indicator.innerHTML = window.SkeletonRenderer.renderChatbotMessageSkeleton();
+        } else {
+            indicator.innerHTML = `
+                <div class="skeleton-chat-message" aria-hidden="true">
+                    <div class="skeleton-bone skeleton-avatar-sm"></div>
+                    <div class="skeleton-chat-content">
+                        <div class="skeleton-bone skeleton-chat-author"></div>
+                        <div class="skeleton-paragraph">
+                            <div class="skeleton-bone skeleton-line" style="width: 100%;"></div>
+                            <div class="skeleton-bone skeleton-line" style="width: 82%;"></div>
+                            <div class="skeleton-bone skeleton-line" style="width: 46%;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
         messagesContainer.appendChild(indicator);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         return indicator;

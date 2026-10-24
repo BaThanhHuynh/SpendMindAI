@@ -32,7 +32,8 @@
     <link rel="apple-touch-icon" href="images/logoapp.png?v=20260911_v8">
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/styles.css?v=20261024_v38">
+    <link rel="stylesheet" href="css/skeleton.css?v=20261024_v1">
+    <link rel="stylesheet" href="css/styles.css?v=20261024_v39">
     <link rel="stylesheet" href="css/mobile.css?v=20261024_v27">
     
     <!-- Google Identity Services SDK -->
@@ -44,8 +45,8 @@
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
 
-    <!-- SECURED APPLICATION DASHBOARD (Hidden by default to prevent flash of content) -->
-    <div class="app-container hidden" id="app-dashboard">
+    <!-- SECURED APPLICATION DASHBOARD (Skeleton screen renders immediately for Zero-CLS) -->
+    <div class="app-container" id="app-dashboard">
         <!-- HEADER -->
         <header class="app-header">
             <div class="logo-area">
@@ -53,7 +54,7 @@
                     <img src="images/logoapp.webp?v=20260911_v8" alt="SpendMindAI Logo" width="38" height="38" loading="lazy">
                 </div>
                 <div>
-                    <h1>Xin chào, <strong id="user-display-name">...</strong>!</h1>
+                    <h1>Xin chào, <strong id="user-display-name"><span class="skeleton-bone skeleton-title-sm" style="display: inline-block; vertical-align: middle; margin: 0; width: 80px; height: 18px;"></span></strong>!</h1>
                     <p class="tagline">Quản lý tài chính thông minh</p>
                 </div>
             </div>
@@ -90,20 +91,20 @@
                 <div class="balance-card-wrapper">
                     <div class="balance-card">
                         <div class="balance-label">Tổng số dư khả dụng</div>
-                        <div class="balance-amount" id="total-balance">0đ</div>
+                        <div class="balance-amount" id="total-balance"><span class="skeleton-bone skeleton-balance-amount" style="display: block; width: 180px; height: 38px; margin: 4px 0;"></span></div>
                         <div class="balance-indicators">
                             <div class="indicator income">
                                 <i data-lucide="arrow-down-left"></i>
                                 <div>
                                     <span>Thu nhập</span>
-                                    <strong id="summary-income">0đ</strong>
+                                    <strong id="summary-income"><span class="skeleton-bone" style="display: block; width: 75px; height: 16px;"></span></strong>
                                 </div>
                             </div>
                             <div class="indicator expense">
                                 <i data-lucide="arrow-up-right"></i>
                                 <div>
                                     <span>Chi tiêu</span>
-                                    <strong id="summary-expense">0đ</strong>
+                                    <strong id="summary-expense"><span class="skeleton-bone" style="display: block; width: 75px; height: 16px;"></span></strong>
                                 </div>
                             </div>
                         </div>
@@ -163,7 +164,36 @@
 
                     <!-- Budget Progress List -->
                     <div class="budget-progress-list" id="budget-progress-container">
-                        <!-- Dynamic budget items -->
+                        <div class="skeleton-budget-item" aria-hidden="true">
+                            <div class="skeleton-budget-header">
+                                <div class="skeleton-bone skeleton-budget-name"></div>
+                                <div class="skeleton-budget-meta">
+                                    <div class="skeleton-bone skeleton-pill" style="width: 65px; height: 22px;"></div>
+                                    <div class="skeleton-bone skeleton-line" style="width: 95px; height: 14px;"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-bone skeleton-budget-bar"></div>
+                        </div>
+                        <div class="skeleton-budget-item" aria-hidden="true">
+                            <div class="skeleton-budget-header">
+                                <div class="skeleton-bone skeleton-budget-name"></div>
+                                <div class="skeleton-budget-meta">
+                                    <div class="skeleton-bone skeleton-pill" style="width: 65px; height: 22px;"></div>
+                                    <div class="skeleton-bone skeleton-line" style="width: 95px; height: 14px;"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-bone skeleton-budget-bar"></div>
+                        </div>
+                        <div class="skeleton-budget-item" aria-hidden="true">
+                            <div class="skeleton-budget-header">
+                                <div class="skeleton-bone skeleton-budget-name"></div>
+                                <div class="skeleton-budget-meta">
+                                    <div class="skeleton-bone skeleton-pill" style="width: 65px; height: 22px;"></div>
+                                    <div class="skeleton-bone skeleton-line" style="width: 95px; height: 14px;"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-bone skeleton-budget-bar"></div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -257,7 +287,66 @@
                             <strong id="selected-date-total">-5,000,000đ</strong>
                         </div>
                         <div class="daily-list" id="daily-transactions-list">
-                            <!-- Dynamic daily transactions -->
+                            <div class="skeleton-daily-item" aria-hidden="true">
+                                <div class="skeleton-daily-left">
+                                    <div class="skeleton-bone skeleton-avatar"></div>
+                                    <div class="skeleton-daily-info">
+                                        <div class="skeleton-bone skeleton-daily-title"></div>
+                                        <div class="skeleton-bone skeleton-daily-desc"></div>
+                                    </div>
+                                </div>
+                                <div class="skeleton-daily-right">
+                                    <div class="skeleton-bone skeleton-daily-amount"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-daily-item" aria-hidden="true">
+                                <div class="skeleton-daily-left">
+                                    <div class="skeleton-bone skeleton-avatar"></div>
+                                    <div class="skeleton-daily-info">
+                                        <div class="skeleton-bone skeleton-daily-title"></div>
+                                        <div class="skeleton-bone skeleton-daily-desc"></div>
+                                    </div>
+                                </div>
+                                <div class="skeleton-daily-right">
+                                    <div class="skeleton-bone skeleton-daily-amount"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-daily-item" aria-hidden="true">
+                                <div class="skeleton-daily-left">
+                                    <div class="skeleton-bone skeleton-avatar"></div>
+                                    <div class="skeleton-daily-info">
+                                        <div class="skeleton-bone skeleton-daily-title"></div>
+                                        <div class="skeleton-bone skeleton-daily-desc"></div>
+                                    </div>
+                                </div>
+                                <div class="skeleton-daily-right">
+                                    <div class="skeleton-bone skeleton-daily-amount"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-daily-item" aria-hidden="true">
+                                <div class="skeleton-daily-left">
+                                    <div class="skeleton-bone skeleton-avatar"></div>
+                                    <div class="skeleton-daily-info">
+                                        <div class="skeleton-bone skeleton-daily-title"></div>
+                                        <div class="skeleton-bone skeleton-daily-desc"></div>
+                                    </div>
+                                </div>
+                                <div class="skeleton-daily-right">
+                                    <div class="skeleton-bone skeleton-daily-amount"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-daily-item" aria-hidden="true">
+                                <div class="skeleton-daily-left">
+                                    <div class="skeleton-bone skeleton-avatar"></div>
+                                    <div class="skeleton-daily-info">
+                                        <div class="skeleton-bone skeleton-daily-title"></div>
+                                        <div class="skeleton-bone skeleton-daily-desc"></div>
+                                    </div>
+                                </div>
+                                <div class="skeleton-daily-right">
+                                    <div class="skeleton-bone skeleton-daily-amount"></div>
+                                </div>
+                            </div>
                         </div>
                         <div class="empty-state" id="daily-transactions-empty" style="display: none;">
                             <div class="empty-icon"><i data-lucide="receipt"></i></div>
@@ -779,9 +868,11 @@
         </button>
     </nav>
 
+    <!-- Skeleton Loading Screen Library -->
+    <script src="js/skeleton.js?v=20261024_v1"></script>
     <!-- Main Dashboard script -->
-    <script src="js/chatbot.js?v=20261024_v26"></script>
-    <script src="js/dashboard.js?v=20261024_v27"></script>
+    <script src="js/chatbot.js?v=20261024_v27"></script>
+    <script src="js/dashboard.js?v=20261024_v28"></script>
     <!-- Cookie Consent & Preferences System -->
     <script src="js/cookie-consent.js?v=20261024_v24"></script>
     <!-- PWA Install Manager (Android & iOS) -->
