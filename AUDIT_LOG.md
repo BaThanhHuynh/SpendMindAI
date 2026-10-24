@@ -329,7 +329,22 @@
       - Thêm debounce 120ms cho `search-input`.
       - Thiết lập `display: none` cho `.bg-glow` khi màu là `transparent`, loại bỏ tính toán blur layer không cần thiết.
       - Tối ưu luồng hiển thị mượt mà.
-    - **Trạng thái:** [x] RESOLVED. Gõ phím tìm kiếm phản hồi trong 0.2ms; loại bỏ hoàn toàn hiện tượng drop frame/jank khi cuộn trang.
+31. **[P1] UI/UX & Responsive Ergonomics - Cử chỉ Nhấn Giữ (Long-press) Mở Cửa Sổ "Chỉnh Sửa" Số Liệu Trên Mobile/Tablet & Ẩn Cây Bút Lịch (Desktop Giữ Nguyên)**
+    - **File:** `dashboard.html`, `js/dashboard.js`, `css/styles.css`, `css/mobile.css`
+    - **Yêu cầu & Vấn đề:**
+      - Trên giao diện Mobile và Tablet, icon cây bút (`.btn-quick-add`) trong từng ô ngày lịch gây chật chội, che khuất số liệu thu chi và dễ bị bấm nhầm khi chạm chọn ngày.
+      - Người dùng muốn ẩn cây bút ở lịch trên Mobile/Tablet và khi nhấn giữ (long-press) vào ô ngày thì hiện lên hộp cửa sổ nhỏ "Chỉnh sửa" để tùy chỉnh các số liệu đã nhập.
+      - Trên Desktop (màn hình > 1024px), giữ nguyên thiết kế và tương tác hiện tại.
+    - **Giải pháp:**
+      - **Ẩn cây bút trên Mobile/Tablet:** Áp dụng `@media (max-width: 1024px) { .btn-quick-add { display: none !important; } }` trong cả `css/styles.css` và `css/mobile.css`. Desktop (> 1024px) giữ nguyên hoàn toàn.
+      - **Cử chỉ Nhấn Giữ (Long-press Controller):** Xây dựng bộ điều khiển nhận diện touch hold với ngưỡng chuẩn 450ms, hiệu ứng co nhẹ cell (`cell-pressing`) và haptic feedback rung nhẹ (`navigator.vibrate(40)`). Tự động hủy nếu ngón tay di chuyển/cuộn màn hình (> 8px) và nuốt sự kiện click để tránh kích hoạt chọn lặp.
+      - **Hộp cửa sổ nhỏ "Chỉnh sửa" (`#day-edit-modal`):**
+        - Thiết kế chuẩn Glassmorphism theo phong cách Apple iOS (Bottom Sheet trên Mobile, Centered Dialog gọn gàng trên Tablet).
+        - Hiển thị tóm tắt thu/chi/tổng trong ngày, danh sách chi tiết các số liệu đã nhập kèm nút "Sửa" và "Xóa" riêng biệt cho từng giao dịch.
+        - Tích hợp nút "+ Thêm giao dịch mới" cho ngày được chọn.
+        - Đóng nhanh qua nút X, nhấn ra ngoài backdrop hoặc phím ESC.
+      - **Khắc phục lỗi hiển thị:** Bổ sung gọi `openTransactionModal()` khi kích hoạt `editTransaction()` để đảm bảo form sửa giao dịch luôn hiển thị mượt mà.
+    - **Trạng thái:** [x] RESOLVED. Kiểm tra cú pháp JavaScript đạt chuẩn 100%, responsive hoạt động chính xác trên cả Mobile, Tablet và Desktop.
 
 
 

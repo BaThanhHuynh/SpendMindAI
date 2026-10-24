@@ -3564,6 +3564,37 @@ html[data-theme="light"] .btn-quick-add {
     color: currentColor;
 }
 
+/* Touch Ergonomics & Long-Press Feedback for Calendar Cells */
+.calendar-cell {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.calendar-cell.cell-pressing {
+    transform: scale(0.95) !important;
+    background: var(--accent-glow) !important;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease !important;
+    box-shadow: 0 0 0 2px var(--accent-color) inset !important;
+}
+
+.calendar-cell.cell-pressed {
+    animation: cellPulse 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes cellPulse {
+    0% { transform: scale(0.94); }
+    50% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+}
+
+/* Ẩn cây bút ở lịch trên Mobile & Tablet (Desktop giữ nguyên) */
+@media (max-width: 1024px) {
+    .btn-quick-add {
+        display: none !important;
+    }
+}
+
 .calendar-cell:nth-child(7n) {
     border-right: none;
 }
@@ -6421,5 +6452,412 @@ html[data-theme="light"] .landing-install-card:hover {
         justify-content: center;
     }
 }
+
+/* ==========================================================================
+   DAY EDIT MODAL - HỘP CỬA SỔ NHỎ "CHỈNH SỬA" KHI NHẤN GIỮ TRÊN MOBILE & TABLET
+   ========================================================================== */
+.day-edit-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.68);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 10001 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.day-edit-modal-overlay.hidden {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Small Window Card */
+.day-edit-card {
+    width: 100%;
+    max-width: 440px;
+    background: rgba(28, 28, 30, 0.95);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 22px;
+    padding: 20px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transform: translateY(0) scale(1);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+
+[data-theme="light"] .day-edit-card {
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.day-edit-modal-overlay.hidden .day-edit-card {
+    transform: translateY(20px) scale(0.96);
+    opacity: 0;
+}
+
+/* Header */
+.day-edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .day-edit-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.day-edit-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.day-edit-badge-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: var(--accent-glow);
+    color: var(--accent-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.day-edit-badge-icon i {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.2;
+}
+
+.day-edit-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.25;
+}
+
+.day-edit-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 2px 0 0 0;
+}
+
+/* Stats Bar */
+.day-edit-stats-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.035);
+    border-radius: 14px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] .day-edit-stats-bar {
+    background: rgba(0, 0, 0, 0.025);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.day-edit-stat-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.day-edit-stat-col .stat-lbl {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+}
+
+.day-edit-stat-col strong {
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.day-edit-stat-col .stat-income {
+    color: var(--income-color);
+}
+
+.day-edit-stat-col .stat-expense {
+    color: var(--expense-color);
+}
+
+/* Body & Items */
+.day-edit-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 320px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 2px;
+}
+
+.day-edit-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 0 2px;
+}
+
+.day-edit-tx-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.day-edit-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 10px 12px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+[data-theme="light"] .day-edit-item {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.day-edit-item:hover,
+.day-edit-item:active {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: var(--accent-color);
+}
+
+[data-theme="light"] .day-edit-item:hover,
+[data-theme="light"] .day-edit-item:active {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.day-edit-item-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.day-edit-item-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.day-edit-item-icon i {
+    width: 17px;
+    height: 17px;
+    stroke-width: 2.2;
+}
+
+.day-edit-item-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.day-edit-item-cat {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.day-edit-item-desc {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.day-edit-item-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.day-edit-item-amount {
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.day-edit-item-amount.income {
+    color: var(--income-color);
+}
+
+.day-edit-item-amount.expense {
+    color: var(--expense-color);
+}
+
+.day-edit-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-action-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--accent-glow);
+    color: var(--accent-color);
+    border: none;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-action-edit:active {
+    transform: scale(0.95);
+    background: var(--accent-color);
+    color: var(--accent-text);
+}
+
+.btn-action-edit i {
+    width: 13px;
+    height: 13px;
+    stroke-width: 2.2;
+}
+
+.btn-action-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 69, 58, 0.1);
+    color: var(--expense-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-action-delete:active {
+    transform: scale(0.92);
+    background: var(--expense-color);
+    color: #fff;
+}
+
+.btn-action-delete i {
+    width: 13px;
+    height: 13px;
+    stroke-width: 2;
+}
+
+/* Empty State */
+.day-edit-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 12px;
+    text-align: center;
+    gap: 8px;
+}
+
+.empty-icon-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-icon-circle i {
+    width: 22px;
+    height: 22px;
+}
+
+.empty-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.empty-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 260px;
+}
+
+/* Footer Add Button */
+.day-edit-footer {
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="light"] .day-edit-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.day-edit-btn-add {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.day-edit-btn-add i {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.2;
+}
+
 
 

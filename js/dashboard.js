@@ -79,6 +79,7 @@ function renderScopedIcons(rootElement) {
 // Calendar State
 let currentCalendarDate = new Date();
 let selectedCalendarDay = new Date();
+let currentDayEditTime = null;
 
 // API Endpoint configuration
 const API_URL = "api";
@@ -374,9 +375,289 @@ function closeTransactionModal() {
     const modal = document.getElementById("transaction-modal");
     if (modal) {
         modal.classList.add("hidden");
-        document.body.classList.remove("modal-open");
+        // Only remove modal-open if day-edit-modal is also closed
+        const dayModal = document.getElementById("day-edit-modal");
+        if (!dayModal || dayModal.classList.contains("hidden")) {
+            document.body.classList.remove("modal-open");
+        }
         resetTransactionForm();
     }
+}
+
+// --- DAY EDIT MODAL FUNCTIONS (HỘP CỬA SỔ NHỎ "CHỈNH SỬA" TRÊN MOBILE & TABLET) ---
+function openDayEditModal(time) {
+    currentDayEditTime = time;
+    renderDayEditModalContent(time);
+    const modal = document.getElementById("day-edit-modal");
+    if (modal) {
+        modal.classList.remove("hidden");
+        document.body.classList.add("modal-open");
+    }
+}
+
+function closeDayEditModal() {
+    const modal = document.getElementById("day-edit-modal");
+    if (modal) {
+        modal.classList.add("hidden");
+        const txModal = document.getElementById("transaction-modal");
+        if (!txModal || txModal.classList.contains("hidden")) {
+            document.body.classList.remove("modal-open");
+        }
+    }
+    currentDayEditTime = null;
+}
+
+function renderDayEditModalContent(time) {
+    if (!time) return;
+    const targetDate = new Date(time);
+    const dayTransactions = state.transactions.filter(t => {
+        const d = new Date(t.date);
+        return d.getFullYear() === targetDate.getFullYear() &&
+               d.getMonth() === targetDate.getMonth() &&
+               d.getDate() === targetDate.getDate();
+    });
+
+    const dateLabelEl = document.getElementById("day-edit-date-label");
+    if (dateLabelEl) {
+        dateLabelEl.textContent = formatSelectedDateLabel(targetDate);
+    }
+
+    let income = 0;
+    let expense = 0;
+    dayTransactions.forEach(t => {
+        if (t.type === 'income') income += t.amount;
+        else expense += t.amount;
+    });
+    const net = income - expense;
+
+    const incomeEl = document.getElementById("day-edit-income");
+    const expenseEl = document.getElementById("day-edit-expense");
+    const netEl = document.getElementById("day-edit-net");
+    const countEl = document.getElementById("day-edit-tx-count");
+    const listEl = document.getElementById("day-edit-tx-list");
+    const emptyEl = document.getElementById("day-edit-empty");
+
+    if (incomeEl) incomeEl.textContent = '+' + formatNumberWithCommas(income) + 'đ';
+    if (expenseEl) expenseEl.textContent = '-' + formatNumberWithCommas(expense) + 'đ';
+    if (netEl) {
+        netEl.textContent = (net < 0 ? '-' : (net > 0 ? '+' : '')) + formatNumberWithCommas(Math.abs(net)) + 'đ';
+        netEl.className = 'stat-net ' + (net >= 0 ? 'stat-income' : 'stat-expense');
+    }
+    if (countEl) countEl.textContent = `${dayTransactions.length} mục`;
+
+    if (!listEl) return;
+    listEl.innerHTML = "";
+
+    if (dayTransactions.length === 0) {
+        if (emptyEl) emptyEl.style.display = "flex";
+        listEl.style.display = "none";
+    } else {
+        if (emptyEl) emptyEl.style.display = "none";
+        listEl.style.display = "flex";
+
+        const fragment = document.createDocumentFragment();
+        dayTransactions.forEach(t => {
+            const cat = CATEGORIES[t.category] || { label: t.category, icon: "help-circle", colorClass: "badge-color-mint" };
+            const isIncome = t.type === 'income';
+
+            const itemEl = document.createElement("div");
+            itemEl.className = "day-edit-item";
+            itemEl.dataset.id = t.id;
+
+            itemEl.innerHTML = `
+                <div class="day-edit-item-left">
+                    <div class="day-edit-item-icon ${cat.colorClass}">
+                        <i data-lucide="${cat.icon}"></i>
+                    </div>
+                    <div class="day-edit-item-info">
+                        <span class="day-edit-item-cat">${escapeHTML(cat.label)}</span>
+                        ${t.description ? `<span class="day-edit-item-desc">${escapeHTML(t.description)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="day-edit-item-right">
+                    <span class="day-edit-item-amount ${isIncome ? 'income' : 'expense'}">
+                        ${isIncome ? '+' : '-'}${formatNumberWithCommas(t.amount)}đ
+                    </span>
+                    <div class="day-edit-item-actions">
+                        <button type="button" class="btn-action-edit" data-id="${t.id}" title="Chỉnh sửa số liệu" aria-label="Chỉnh sửa">
+                            <i data-lucide="pencil"></i>
+                            <span>Sửa</span>
+                        </button>
+                        <button type="button" class="btn-action-delete" data-id="${t.id}" title="Xóa giao dịch" aria-label="Xóa">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            fragment.appendChild(itemEl);
+        });
+
+        listEl.appendChild(fragment);
+    }
+
+    const modal = document.getElementById("day-edit-modal");
+    if (modal) {
+        renderScopedIcons(modal);
+    }
+}
+
+// Controller nhận diện cử chỉ nhấn giữ (Long-press) trên ô lịch cho Mobile & Tablet
+function initCalendarLongPress(calendarGrid) {
+    if (!calendarGrid) return null;
+
+    let longPressTimer = null;
+    let longPressTriggered = false;
+    let startX = 0;
+    let startY = 0;
+    let currentCell = null;
+
+    function isTouchOrMobileDevice() {
+        return window.innerWidth <= 1024 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    }
+
+    function cancelTimer() {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        if (currentCell) {
+            currentCell.classList.remove("cell-pressing");
+            currentCell = null;
+        }
+    }
+
+    function fireLongPress(cell) {
+        longPressTriggered = true;
+        cell.classList.remove("cell-pressing");
+        cell.classList.add("cell-pressed");
+        setTimeout(() => cell.classList.remove("cell-pressed"), 300);
+
+        if (navigator.vibrate) {
+            try { navigator.vibrate(40); } catch (_) {}
+        }
+
+        const time = Number(cell.dataset.time);
+        if (time) {
+            selectCalendarDay(time);
+            openDayEditModal(time);
+        }
+    }
+
+    // Touch listeners
+    calendarGrid.addEventListener("touchstart", (e) => {
+        if (!isTouchOrMobileDevice()) return;
+
+        const cell = e.target.closest(".calendar-cell");
+        if (!cell || !cell.dataset.time) return;
+
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        currentCell = cell;
+        longPressTriggered = false;
+
+        currentCell.classList.add("cell-pressing");
+
+        clearTimeout(longPressTimer);
+        longPressTimer = setTimeout(() => {
+            if (currentCell) {
+                fireLongPress(currentCell);
+            }
+        }, 450);
+    }, { passive: true });
+
+    calendarGrid.addEventListener("touchmove", (e) => {
+        if (!longPressTimer) return;
+        const touch = e.touches[0];
+        const dx = Math.abs(touch.clientX - startX);
+        const dy = Math.abs(touch.clientY - startY);
+        if (dx > 8 || dy > 8) {
+            cancelTimer();
+        }
+    }, { passive: true });
+
+    calendarGrid.addEventListener("touchend", (e) => {
+        if (currentCell) {
+            currentCell.classList.remove("cell-pressing");
+        }
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        if (longPressTriggered) {
+            e.preventDefault();
+            setTimeout(() => {
+                longPressTriggered = false;
+            }, 180);
+        }
+        currentCell = null;
+    });
+
+    calendarGrid.addEventListener("touchcancel", () => {
+        cancelTimer();
+        longPressTriggered = false;
+    });
+
+    // Mouse listeners for tablet with trackpad / browser DevTools responsive testing
+    calendarGrid.addEventListener("mousedown", (e) => {
+        if (window.innerWidth > 1024) return; // Desktop mouse behavior stays untouched
+        if (e.button !== 0) return;
+
+        const cell = e.target.closest(".calendar-cell");
+        if (!cell || !cell.dataset.time) return;
+
+        startX = e.clientX;
+        startY = e.clientY;
+        currentCell = cell;
+        longPressTriggered = false;
+
+        currentCell.classList.add("cell-pressing");
+
+        clearTimeout(longPressTimer);
+        longPressTimer = setTimeout(() => {
+            if (currentCell) {
+                fireLongPress(currentCell);
+            }
+        }, 450);
+    });
+
+    calendarGrid.addEventListener("mousemove", (e) => {
+        if (!longPressTimer) return;
+        const dx = Math.abs(e.clientX - startX);
+        const dy = Math.abs(e.clientY - startY);
+        if (dx > 8 || dy > 8) {
+            cancelTimer();
+        }
+    });
+
+    calendarGrid.addEventListener("mouseup", () => {
+        if (currentCell) {
+            currentCell.classList.remove("cell-pressing");
+        }
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        if (longPressTriggered) {
+            setTimeout(() => {
+                longPressTriggered = false;
+            }, 180);
+        }
+        currentCell = null;
+    });
+
+    calendarGrid.addEventListener("contextmenu", (e) => {
+        if (isTouchOrMobileDevice()) {
+            const cell = e.target.closest(".calendar-cell");
+            if (cell) {
+                e.preventDefault();
+            }
+        }
+    });
+
+    return {
+        wasLongPressed: () => longPressTriggered
+    };
 }
 
 // Setup Event Listeners
@@ -452,8 +733,16 @@ function initEventListeners() {
 
     // Event delegation for calendar grid and daily transactions list
     const calendarGrid = document.getElementById("calendar-grid-cells");
+    let calendarLongPress = null;
     if (calendarGrid) {
+        calendarLongPress = initCalendarLongPress(calendarGrid);
+
         calendarGrid.addEventListener("click", (e) => {
+            if (calendarLongPress && calendarLongPress.wasLongPressed()) {
+                e.stopPropagation();
+                e.preventDefault();
+                return;
+            }
             const quickAddBtn = e.target.closest(".btn-quick-add");
             if (quickAddBtn) {
                 e.stopPropagation();
@@ -467,6 +756,60 @@ function initEventListeners() {
             if (cell && cell.dataset.time) {
                 selectCalendarDay(Number(cell.dataset.time));
             }
+        });
+    }
+
+    // Day Edit Modal Event Listeners
+    const dayEditTxList = document.getElementById("day-edit-tx-list");
+    if (dayEditTxList) {
+        dayEditTxList.addEventListener("click", (e) => {
+            const btnDelete = e.target.closest(".btn-action-delete");
+            if (btnDelete && btnDelete.dataset.id) {
+                e.stopPropagation();
+                deleteTransaction(btnDelete.dataset.id);
+                return;
+            }
+
+            const btnEdit = e.target.closest(".btn-action-edit");
+            if (btnEdit && btnEdit.dataset.id) {
+                e.stopPropagation();
+                const id = btnEdit.dataset.id;
+                closeDayEditModal();
+                editTransaction(id);
+                return;
+            }
+
+            const item = e.target.closest(".day-edit-item");
+            if (item && item.dataset.id) {
+                e.stopPropagation();
+                const id = item.dataset.id;
+                closeDayEditModal();
+                editTransaction(id);
+                return;
+            }
+        });
+    }
+
+    const btnCloseDayEdit = document.getElementById("btn-close-day-edit");
+    if (btnCloseDayEdit) {
+        btnCloseDayEdit.addEventListener("click", closeDayEditModal);
+    }
+
+    const dayEditModal = document.getElementById("day-edit-modal");
+    if (dayEditModal) {
+        dayEditModal.addEventListener("click", (e) => {
+            if (e.target === dayEditModal) {
+                closeDayEditModal();
+            }
+        });
+    }
+
+    const btnDayEditAdd = document.getElementById("btn-day-edit-add");
+    if (btnDayEditAdd) {
+        btnDayEditAdd.addEventListener("click", () => {
+            const time = currentDayEditTime || selectedCalendarDay.getTime();
+            closeDayEditModal();
+            openTransactionModalForDate(time);
         });
     }
 
@@ -726,6 +1069,16 @@ function initEventListeners() {
     // Close on Escape key
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
+            const dayModal = document.getElementById("day-edit-modal");
+            if (dayModal && !dayModal.classList.contains("hidden")) {
+                closeDayEditModal();
+                return;
+            }
+            const txModal = document.getElementById("transaction-modal");
+            if (txModal && !txModal.classList.contains("hidden")) {
+                closeTransactionModal();
+                return;
+            }
             const dropdown = document.getElementById("settings-dropdown");
             if (dropdown && !dropdown.classList.contains("hidden")) {
                 closeSettingsDropdown();
@@ -1018,6 +1371,8 @@ function editTransaction(id) {
     const transaction = state.transactions.find(t => t.id === id);
     if (!transaction) return;
 
+    openTransactionModal();
+
     // On mobile, scroll smoothly without layout disruption
     const formCard = document.querySelector(".form-card");
     if (formCard) {
@@ -1064,6 +1419,9 @@ function deleteTransaction(id) {
                 showToast("Đã xóa giao dịch thành công", "success");
                 resetTransactionForm();
                 fetchStateFromServer();
+                if (currentDayEditTime) {
+                    renderDayEditModalContent(currentDayEditTime);
+                }
             }
         })
         .catch(err => {
@@ -1122,6 +1480,10 @@ function updateUI(redrawCharts = true) {
 
     renderCalendarView(stats.filteredTransactions);
     renderBudgetsProgress(stats.categoryExpenses);
+
+    if (currentDayEditTime) {
+        renderDayEditModalContent(currentDayEditTime);
+    }
 
     if (redrawCharts) {
         renderCharts(stats.categoryExpenses);
@@ -2511,6 +2873,8 @@ window.selectCalendarDay = selectCalendarDay;
 window.openTransactionModalForDate = openTransactionModalForDate;
 window.openTransactionModal = openTransactionModal;
 window.closeTransactionModal = closeTransactionModal;
+window.openDayEditModal = openDayEditModal;
+window.closeDayEditModal = closeDayEditModal;
 window.closeSettingsDropdown = closeSettingsDropdown;
 window.toggleSettingsDropdown = toggleSettingsDropdown;
 window.positionSettingsDropdown = positionSettingsDropdown;

@@ -340,6 +340,70 @@
         </div>
     </div>
 
+    <!-- MOBILE / TABLET DAY EDIT MODAL (HỘP CỬA SỔ NHỎ "CHỈNH SỬA" KHI NHẤN GIỮ LỊCH) -->
+    <div id="day-edit-modal" class="modal-overlay hidden day-edit-modal-overlay">
+        <div class="modal-content card glass-card day-edit-card" role="dialog" aria-modal="true" aria-labelledby="day-edit-title">
+            <div class="day-edit-header">
+                <div class="day-edit-title-group">
+                    <div class="day-edit-badge-icon">
+                        <i data-lucide="calendar"></i>
+                    </div>
+                    <div>
+                        <h3 class="day-edit-title" id="day-edit-title">Chỉnh sửa</h3>
+                        <p class="day-edit-subtitle" id="day-edit-date-label">Thứ Ba, 24/10/2026</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close-modal" id="btn-close-day-edit" title="Đóng" aria-label="Đóng">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <!-- Stats summary bar for selected date -->
+            <div class="day-edit-stats-bar" id="day-edit-stats-bar">
+                <div class="day-edit-stat-col">
+                    <span class="stat-lbl">Thu nhập</span>
+                    <strong id="day-edit-income" class="stat-income">+0đ</strong>
+                </div>
+                <div class="day-edit-stat-col">
+                    <span class="stat-lbl">Chi tiêu</span>
+                    <strong id="day-edit-expense" class="stat-expense">-0đ</strong>
+                </div>
+                <div class="day-edit-stat-col">
+                    <span class="stat-lbl">Tổng ngày</span>
+                    <strong id="day-edit-net" class="stat-net">0đ</strong>
+                </div>
+            </div>
+
+            <!-- Main Scrollable Body with Transactions -->
+            <div class="day-edit-body">
+                <div class="day-edit-section-header">
+                    <span class="section-title">Số liệu đã nhập</span>
+                    <span class="section-count" id="day-edit-tx-count">0 mục</span>
+                </div>
+
+                <!-- Transaction List for this day -->
+                <div class="day-edit-tx-list" id="day-edit-tx-list"></div>
+
+                <!-- Empty State -->
+                <div class="day-edit-empty" id="day-edit-empty" style="display: none;">
+                    <div class="empty-icon-circle">
+                        <i data-lucide="receipt"></i>
+                    </div>
+                    <p class="empty-title">Chưa có số liệu nào</p>
+                    <p class="empty-subtitle">Ngày này chưa có số liệu thu chi nào được lưu.</p>
+                </div>
+            </div>
+
+            <!-- Footer: Add transaction for this date -->
+            <div class="day-edit-footer">
+                <button type="button" class="btn btn-primary day-edit-btn-add" id="btn-day-edit-add">
+                    <i data-lucide="plus"></i>
+                    <span>Thêm giao dịch mới</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- SETTINGS MODAL BACKDROP & DIALOG (Root level DOM to prevent stacking context & clipping) -->
     <div id="settings-backdrop" class="settings-backdrop hidden"></div>
     <div id="settings-dropdown" class="settings-dropdown-menu hidden animate-scale-up">

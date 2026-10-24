@@ -628,4 +628,39 @@
     .daily-item-right {
         gap: 0 !important;
     }
+
+    /* Ẩn cây bút ở lịch trên mobile */
+    .btn-quick-add {
+        display: none !important;
+    }
+
+    /* Mobile Bottom Sheet Style cho Hộp cửa sổ Chỉnh sửa */
+    .day-edit-modal-overlay {
+        align-items: flex-end !important;
+        padding: 0 !important;
+    }
+
+    .day-edit-card {
+        max-width: 100% !important;
+        width: 100% !important;
+        border-radius: 24px 24px 0 0 !important;
+        border-bottom: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        padding: 20px 18px calc(24px + env(safe-area-inset-bottom, 16px)) 18px !important;
+        animation: slideUpDayEdit 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        max-height: 82vh !important;
+    }
+
+    @keyframes slideUpDayEdit {
+        from {
+            transform: translateY(100%);
+            opacity: 0.6;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
 }
+
