@@ -315,9 +315,16 @@
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
-        transform: none !important;
+        transform-origin: 70% 95% !important;
         overflow: hidden !important;
-        animation: chatPageSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        animation: appleMorphInMobile 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+    }
+
+    #chatbot-container.closing,
+    .chatbot-container.closing {
+        animation: appleMorphOutMobile 0.22s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+        transform-origin: 70% 95% !important;
+        pointer-events: none !important;
     }
 
     #chatbot-container.hidden,
@@ -332,14 +339,33 @@
         box-shadow: none !important;
     }
 
-    @keyframes chatPageSlideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0.8;
+    @keyframes appleMorphInMobile {
+        0% {
+            opacity: 0;
+            transform: scale(0.6) translateY(36px);
+            border-radius: 44px;
         }
-        to {
-            transform: translateX(0);
+        50% {
             opacity: 1;
+            border-radius: 24px;
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            border-radius: 0px;
+        }
+    }
+
+    @keyframes appleMorphOutMobile {
+        0% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            border-radius: 0px;
+        }
+        100% {
+            opacity: 0;
+            transform: scale(0.65) translateY(36px);
+            border-radius: 44px;
         }
     }
 
@@ -1174,15 +1200,32 @@
         border-bottom: none !important;
         border-left: none !important;
         border-right: none !important;
-        padding: 20px 18px calc(24px + env(safe-area-inset-bottom, 16px)) 18px !important;
-        animation: slideUpDayEdit 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-        max-height: 82vh !important;
+        padding: 24px 18px calc(24px + env(safe-area-inset-bottom, 16px)) 18px !important;
+        animation: slideUpDayEdit 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+        max-height: 85vh !important;
+        position: relative !important;
+    }
+
+    .day-edit-card::before {
+        content: "" !important;
+        position: absolute !important;
+        top: 8px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 36px !important;
+        height: 5px !important;
+        border-radius: 999px !important;
+        background: rgba(255, 255, 255, 0.25) !important;
+    }
+
+    [data-theme="light"] .day-edit-card::before {
+        background: rgba(0, 0, 0, 0.2) !important;
     }
 
     @keyframes slideUpDayEdit {
         from {
             transform: translateY(100%);
-            opacity: 0.6;
+            opacity: 0.5;
         }
         to {
             transform: translateY(0);

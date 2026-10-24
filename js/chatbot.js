@@ -43,17 +43,27 @@ function initChatbot() {
 
     function openChatbot() {
         container.classList.remove("hidden");
+        container.classList.remove("closing");
         if (backdrop && window.innerWidth > 1024) {
             backdrop.classList.remove("hidden");
         }
         document.body.classList.add("chatbot-open");
 
-        // Mobile / Tablet full page: hide app-dashboard so nothing can ever leak through from underneath
+        // Subtle tactile haptic on mobile
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate(8); } catch (e) {}
+        }
+
+        // Mobile / Tablet full page: hide app-dashboard after morph transition completes (smooth overlap)
         if (window.innerWidth <= 1024) {
-            const dashboard = document.getElementById("app-dashboard");
-            if (dashboard) {
-                dashboard.style.setProperty("visibility", "hidden", "important");
-            }
+            setTimeout(() => {
+                if (document.body.classList.contains("chatbot-open")) {
+                    const dashboard = document.getElementById("app-dashboard");
+                    if (dashboard) {
+                        dashboard.style.setProperty("visibility", "hidden", "important");
+                    }
+                }
+            }, 280);
         }
 
         // Clean up any stale inline styles
@@ -100,43 +110,56 @@ function initChatbot() {
     }
 
     function closeChatbot(fromPopState = false) {
-        container.classList.add("hidden");
-        if (backdrop) backdrop.classList.add("hidden");
-        document.body.classList.remove("chatbot-open");
+        if (container.classList.contains("closing")) return;
 
-        // Restore dashboard visibility
+        // Apple fluid morph-out transition
+        container.classList.add("closing");
+
+        // Restore dashboard visibility immediately so it smoothly appears behind the shrinking morph
         const dashboard = document.getElementById("app-dashboard");
         if (dashboard) {
             dashboard.style.removeProperty("visibility");
         }
 
-        // Clean up inline styles from visualViewport resize
-        container.style.removeProperty("--keyboard-inset");
-        container.style.removeProperty("height");
-        container.style.removeProperty("top");
-        container.style.removeProperty("bottom");
-        const inputBar = container.querySelector(".chatbot-input-bar");
-        if (inputBar) inputBar.classList.remove("keyboard-open");
-
-        if (triggerBtn) {
-            const chatIcon = triggerBtn.querySelector(".chat-icon");
-            const closeIcon = triggerBtn.querySelector(".close-icon");
-            if (chatIcon) chatIcon.classList.remove("hidden");
-            if (closeIcon) closeIcon.classList.add("hidden");
+        // Haptic feedback
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate(6); } catch (e) {}
         }
 
-        // Clean up history state if closed via button
-        if (!fromPopState && history.state && history.state.chatOpen) {
-            history.back();
-        }
+        setTimeout(() => {
+            container.classList.remove("closing");
+            container.classList.add("hidden");
+            if (backdrop) backdrop.classList.add("hidden");
+            document.body.classList.remove("chatbot-open");
 
-        // Update mobile bottom nav active state if needed
-        const navChat = document.getElementById("nav-btn-chatbot");
-        if (navChat) navChat.classList.remove("active");
-        const navOverview = document.getElementById("nav-btn-overview") || document.getElementById("nav-btn-home");
-        if (navOverview) navOverview.classList.add("active");
+            // Clean up inline styles from visualViewport resize
+            container.style.removeProperty("--keyboard-inset");
+            container.style.removeProperty("height");
+            container.style.removeProperty("top");
+            container.style.removeProperty("bottom");
+            const inputBar = container.querySelector(".chatbot-input-bar");
+            if (inputBar) inputBar.classList.remove("keyboard-open");
 
-        clearActiveTyping();
+            if (triggerBtn) {
+                const chatIcon = triggerBtn.querySelector(".chat-icon");
+                const closeIcon = triggerBtn.querySelector(".close-icon");
+                if (chatIcon) chatIcon.classList.remove("hidden");
+                if (closeIcon) closeIcon.classList.add("hidden");
+            }
+
+            // Clean up history state if closed via button
+            if (!fromPopState && history.state && history.state.chatOpen) {
+                history.back();
+            }
+
+            // Update mobile bottom nav active state if needed
+            const navChat = document.getElementById("nav-btn-chatbot");
+            if (navChat) navChat.classList.remove("active");
+            const navOverview = document.getElementById("nav-btn-overview") || document.getElementById("nav-btn-home");
+            if (navOverview) navOverview.classList.add("active");
+
+            clearActiveTyping();
+        }, 220);
     }
 
     function toggleChatbot() {

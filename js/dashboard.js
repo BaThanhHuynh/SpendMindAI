@@ -1470,13 +1470,18 @@ function handleBudgetSubmit(e) {
 function updateUI(redrawCharts = true) {
     const stats = calculateFinanceStats();
     
-    document.getElementById("total-balance").textContent = formatVND(stats.balance);
-    document.getElementById("summary-income").textContent = formatVND(stats.income);
-    document.getElementById("summary-expense").textContent = formatVND(stats.expense);
-
     const balanceEl = document.getElementById("total-balance");
-    balanceEl.style.backgroundImage = "none";
-    balanceEl.style.color = stats.balance < 0 ? "var(--expense-color)" : "var(--text-primary)";
+    const incomeEl = document.getElementById("summary-income");
+    const expenseEl = document.getElementById("summary-expense");
+
+    if (balanceEl) animateValueRoll(balanceEl, stats.balance);
+    if (incomeEl) animateValueRoll(incomeEl, stats.income);
+    if (expenseEl) animateValueRoll(expenseEl, stats.expense);
+
+    if (balanceEl) {
+        balanceEl.style.backgroundImage = "none";
+        balanceEl.style.color = stats.balance < 0 ? "var(--expense-color)" : "var(--text-primary)";
+    }
 
     renderCalendarView(stats.filteredTransactions);
     renderBudgetsProgress(stats.categoryExpenses);
@@ -1560,6 +1565,52 @@ function calculateFinanceStats() {
         filteredTransactions: filtered,
         categoryExpenses
     };
+}
+
+// Apple Kinetic Rolling Number Animation (fluid 60/120fps easeOutQuart)
+function animateValueRoll(el, targetVal, duration = 650) {
+    if (!el) return;
+    const target = Math.round(Number(targetVal) || 0);
+    
+    // Fallback if reduced motion is preferred
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        el.textContent = formatVND(target);
+        el._currentVal = target;
+        return;
+    }
+    
+    const hasCurrent = typeof el._currentVal === 'number' && !isNaN(el._currentVal);
+    const rawText = String(el.textContent || '').replace(/[^0-9.-]/g, '');
+    const startVal = hasCurrent ? el._currentVal : (parseFloat(rawText) || 0);
+    
+    if (startVal === target && hasCurrent) {
+        el.textContent = formatVND(target);
+        return;
+    }
+    
+    if (el._animationFrame) {
+        cancelAnimationFrame(el._animationFrame);
+        el._animationFrame = null;
+    }
+    
+    const startTime = performance.now();
+    function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // Apple quartic ease-out deceleration curve
+        const ease = 1 - Math.pow(1 - progress, 4);
+        const current = startVal + (target - startVal) * ease;
+        el.textContent = formatVND(Math.round(current));
+        
+        if (progress < 1) {
+            el._animationFrame = requestAnimationFrame(step);
+        } else {
+            el._currentVal = target;
+            el.textContent = formatVND(target);
+            el._animationFrame = null;
+        }
+    }
+    el._animationFrame = requestAnimationFrame(step);
 }
 
 function formatVND(val) {
