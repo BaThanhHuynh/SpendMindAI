@@ -385,8 +385,31 @@
         - **Header:** Bổ sung huy hiệu `.chatbot-model-badge` ("✦ SpendMind AI • Gemini Flash") ở trung tâm, nút Back $\leftarrow$ bên trái, nút New Chat (`#chatbot-new-btn`) bên phải.
         - **Hero chào mừng (`.gemini-welcome-hero`):** Biểu tượng Sparkle gradient đa sắc, heading chào hỏi hiện đại, phụ đề tinh tế và cụm pill suggestions (Số dư khả dụng, Tổng quan tháng, Ngân sách tháng, Lời khuyên tài chính) bo tròn chuẩn Gemini.
         - **Thanh nhập liệu viên thuốc nổi (`.chatbot-input-capsule`):** Khung card bo cong 28px nổi trên nền gradient mờ (`linear-gradient(to top, ...)`), nút `+` bên trái toggle gợi ý nhanh, input co giãn flex: 1 1 0% với min-width: 0 (loại bỏ hoàn toàn lỗi tràn ngang), nút gửi mũi tên $\uparrow$ phát sáng xanh khi nhập liệu.
-      - **Cache & Service Worker:** Nâng cấp Service Worker lên `spendmind-v6.1` và bump query string asset lên `?v=20261024_v19` để thiết bị di động nhận diện và cập nhật giao diện mới ngay lập tức.
-    - **Trạng thái:** [x] RESOLVED. Layout hoàn toàn chuẩn mực, không vỡ hạt, trải nghiệm sánh ngang Gemini và Claude trên di động.
+34. **[P0] Bug Fix & UI Refinement - Khắc Phục Lỗi Bàn Phím Ảo Che Khuất Khung Chat Mobile, Đổi Tiêu Đề Thành "Trợ lý tài chính", Bỏ Icon Gemini/Emoji, Bố Trí Lưới 2x2 Gọn Gàng**
+    - **File:** `dashboard.html`, `js/chatbot.js`, `css/mobile.css`, `css/styles.css`, `sw.js`
+    - **Yêu cầu & Vấn đề:**
+      1. **Lỗi che khuất khung chat khi gõ:** Khi người dùng bấm vào ô nhập (`#chatbot-input`) trên mobile, bàn phím ảo iOS/Android bật lên nhưng khung chat và thanh nhập liệu không tự động được đẩy lên trên, khiến ô nhập bị chìm phía dưới bàn phím ảo.
+         - *Nguyên nhân kỹ thuật:* `css/mobile.css` và `css/styles.css` chứa `min-height: 100dvh !important` và `inset: 0 !important; max-height: 100dvh !important;`. Trong đặc tả CSS, `min-height` luôn ghi đè `height` của Javascript; đồng thời trên iOS Safari `100dvh` không co lại khi bàn phím xuất hiện. Ngoài ra `body.chatbot-open` có `position: fixed; touch-action: none` làm khóa cơ chế điều phối Visual Viewport của WebKit.
+      2. **Bỏ các biểu tượng Gemini:** Loại bỏ toàn bộ icon ngôi sao lấp lánh 4 cánh SVG của Gemini ở màn hình chào mừng cũng như ký hiệu `✦`. Thay thế bằng logo ứng dụng SpendMind AI chính thức với bo góc và đổ bóng nhẹ sang trọng.
+      3. **Đổi tiêu đề:** Đổi tiêu đề ở header từ `SpendMind AI Gemini Flash` thành `Trợ lý tài chính` tinh gọn cùng chấm đèn trạng thái xanh (`.status-dot`).
+      4. **Bỏ các emoji:** Loại bỏ toàn bộ emoji (`💰`, `📊`, `🎯`, `💡`, `🤖`) khỏi các thẻ gợi ý nhanh, dropdown gợi ý và câu thông báo.
+      5. **Sắp xếp lại thẻ theo lưới 2x2:** Thay vì hiển thị dàn trải quấn dòng không đồng đều, bố trí 4 thẻ câu hỏi thành dạng lưới 2 thẻ hàng trên, 2 thẻ hàng dưới (`grid-template-columns: repeat(2, 1fr)`) đối xứng, gọn gàng và đẹp mắt.
+    - **Giải pháp thực hiện:**
+      - **Tự động đẩy hộp thoại chat lên trên bàn phím (Auto-push above virtual keyboard):**
+        - Cập nhật `<meta name="viewport">` trong `dashboard.html`: Thêm `interactive-widget=resizes-content, maximum-scale=1.0, user-scalable=no` theo tiêu chuẩn W3C mới nhất được Safari 17.2+ và Chrome hỗ trợ.
+        - Gỡ bỏ `min-height: 100dvh !important`, `max-height: 100dvh !important` và `inset: 0 !important` khỏi `#chatbot-container` ở cả `css/mobile.css` và `css/styles.css`.
+        - Gỡ bỏ `position: fixed` và `touch-action: none` trên `body.chatbot-open`, giữ `overflow: hidden !important` để khóa cuộn nền mà không làm nhiễu tọa độ Safari Visual Viewport.
+        - Trong `js/chatbot.js`, nâng cấp hàm `handleVisualViewport()`: Tính toán độ cao bàn phím chính xác `keyboardHeight = Math.max(0, window.innerHeight - (offsetTop + visibleHeight))` và gán `bottom: ${keyboardHeight}px !important`, `height: ${visibleHeight}px !important`, `top: ${offsetTop}px !important`.
+        - Khi bàn phím mở, tự động gán class `.keyboard-open` thu gọn `padding-bottom: 6px` của thanh input, đồng thời tự động cuộn danh sách tin nhắn và đưa input vào tầm nhìn (`scrollIntoView`).
+      - **Thanh Header & Màn hình chào mừng:**
+        - Cập nhật `.chatbot-header-title` với tiêu đề `Trợ lý tài chính` và chấm xanh trực tuyến.
+        - Màn hình chào mừng hiển thị logo ứng dụng SpendMind AI bo góc 14px mềm mại, loại bỏ ngôi sao 4 cánh Gemini.
+      - **Lưới thẻ gợi ý 2x2 sạch sẽ, không emoji:**
+        - Bố cục lưới `.chatbot-quick-grid` (`display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 360px;`).
+        - 4 thẻ cân đối: Hàng 1: *Số dư khả dụng* | *Tổng quan tháng*, Hàng 2: *Ngân sách còn lại* | *Lời khuyên tài chính*.
+      - **Service Worker & Cache Invalidation:** Nâng cấp `CACHE_NAME` lên `'spendmind-v6.2'` và cập nhật query string version trong `dashboard.html` lên `?v=20261024_v20`.
+    - **Trạng thái:** [x] RESOLVED. Khung chat tự động đẩy mượt mà lên trên bàn phím ảo, không che mất thanh nhập liệu, giao diện "Trợ lý tài chính" chuẩn mực, thanh lịch và sạch bóng icon Gemini/emoji.
+
 
 
 

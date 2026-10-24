@@ -2878,45 +2878,39 @@ html[data-theme="light"] .chatbot-header {
     min-width: 0;
 }
 
+.chatbot-header-title,
 .chatbot-model-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 9999px;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     font-weight: 600;
     color: var(--text-primary);
     user-select: none;
     max-width: 100%;
 }
 
+html[data-theme="light"] .chatbot-header-title,
 html[data-theme="light"] .chatbot-model-badge {
     background: rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.chatbot-model-badge .sparkle-symbol {
-    color: #38bdf8;
-    font-size: 0.85rem;
-    line-height: 1;
+.chatbot-header-title .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+    flex-shrink: 0;
 }
 
-.chatbot-model-badge .model-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.chatbot-model-badge .model-tag {
-    font-size: 0.65rem;
-    color: #10b981;
-    font-weight: 600;
-    background: rgba(16, 185, 129, 0.12);
-    padding: 1px 5px;
-    border-radius: 5px;
+.chatbot-header-title .title-text {
+    letter-spacing: -0.01em;
     white-space: nowrap;
 }
 
@@ -3152,7 +3146,8 @@ html[data-theme="light"] .chat-message.bot {
     transform: scale(0.95);
 }
 
-/* Gemini & Claude Style Welcome Hero Screen */
+/* Welcome Hero Screen & 2x2 Grid (No emojis, 2 cards on top, 2 cards below) */
+.welcome-hero-container,
 .gemini-welcome-hero {
     margin: auto;
     max-width: 380px;
@@ -3172,14 +3167,25 @@ html[data-theme="light"] .chat-message.bot {
     to { opacity: 1; transform: translateY(0); }
 }
 
+.welcome-logo-badge,
 .gemini-star-badge {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-bottom: 2px;
 }
 
+.welcome-logo-img {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 113, 227, 0.25);
+    object-fit: cover;
+}
+
+.welcome-hero-heading,
 .gemini-welcome-heading {
     font-size: 1.35rem;
     font-weight: 700;
@@ -3189,6 +3195,7 @@ html[data-theme="light"] .chat-message.bot {
     letter-spacing: -0.02em;
 }
 
+.welcome-hero-desc,
 .gemini-welcome-desc {
     font-size: 0.82rem;
     color: var(--text-secondary, #94a3b8);
@@ -3197,38 +3204,66 @@ html[data-theme="light"] .chat-message.bot {
     max-width: 280px;
 }
 
+/* 2x2 Grid: 2 cards on top, 2 cards below */
+.chatbot-quick-grid,
 .gemini-pills-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 6px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 8px;
     width: 100%;
+    max-width: 340px;
 }
 
+.quick-prompt-card,
 .gemini-prompt-pill {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 6px 12px;
-    border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.06);
+    justify-content: center;
+    text-align: center;
+    padding: 10px 8px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     font-weight: 500;
     cursor: pointer;
-    transition: transform 0.15s ease, background 0.15s ease;
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    user-select: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
+html[data-theme="light"] .quick-prompt-card,
 html[data-theme="light"] .gemini-prompt-pill {
-    background: rgba(0, 0, 0, 0.04);
+    background: #ffffff;
     border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
 }
 
+.quick-prompt-card:hover,
+.gemini-prompt-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(0, 113, 227, 0.4);
+}
+
+html[data-theme="light"] .quick-prompt-card:hover,
+html[data-theme="light"] .gemini-prompt-pill:hover {
+    background: #f5f5f7;
+    border-color: rgba(0, 113, 227, 0.4);
+}
+
+.quick-prompt-card:active,
 .gemini-prompt-pill:active {
-    transform: scale(0.95);
-    background: rgba(255, 255, 255, 0.12);
+    transform: scale(0.96);
+    background: rgba(0, 113, 227, 0.15);
+}
+
+.quick-prompt-card .card-title {
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Floating Capsule Input Bar */
@@ -5429,14 +5464,10 @@ body {
         left: 0 !important;
         right: 0 !important;
         bottom: 0 !important;
-        inset: 0 !important;
-        width: 100vw !important;
-        max-width: 100vw !important;
-        min-width: 100vw !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
         height: 100% !important;
-        height: 100dvh !important;
-        max-height: 100dvh !important;
-        min-height: 100dvh !important;
         margin: 0 !important;
         padding: 0 !important;
         border: none !important;

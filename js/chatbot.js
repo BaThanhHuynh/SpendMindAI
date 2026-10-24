@@ -87,6 +87,9 @@ function initChatbot() {
         // Clean up inline styles from visualViewport resize
         container.style.removeProperty("height");
         container.style.removeProperty("top");
+        container.style.removeProperty("bottom");
+        const inputBar = container.querySelector(".chatbot-input-bar");
+        if (inputBar) inputBar.classList.remove("keyboard-open");
 
         if (triggerBtn) {
             const chatIcon = triggerBtn.querySelector(".chat-icon");
@@ -183,16 +186,34 @@ function initChatbot() {
         if (window.innerWidth > 1024) {
             container.style.removeProperty("height");
             container.style.removeProperty("top");
+            container.style.removeProperty("bottom");
+            const inputBar = container.querySelector(".chatbot-input-bar");
+            if (inputBar) inputBar.classList.remove("keyboard-open");
             return;
         }
         if (window.visualViewport) {
             const vv = window.visualViewport;
-            // Prevent iOS Safari from scrolling background page
             if (window.scrollY !== 0) {
                 window.scrollTo(0, 0);
             }
-            container.style.setProperty("height", `${vv.height}px`, "important");
-            container.style.setProperty("top", `${vv.offsetTop}px`, "important");
+            const offsetTop = vv.offsetTop || 0;
+            const visibleHeight = vv.height;
+            const keyboardHeight = Math.max(0, window.innerHeight - (offsetTop + visibleHeight));
+            const isKeyboardOpen = keyboardHeight > 50 || visibleHeight < (window.innerHeight - 80);
+
+            container.style.setProperty("top", `${offsetTop}px`, "important");
+            container.style.setProperty("bottom", `${keyboardHeight}px`, "important");
+            container.style.setProperty("height", `${visibleHeight}px`, "important");
+
+            const inputBar = container.querySelector(".chatbot-input-bar");
+            if (inputBar) {
+                if (isKeyboardOpen) {
+                    inputBar.classList.add("keyboard-open");
+                } else {
+                    inputBar.classList.remove("keyboard-open");
+                }
+            }
+
             if (messagesContainer) {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
@@ -207,13 +228,21 @@ function initChatbot() {
     if (inputField) {
         inputField.addEventListener("focus", () => {
             if (window.innerWidth <= 1024) {
+                handleVisualViewport();
                 setTimeout(handleVisualViewport, 50);
-                setTimeout(handleVisualViewport, 250);
+                setTimeout(handleVisualViewport, 150);
+                setTimeout(handleVisualViewport, 300);
+                setTimeout(handleVisualViewport, 500);
+                setTimeout(() => {
+                    if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    inputField.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                }, 350);
             }
         });
         inputField.addEventListener("blur", () => {
             if (window.innerWidth <= 1024) {
                 setTimeout(handleVisualViewport, 50);
+                setTimeout(handleVisualViewport, 200);
             }
         });
     }
@@ -229,9 +258,9 @@ function initChatbot() {
     window.closeChatbot = closeChatbot;
     window.toggleChatbot = toggleChatbot;
 
-    // Handle suggestion chips click (works for both Gemini hero pills and dropdown chips)
+    // Handle suggestion chips and 2x2 quick cards click
     container.addEventListener("click", (e) => {
-        const chip = e.target.closest(".suggestion-chip, .gemini-prompt-pill");
+        const chip = e.target.closest(".suggestion-chip, .gemini-prompt-pill, .quick-prompt-card");
         if (!chip) return;
 
         const query = chip.getAttribute("data-query");
@@ -297,33 +326,24 @@ function initChatbot() {
         const cleanName = getFriendlyName(displayName);
 
         const welcomeHtml = `
-            <div class="gemini-welcome-hero">
-                <div class="gemini-star-badge">
-                    <svg class="gemini-star-icon" viewBox="0 0 24 24" width="46" height="46" fill="none">
-                        <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" fill="url(#gemini-sparkle-grad)"/>
-                        <defs>
-                            <linearGradient id="gemini-sparkle-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#38bdf8"/>
-                                <stop offset="0.5" stop-color="#10b981"/>
-                                <stop offset="1" stop-color="#f59e0b"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
+            <div class="welcome-hero-container">
+                <div class="welcome-logo-badge">
+                    <img src="images/logoapp.webp?v=20260911_v8" alt="Logo" width="48" height="48" class="welcome-logo-img">
                 </div>
-                <h1 class="gemini-welcome-heading">Chào ${cleanName},<br>tiếp theo mình làm gì?</h1>
-                <p class="gemini-welcome-desc">Trợ lý AI phân tích số dư, chi tiêu & quản lý ngân sách cá nhân</p>
-                <div class="gemini-pills-grid">
-                    <button type="button" class="gemini-prompt-pill" data-query="số dư">
-                        <span>💰 Số dư khả dụng</span>
+                <h1 class="welcome-hero-heading">Chào ${cleanName},<br>tiếp theo mình làm gì?</h1>
+                <p class="welcome-hero-desc">Trợ lý AI phân tích số dư, chi tiêu & quản lý ngân sách cá nhân</p>
+                <div class="chatbot-quick-grid">
+                    <button type="button" class="quick-prompt-card" data-query="số dư">
+                        <span class="card-title">Số dư khả dụng</span>
                     </button>
-                    <button type="button" class="gemini-prompt-pill" data-query="tổng quan chi tiêu">
-                        <span>📊 Tổng quan tháng</span>
+                    <button type="button" class="quick-prompt-card" data-query="tổng quan chi tiêu">
+                        <span class="card-title">Tổng quan tháng</span>
                     </button>
-                    <button type="button" class="gemini-prompt-pill" data-query="ngân sách còn lại">
-                        <span>🎯 Ngân sách còn lại</span>
+                    <button type="button" class="quick-prompt-card" data-query="ngân sách còn lại">
+                        <span class="card-title">Ngân sách còn lại</span>
                     </button>
-                    <button type="button" class="gemini-prompt-pill" data-query="lời khuyên tiết kiệm">
-                        <span>💡 Lời khuyên tài chính</span>
+                    <button type="button" class="quick-prompt-card" data-query="lời khuyên tiết kiệm">
+                        <span class="card-title">Lời khuyên tài chính</span>
                     </button>
                 </div>
             </div>
@@ -478,7 +498,7 @@ function initChatbot() {
 
     function handleUserMessage(text) {
         clearActiveTyping();
-        const welcomeHero = messagesContainer.querySelector(".gemini-welcome-hero, .chatbot-welcome-intro");
+        const welcomeHero = messagesContainer.querySelector(".welcome-hero-container, .gemini-welcome-hero, .chatbot-welcome-intro");
         if (welcomeHero) {
             messagesContainer.innerHTML = "";
         }
@@ -585,7 +605,7 @@ function initChatbot() {
             indicator.remove();
             console.error("Chatbot API error:", err);
             const safeErr = String(err.message || err).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            const errorMsg = `<p>🤖 <strong>Trợ lý AI phản hồi:</strong></p>
+            const errorMsg = `<p><strong>Trợ lý tài chính phản hồi:</strong></p>
                 <p style="color: #ef4444; font-size: 12.5px; background: rgba(239, 68, 68, 0.08); padding: 8px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.2); margin: 6px 0;">${safeErr}</p>
                 <p style="font-size: 12px; opacity: 0.85; margin-top: 6px;">Vui lòng thử lại sau giây lát hoặc làm mới trang.</p>`;
             addMessage("bot", errorMsg, true);
