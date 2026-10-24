@@ -2,6 +2,10 @@
    CHATBOT ASSISTANT LOGIC (GOOGLE GEMINI AI INTEGRATION ONLY)
    ========================================================================== */
 
+// Capture the full-screen height ONCE before any keyboard events
+// window.screen.height is the device's physical screen height (never changes)
+const SCREEN_FULL_HEIGHT = window.screen.height;
+
 document.addEventListener("DOMContentLoaded", () => {
     initChatbot();
 });
@@ -203,7 +207,7 @@ function initChatbot() {
         });
     }
 
-    // Rock-solid visualViewport handler for iOS / Android virtual keyboards (Claude & Telegram model)
+    // Rock-solid visualViewport handler for iOS / Android virtual keyboards
     function handleVisualViewport() {
         if (!document.body.classList.contains("chatbot-open") || window.innerWidth > 1024) {
             container.style.removeProperty("height");
@@ -226,8 +230,13 @@ function initChatbot() {
         const visibleHeight = Math.round(vv.height);
         const offsetTop = Math.round(vv.offsetTop || 0);
         const isInputFocused = (document.activeElement === inputField);
-        // Virtual keyboard is open ONLY if input is focused and the visible height has shrunk
-        const isKeyboardOpen = isInputFocused && (visibleHeight < (window.innerHeight - 100));
+
+        // Use SCREEN_FULL_HEIGHT (never changes) as a baseline to detect keyboard.
+        // Keyboard is open when: input is focused AND visibleHeight has shrunk
+        // significantly compared to the full screen height.
+        // The threshold 0.75 covers all common keyboard sizes (iOS compact/full, Android Gboard).
+        const baselineHeight = SCREEN_FULL_HEIGHT || window.innerHeight;
+        const isKeyboardOpen = isInputFocused && (visibleHeight < baselineHeight * 0.75);
 
         if (isKeyboardOpen) {
             container.style.setProperty("top", `${offsetTop}px`, "important");
