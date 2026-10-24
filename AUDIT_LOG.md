@@ -744,6 +744,37 @@
     - **Kiểm chứng:** Cú pháp Node.js `node --check` 100% không lỗi; kiểm thử nút modal căn chỉnh hoàn hảo ở cả desktop, tablet, mobile; toast hiển thị thoáng đãng không bị che khuất; chatbot hiển thị 3 chấm loading; mọi nút bấm đều có vòng tròn xoay phản hồi người dùng rõ ràng.
     - **Trạng thái:** [x] RESOLVED.
 
+56. **[P1] UI/UX & Native Gestures - Bổ Sung Kéo Vuốt Làm Mới Dữ Liệu (Pull-To-Refresh) Chuẩn Apple Trên Mobile & Bấm Vào Logo Để Làm Mới Trang Trên Desktop**
+    - **File:** `js/pull-to-refresh.js`, `css/styles.css`, `css/mobile.css`, `dashboard.html`, `index.html`, `sw.js`
+    - **Yêu cầu:**
+      1. Ở chế độ mobile: Khi người dùng ở đầu trang kéo màn hình xuống, hiển thị biểu tượng mũi tên tròn xoay (`rotate-cw`), có độ co giãn hồi tiếp (Apple spring elasticity & damping), xoay theo khoảng cách kéo, rung xúc giác (haptic feedback), và làm mới lại toàn bộ trang/dữ liệu khi kéo đủ khoảng cách.
+      2. Ở chế độ desktop: Khi bấm vào logo web (`.logo-area` hoặc `.landing-logo`), trang web tự động tải lại (reload) với hiệu ứng vi tương tác xoay tròn 360 độ đẹp mắt.
+    - **Thay đổi & Giải pháp:**
+      1. **Tạo Module Cử Chỉ Kéo Vuốt Chuyên Nghiệp (`js/pull-to-refresh.js`):**
+         - Thiết lập bộ xử lý cảm ứng vuốt đơn điểm (`touchstart`, `touchmove`, `touchend`, `touchcancel`) với cơ chế lọc chỉ kích hoạt khi thanh cuộn ở đỉnh trang (`window.scrollY <= 4`).
+         - Kiểm tra góc nghiêng cử chỉ (`diffY > 8` và `|diffY| > |diffX| * 1.5`) nhằm phân biệt chính xác thao tác vuốt cuộn ngang/chạm thông thường với cử chỉ vuốt kéo xuống, tránh can thiệp ngoài ý muốn.
+         - Sử dụng công thức vật lý lò xo tiêu chuẩn Apple iOS (`Math.min(MAX_PULL, Math.pow(diffY, 0.82) * 1.6)`) tạo cảm giác kéo có độ đầm, mượt mà và tự nhiên.
+         - Kéo dãn khung trang web (`#app-dashboard` / `.landing-wrapper`) đi xuống đồng bộ `dist * 0.72px`, mô phỏng chính xác hành vi kéo trang của Safari / iOS.
+         - Tự động xoay icon mũi tên tròn SVG theo độ dịch chuyển `(dist / PULL_THRESHOLD) * 360deg`.
+         - Khi đạt ngưỡng 68px (`PULL_THRESHOLD`): Kích hoạt class `.is-ready`, đổi sang màu xanh ngọc lục bảo (Emerald Green) phát sáng, đồng thời kích hoạt rung phản hồi nhẹ `navigator.vibrate(12)` (Haptic Feedback) báo cho người dùng biết đã đủ điều kiện làm mới.
+         - Khi người dùng thả tay (`touchend`): Nếu đủ ngưỡng, chuyển sang trạng thái `.is-refreshing` với animation xoay tròn mượt mà, cố định vị trí ở 18px phía trên màn hình, phát nhịp rung xác nhận, và thực hiện `window.location.reload()` sau 320ms để người dùng cảm nhận trọn vẹn phản hồi trực quan.
+         - Nếu người dùng thả tay trước ngưỡng: Đàn hồi trả về vị trí ban đầu bằng đường cong chuyển động Apple `cubic-bezier(0.16, 1, 0.3, 1)`.
+         - Tự động ngưng cử chỉ pull-to-refresh khi có modal, chatbot hoặc menu cài đặt đang mở.
+      2. **Thao Tác Click Logo Để Reload Trên Desktop:**
+         - Trong `initDesktopLogoReload()`: Bổ sung lắng nghe sự kiện click trên `.logo-area` và `.landing-logo`.
+         - Khi ở chế độ desktop (`window.innerWidth > 768`): Thêm tooltip `Nhấn để làm mới trang (Reload)`, kích hoạt hiệu ứng xoay 360 độ và thu phóng nhẹ `scale(0.92)` trên icon, sau đó thực hiện `window.location.reload()`.
+      3. **Tạo Phần Tử Đồ Họa SVG Apple Glassmorphism (`#pull-to-refresh-indicator`):**
+         - Thiết kế viên nang tròn 42px x 42px bo tròn 50%, sử dụng kính mờ cao cấp `backdrop-filter: blur(20px) saturate(180%)`, viền sáng tinh tế và đổ bóng phân lớp sâu.
+         - Sử dụng icon vector SVG xoay tròn kim đồng hồ nguyên bản sắc nét trên mọi mật độ điểm ảnh Retina / OLED, không phụ thuộc thư viện ngoài.
+      4. **Tối Ưu Cuộn Mobile Trong `css/mobile.css`:**
+         - Đặt `overscroll-behavior-y: contain;` cho `html, body` trên mobile để ngăn chặn triệt để xung đột với hiệu ứng nảy màu trắng mặc định của trình duyệt.
+      5. **Đồng Bộ Service Worker & HTML Cache Versioning:**
+         - Bổ sung `'/js/pull-to-refresh.js'` vào `STATIC_ASSETS` trong `sw.js`, nâng cấp `CACHE_NAME` lên `spendmind-v7.16`.
+         - Đặt `#pull-to-refresh-indicator` và nhúng script trên cả `dashboard.html` và `index.html`.
+    - **Kiểm chứng:** Kiểm thử cú pháp Node.js `node --check` 100% không lỗi; trên mobile kéo trang xuống hiển thị mũi tên tròn xoay theo tay, rung haptic và reload trang chuẩn chỉ; trên desktop rê chuột và click logo thực hiện hiệu ứng xoay và tải lại trang ngay tức thì.
+    - **Trạng thái:** [x] RESOLVED.
+
+
 
 
 

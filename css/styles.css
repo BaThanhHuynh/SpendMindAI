@@ -8211,3 +8211,118 @@ html[data-theme="light"] .btn-offline-retry {
     animation: spin 0.8s linear infinite;
 }
 
+/* ==========================================================================
+   PULL-TO-REFRESH (MOBILE) & DESKTOP LOGO RELOAD
+   ========================================================================== */
+.ptr-indicator {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translate3d(-50%, -64px, 0);
+    z-index: 9998;
+    pointer-events: none;
+    display: none;
+    will-change: transform;
+}
+
+@media (max-width: 768px) {
+    .ptr-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+.ptr-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(28, 28, 30, 0.90);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+                color 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html[data-theme="light"] .ptr-circle {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+    color: var(--text-secondary);
+}
+
+.ptr-icon {
+    width: 20px;
+    height: 20px;
+    display: block;
+    transform-origin: center center;
+    will-change: transform;
+}
+
+/* Ready to release state (Threshold crossed) */
+.ptr-indicator.is-ready .ptr-circle {
+    color: var(--accent-color);
+    border-color: rgba(16, 185, 129, 0.45);
+    transform: scale(1.08);
+    box-shadow: 0 0 22px rgba(16, 185, 129, 0.45), 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="light"] .ptr-indicator.is-ready .ptr-circle {
+    box-shadow: 0 0 22px rgba(5, 150, 105, 0.3), 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+/* Refreshing / Reloading state */
+.ptr-indicator.is-refreshing .ptr-circle {
+    color: var(--accent-color);
+    border-color: rgba(16, 185, 129, 0.5);
+    transform: scale(1.04);
+}
+
+.ptr-indicator.is-refreshing .ptr-icon {
+    animation: ptr-spin 0.75s linear infinite !important;
+}
+
+@keyframes ptr-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Desktop Logo Reload Micro-Interactions */
+@media (min-width: 769px) {
+    .logo-area,
+    .landing-logo {
+        cursor: pointer;
+        user-select: none;
+        transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .logo-area:hover,
+    .landing-logo:hover {
+        opacity: 0.92;
+    }
+
+    .logo-area:hover .logo-icon,
+    .landing-logo:hover .logo-icon-sm {
+        transform: scale(1.06) rotate(6deg);
+        box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+    }
+
+    .logo-area:active,
+    .landing-logo:active {
+        transform: scale(0.97);
+    }
+}
+
+

@@ -1154,7 +1154,7 @@
 
     /* Mobile inertial touch scrolling & vertical pan navigation */
     html, body {
-        overscroll-behavior-y: auto;
+        overscroll-behavior-y: contain;
         touch-action: pan-y;
         -webkit-overflow-scrolling: touch;
     }
