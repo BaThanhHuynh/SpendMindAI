@@ -463,3 +463,20 @@
 
 
 
+37. **[P1] UI/UX Motion - Tinh Chỉnh Chuyển Động Theo Chuẩn Apple (Reduce Motion, Morph Từ Nút Chat, 3 Đường Cong Thống Nhất)**
+    - **File:** `css/styles.css`, `css/mobile.css`, `js/index.js`, `design-system/spendmindai/MASTER.md`, `dashboard.html`, `index.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:**
+      1. `MASTER.md` cam kết tôn trọng `prefers-reduced-motion` nhưng CSS có 0 quy tắc; người bật «Giảm chuyển động» vẫn thấy morph, nhịp đập, hiệu ứng gõ chữ.
+      2. Morph khung chat bắt đầu ở 60–65% kích thước (không nở ra từ nút); trên tablet (769–1024px) `transform: none !important` chặn hẳn phần phóng to. Keyframe `border-radius` không bao giờ chạy vì các rule khung chat đặt `border-radius … !important`.
+      3. 10 đường cong `cubic-bezier` khác nhau, 20 chỗ `transition: all`, ~80 chỗ dùng từ khoá `ease`/`ease-in-out` — nhịp chuyển động không đồng nhất; hai đường cong nảy quá đà (`1.56`, `1.275`).
+      4. Hiệu ứng gõ chữ ở trang chủ không mang chất Apple; nút Thu/Chi đổi màu tức thì; icon thanh tab không phản hồi khi chọn.
+      5. `@keyframes appleMorphInMobile/OutMobile` định nghĩa trùng ở `styles.css` và `mobile.css`.
+    - **Giải pháp:**
+      - Thêm 3 token `--ease-out`, `--ease-sheet`, `--ease-spring` + `--transition-props`; thay toàn bộ đường cong cũ và từ khoá easing trong `transition:` bằng token; `transition: all` → `transition-property: var(--transition-props)`.
+      - Khối `@media (prefers-reduced-motion: reduce)` cuối `styles.css` (kèm các selector có `animation … !important`).
+      - Morph: desktop `transform-origin` = tâm nút chat (`calc(100% - 26px) calc(100% + 42px)`), scale 0.15 → 1; mobile/tablet scale 0.12 → 1 từ nút ở thanh tab; bỏ `transform: none !important` ở tablet; xoá keyframe trùng trong `mobile.css`.
+      - `.apple-reveal` (mờ → nét, nổi lên 12px) thay hiệu ứng gõ chữ trong `js/index.js`; viên nền trượt cho nút Thu/Chi (`:has()`, có `@supports`); icon tab nảy nhẹ `navIconBounce`.
+      - Giữ nguyên: thanh tiến độ dùng `width` (dùng `scaleX` sẽ méo hai đầu bo tròn), ô tìm kiếm nở `width`, panel ngân sách `max-height` (cần đẩy nội dung bên dưới). Mã laser-cut (`.cutting-triggered`, `.laser-line`…) không được dùng ở đâu — chưa xoá. 1.201 chỗ `!important` chưa xử lý.
+      - Bump `?v=` asset và `CACHE_NAME` → `spendmind-v6.7`.
+    - **Kiểm chứng:** Chạy `dev_server.py` + trình duyệt: token có giá trị; keyframe mới được nạp (không còn bản trùng); viên nền Thu/Chi rộng 293px, trượt 297px trùng ô «Thu»; khung chat mobile `transform-origin: 70% 95%`, kết thúc scale 1/opacity 1, đóng ẩn sau 220ms; icon tab nhận `navIconBounce`; `runTypewriter`/`typeWriterEffect` hiện đủ chữ + `appleReveal`; Reduce Motion đang bật trong trình duyệt kiểm thử → thời lượng animation bị ép về `1e-05s` (khối reduce hoạt động). `node --check` pass cho `js/index.js`, `sw.js`.
+    - **Trạng thái:** [x] RESOLVED.

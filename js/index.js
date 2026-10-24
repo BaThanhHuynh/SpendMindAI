@@ -24,32 +24,21 @@ window.addEventListener("pageshow", (e) => {
 
 const API_URL = "api";
 
-// 1. Typewriter phrase configuration for Hero Section (only greeting phrase)
+// 1. Hero slogan – hiện kiểu Apple (từ mờ sang nét) thay cho gõ chữ
 const typewriterPhrases = [
     "Định hình tư duy chi tiêu - Làm chủ tương lai tài chính"
 ];
-let typewriterCharIdx = 0;
 
 function runTypewriter() {
     const target = document.getElementById("typewriter-target");
     if (!target) return;
 
-    const currentPhrase = typewriterPhrases[0];
-
-    if (typewriterCharIdx < currentPhrase.length) {
-        const typedText = currentPhrase.substring(0, typewriterCharIdx + 1);
-        const untypedText = currentPhrase.substring(typewriterCharIdx + 1);
-        target.innerHTML = typedText + '<span style="opacity: 0;">' + untypedText + '</span>';
-        
-        typewriterCharIdx++;
-        setTimeout(runTypewriter, Math.random() * 25 + 25);
-    } else {
-        target.innerHTML = currentPhrase;
-        // Make hero items fade in
-        const heroActions = document.querySelector(".hero-actions");
-        if (heroActions) {
-            heroActions.classList.add("fade-in-active");
-        }
+    target.textContent = typewriterPhrases[0];
+    target.classList.add("apple-reveal");
+    // Make hero items fade in
+    const heroActions = document.querySelector(".hero-actions");
+    if (heroActions) {
+        heroActions.classList.add("fade-in-active");
     }
 }
 
@@ -350,16 +339,7 @@ function initScrollTypewriter() {
 }
 
 function typeWriterEffect(element, text, charIdx, callback) {
-    if (charIdx < text.length) {
-        const typedText = text.substring(0, charIdx + 1);
-        const untypedText = text.substring(charIdx + 1);
-        element.innerHTML = typedText + '<span style="opacity: 0;">' + untypedText + '</span>';
-        
-        setTimeout(() => {
-            typeWriterEffect(element, text, charIdx + 1, callback);
-        }, Math.random() * 5 + 5);
-    } else {
-        element.innerHTML = text;
-        if (callback) callback();
-    }
+    element.textContent = text;
+    element.classList.add("apple-reveal");
+    if (callback) callback();
 }

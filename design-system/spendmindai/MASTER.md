@@ -70,7 +70,14 @@
 
 ### Motion & Physics
 
-- **Snappy Spring:** `0.18s cubic-bezier(0.16, 1, 0.3, 1)`
-- **Smooth Spring:** `0.32s cubic-bezier(0.32, 0.72, 0, 1)`
+- **Only three curves** (tokens in `css/styles.css` `:root`) — never hard-code a new `cubic-bezier`:
+  - `--ease-out: cubic-bezier(0.16, 1, 0.3, 1)` — appear, press, hover.
+  - `--ease-sheet: cubic-bezier(0.32, 0.72, 0, 1)` — sheets, morph, screen changes.
+  - `--ease-spring: cubic-bezier(0.34, 1.25, 0.64, 1)` — gentle overshoot, use sparingly.
+- **Snappy Spring:** `--spring-snappy: 0.16s var(--ease-out)`
+- **Smooth Spring:** `--spring-smooth: 0.32s var(--ease-sheet)`
+- **No `transition: all`:** use `transition-property: var(--transition-props)` (transform, opacity, colors, shadow).
+- **Chat morph:** window zooms out of the chat button (`transform-origin` = button centre), opacity + scale only.
+- **Text reveal:** `.apple-reveal` (blur → sharp, fade + 12px rise) instead of typewriter effects.
 - **Tactile Active Press:** `transform: scale(0.96);` on buttons and interactive chips.
-- **Respect Motion Preference:** All transitions fold to simple opacity under `prefers-reduced-motion: reduce`.
+- **Respect Motion Preference:** under `prefers-reduced-motion: reduce` every animation/transition finishes instantly (block at the end of `css/styles.css`; add any new `animation … !important` selector there).

@@ -53,7 +53,7 @@
     min-width: 52px;
     min-height: 40px;
     cursor: pointer;
-    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), color 0.18s ease;
+    transition: transform 0.18s var(--ease-out), color 0.18s var(--ease-out);
     border-radius: var(--radius-sm);
     text-decoration: none;
     -webkit-tap-highlight-color: transparent;
@@ -63,7 +63,7 @@
     width: 20px;
     height: 20px;
     stroke-width: 1.8;
-    transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: transform 0.2s var(--ease-sheet);
 }
 
 .mobile-nav-item:active {
@@ -78,6 +78,16 @@
 .mobile-nav-item.active i {
     transform: scale(1.08);
     stroke-width: 2.2;
+}
+
+/* Icon tab nảy nhẹ khi được chọn (kiểu SF Symbols bounce) */
+.mobile-nav-item.active :is(i, svg) {
+    animation: navIconBounce 0.42s var(--ease-spring);
+}
+
+@keyframes navIconBounce {
+    40% { transform: scale(0.84); }
+    75% { transform: scale(1.12); }
 }
 
 /* Center Floating Add Button (+) - Apple Monochromatic */
@@ -98,7 +108,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.2s ease;
+    transition: transform 0.2s var(--ease-sheet), box-shadow 0.2s var(--ease-out);
 }
 
 [data-theme="light"] .mobile-nav-item.nav-add-btn,
@@ -227,7 +237,7 @@
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
         margin: 0 !important;
-        animation: slideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        animation: slideUpMobile 0.3s var(--ease-out) forwards !important;
         padding: 24px 20px calc(36px + env(safe-area-inset-bottom, 16px)) 20px !important;
         box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8) !important;
     }
@@ -267,7 +277,7 @@
         pointer-events: none !important;
         visibility: hidden !important;
         transform: translateY(24px) !important;
-        transition: opacity 0.2s ease, transform 0.2s ease;
+        transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out);
     }
 
     /* Prevent background body scroll when modal or settings is open */
@@ -317,12 +327,12 @@
         box-sizing: border-box !important;
         transform-origin: 70% 95% !important;
         overflow: hidden !important;
-        animation: appleMorphInMobile 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+        animation: appleMorphInMobile 0.28s var(--ease-sheet) forwards !important;
     }
 
     #chatbot-container.closing,
     .chatbot-container.closing {
-        animation: appleMorphOutMobile 0.22s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+        animation: appleMorphOutMobile 0.22s var(--ease-sheet) forwards !important;
         transform-origin: 70% 95% !important;
         pointer-events: none !important;
     }
@@ -337,36 +347,6 @@
         background: #ffffff !important;
         border: none !important;
         box-shadow: none !important;
-    }
-
-    @keyframes appleMorphInMobile {
-        0% {
-            opacity: 0;
-            transform: scale(0.6) translateY(36px);
-            border-radius: 44px;
-        }
-        50% {
-            opacity: 1;
-            border-radius: 24px;
-        }
-        100% {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-            border-radius: 0px;
-        }
-    }
-
-    @keyframes appleMorphOutMobile {
-        0% {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-            border-radius: 0px;
-        }
-        100% {
-            opacity: 0;
-            transform: scale(0.65) translateY(36px);
-            border-radius: 44px;
-        }
     }
 
     /* Full-Page Chat Header (Gemini & Claude Inspired) */
@@ -410,7 +390,7 @@
         color: var(--text-primary) !important;
         border: none !important;
         cursor: pointer !important;
-        transition: transform 0.15s ease, background 0.15s ease !important;
+        transition: transform 0.15s var(--ease-out), background 0.15s var(--ease-out) !important;
         padding: 0 !important;
         flex-shrink: 0 !important;
     }
@@ -497,7 +477,7 @@
         align-items: center !important;
         justify-content: center !important;
         cursor: pointer !important;
-        transition: transform 0.15s ease, background 0.15s ease !important;
+        transition: transform 0.15s var(--ease-out), background 0.15s var(--ease-out) !important;
         padding: 0 !important;
         flex-shrink: 0 !important;
     }
@@ -603,7 +583,7 @@
         font-size: 0.84rem !important;
         font-weight: 500 !important;
         cursor: pointer !important;
-        transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease !important;
+        transition: transform 0.15s var(--ease-out), background 0.15s var(--ease-out), border-color 0.15s var(--ease-out) !important;
         -webkit-tap-highlight-color: transparent !important;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
         user-select: none !important;
@@ -647,7 +627,7 @@
         gap: 8px !important;
         box-sizing: border-box !important;
         flex-shrink: 0 !important;
-        transition: padding-bottom 0.12s ease !important;
+        transition: padding-bottom 0.12s var(--ease-out) !important;
     }
 
     [data-theme="light"] .chatbot-input-bar {
@@ -710,7 +690,7 @@
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
         box-sizing: border-box !important;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+        transition: border-color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out) !important;
     }
 
     [data-theme="light"] .claude-input-card,
@@ -794,7 +774,7 @@
         align-items: center !important;
         justify-content: center !important;
         cursor: pointer !important;
-        transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease !important;
+        transition: transform 0.12s var(--ease-out), background 0.12s var(--ease-out), color 0.12s var(--ease-out) !important;
         padding: 0 !important;
         flex-shrink: 0 !important;
     }
@@ -870,7 +850,7 @@
         align-items: center !important;
         justify-content: center !important;
         cursor: pointer !important;
-        transition: transform 0.12s ease, background 0.12s ease !important;
+        transition: transform 0.12s var(--ease-out), background 0.12s var(--ease-out) !important;
         padding: 0 !important;
         flex-shrink: 0 !important;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
@@ -1045,7 +1025,7 @@
         background: var(--surface-secondary, rgba(255, 255, 255, 0.06)) !important;
         color: var(--text-secondary) !important;
         border: none !important;
-        transition: transform 0.15s cubic-bezier(0.32, 0.72, 0, 1), background 0.15s ease !important;
+        transition: transform 0.15s var(--ease-sheet), background 0.15s var(--ease-out) !important;
     }
 
     [data-theme="light"] .btn-icon-label {
@@ -1087,7 +1067,7 @@
         border: none !important;
         overflow: hidden !important;
         cursor: pointer !important;
-        transition: transform 0.15s cubic-bezier(0.32, 0.72, 0, 1) !important;
+        transition: transform 0.15s var(--ease-sheet) !important;
     }
 
     [data-theme="light"] .theme-toggle-btn#btn-settings {
@@ -1201,7 +1181,7 @@
         border-left: none !important;
         border-right: none !important;
         padding: 24px 18px calc(24px + env(safe-area-inset-bottom, 16px)) 18px !important;
-        animation: slideUpDayEdit 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+        animation: slideUpDayEdit 0.32s var(--ease-sheet) forwards !important;
         max-height: 85vh !important;
         position: relative !important;
     }

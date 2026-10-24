@@ -9,12 +9,17 @@
     --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Inter", -apple-system, sans-serif;
 
     /* Apple Spring Physics Transitions */
-    --spring-snappy: 0.16s cubic-bezier(0.16, 1, 0.3, 1);
-    --spring-smooth: 0.32s cubic-bezier(0.32, 0.72, 0, 1);
-    --spring-bounce: 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* Apple motion: chỉ 3 đường cong cho toàn site */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);        /* hiện ra, nhấn */
+    --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);     /* sheet, morph, chuyển màn */
+    --ease-spring: cubic-bezier(0.34, 1.25, 0.64, 1); /* nảy nhẹ, dùng ít */
+    --transition-props: transform, opacity, color, background-color, border-color, box-shadow;
+    --spring-snappy: 0.16s var(--ease-out);
+    --spring-smooth: 0.32s var(--ease-sheet);
+    --spring-bounce: 0.45s var(--ease-spring);
     --transition-fast: var(--spring-snappy);
     --transition-normal: var(--spring-smooth);
-    --transition-slow: 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    --transition-slow: 0.4s var(--ease-sheet);
 
     /* Apple Continuous Radii / Squircles */
     --radius-xs: 6px;
@@ -260,7 +265,7 @@ body {
     align-items: center;
     color: var(--accent-text);
     box-shadow: none;
-    animation: bounce-in 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: bounce-in 0.8s var(--ease-spring);
 }
 
 .logo-icon img {
@@ -794,7 +799,7 @@ html[data-theme="light"] .btn-secondary:hover {
 }
 
 .budget-settings-panel {
-    transition: max-height 0.4s ease-in-out, opacity 0.3s ease, margin-bottom 0.3s ease;
+    transition: max-height 0.4s var(--ease-sheet), opacity 0.3s var(--ease-out), margin-bottom 0.3s var(--ease-out);
     overflow: hidden;
 }
 
@@ -903,7 +908,7 @@ html[data-theme="light"] .btn-secondary:hover {
     height: 100%;
     border-radius: var(--radius-sm);
     width: 0;
-    transition: width 0.8s cubic-bezier(0.1, 0.8, 0.2, 1), background-color var(--transition-normal);
+    transition: width 0.8s var(--ease-out), background-color var(--transition-normal);
 }
 
 /* Warning & Status colors — Apple Flat & Clean */
@@ -1147,7 +1152,8 @@ html[data-theme="light"] .btn-secondary:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: all var(--transition-fast);
+    transition: var(--transition-fast);
+    transition-property: var(--transition-props);
 }
 
 .btn-table-action i {
@@ -1238,7 +1244,7 @@ html[data-theme="light"] .btn-secondary:hover {
     height: auto !important;
     min-height: unset !important;
     box-sizing: border-box;
-    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease;
+    transition: transform 0.35s var(--ease-sheet), opacity 0.25s var(--ease-out);
 }
 
 html[data-theme="light"] .toast {
@@ -1620,7 +1626,7 @@ html[data-theme="light"] .toast {
     -webkit-text-fill-color: var(--text-primary) !important;
     letter-spacing: -0.03em !important;
     display: inline-block;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s var(--ease-out);
 }
 
 .font-welcome.welcome-complete {
@@ -1772,7 +1778,7 @@ html[data-theme="light"] .toast {
     width: 100%;
     opacity: 0;
     transform: translateY(15px);
-    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
     pointer-events: none;
 }
 
@@ -1819,7 +1825,8 @@ html[data-theme="light"] .toast {
     border: 1px solid var(--card-border);
     padding: 8px 18px;
     border-radius: 30px;
-    transition: all var(--transition-fast);
+    transition: var(--transition-fast);
+    transition-property: var(--transition-props);
 }
 
 .feat-badge:hover {
@@ -1858,16 +1865,16 @@ html[data-theme="light"] .toast {
 }
 
 .splash-completed .animate-fade {
-    animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: slide-up 0.8s var(--ease-out) both;
 }
 
 .splash-completed .animate-fade-delay {
-    animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: slide-up 0.8s var(--ease-out) both;
     animation-delay: 0.15s;
 }
 
 .splash-completed .animate-fade-delay-2 {
-    animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: slide-up 0.8s var(--ease-out) both;
     animation-delay: 0.3s;
 }
 
@@ -1993,7 +2000,7 @@ html[data-theme="light"] .toast {
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.35s var(--ease-out), transform 0.35s var(--ease-out);
     will-change: opacity, transform;
 }
 
@@ -2058,7 +2065,7 @@ body.landing-page-body.splash-completed > *:not(#iphone-splash-screen):not(scrip
     text-transform: uppercase;
     opacity: 0;
     transform: translateY(12px);
-    transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 1.2s var(--ease-out), transform 1.2s var(--ease-out);
     filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.25));
     will-change: opacity, transform;
 }
@@ -2106,7 +2113,7 @@ body.landing-page-body.splash-completed > *:not(#iphone-splash-screen):not(scrip
     align-items: center;
     z-index: 10000;
     opacity: 1;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s var(--ease-out);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
 }
@@ -2197,7 +2204,8 @@ body.landing-page-body.splash-completed > *:not(#iphone-splash-screen):not(scrip
     color: #5f6368;
     font-size: 16px;
     pointer-events: none;
-    transition: 0.15s ease all;
+    transition: 0.15s var(--ease-out);
+    transition-property: var(--transition-props);
     background: #ffffff;
     padding: 0 4px;
 }
@@ -2357,7 +2365,8 @@ body.landing-page-body.splash-completed > *:not(#iphone-splash-screen):not(scrip
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--transition-fast);
+    transition-property: var(--transition-props);
 }
 .btn-close-modal:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -2651,7 +2660,8 @@ html[data-theme="light"] .category-badge {
     border: 1px solid var(--card-border) !important;
     color: var(--text-secondary) !important;
     border-radius: var(--radius-pill) !important;
-    transition: all var(--transition-fast) !important;
+    transition: var(--transition-fast) !important;
+    transition-property: var(--transition-props) !important;
 }
 .logout-btn:hover {
     background: rgba(142, 142, 147, 0.16) !important;
@@ -2788,7 +2798,8 @@ h1, h2, h3, h4 { font-weight: 500; }
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: all var(--transition-fast);
+    transition: var(--transition-fast);
+    transition-property: var(--transition-props);
 }
 
 .chatbot-trigger-btn:hover {
@@ -2819,40 +2830,41 @@ h1, h2, h3, h4 { font-weight: 500; }
     border: 1px solid var(--card-border) !important;
     border-radius: var(--radius-xl) !important;
     box-shadow: var(--shadow-float) !important;
-    transform-origin: bottom right !important;
-    animation: appleMorphInDesktop 0.32s cubic-bezier(0.34, 1.25, 0.64, 1) forwards !important;
+    transform-origin: calc(100% - 26px) calc(100% + 42px) !important;
+    animation: appleMorphInDesktop 0.32s var(--ease-spring) forwards !important;
 }
 
 #chatbot-container.closing,
 .chatbot-container.closing {
-    animation: appleMorphOutDesktop 0.22s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
-    transform-origin: bottom right !important;
+    animation: appleMorphOutDesktop 0.22s var(--ease-sheet) forwards !important;
+    transform-origin: calc(100% - 26px) calc(100% + 42px) !important;
     pointer-events: none !important;
 }
 
+/* Morph kiểu iOS: khung chat nở ra từ cỡ nút chat (transform-origin = tâm nút).
+   Không animate border-radius: các rule khung chat đặt border-radius !important nên keyframe không có tác dụng. */
 @keyframes appleMorphInDesktop {
     0% {
         opacity: 0;
-        transform: scale(0.65) translateY(24px);
-        border-radius: 48px;
+        transform: scale(0.15);
+    }
+    40% {
+        opacity: 1;
     }
     100% {
         opacity: 1;
-        transform: scale(1) translateY(0);
-        border-radius: var(--radius-xl);
+        transform: scale(1);
     }
 }
 
 @keyframes appleMorphOutDesktop {
     0% {
         opacity: 1;
-        transform: scale(1) translateY(0);
-        border-radius: var(--radius-xl);
+        transform: scale(1);
     }
     100% {
         opacity: 0;
-        transform: scale(0.7) translateY(20px);
-        border-radius: 48px;
+        transform: scale(0.15);
     }
 }
 
@@ -2954,7 +2966,8 @@ html[data-theme="light"] .chatbot-model-badge {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--transition-fast);
+    transition-property: var(--transition-props);
     padding: 0;
 }
 
@@ -3019,7 +3032,8 @@ html[data-theme="light"] .chatbot-model-badge {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: 0.25s var(--ease-spring);
+    transition-property: var(--transition-props);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3065,7 +3079,7 @@ html[data-theme="light"] .chatbot-model-badge {
     padding: 9px 14px;
     font-size: 0.88rem;
     line-height: 1.42;
-    animation: chat-msg-fade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: chat-msg-fade 0.2s var(--ease-out);
     word-break: break-word;
 }
 
@@ -3239,7 +3253,7 @@ html[data-theme="light"] .chat-message.bot {
     font-size: 0.8rem;
     font-weight: 500;
     cursor: pointer;
-    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    transition: transform 0.15s var(--ease-out), background 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
     user-select: none;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
@@ -3356,7 +3370,7 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.12s ease, background 0.12s ease;
+    transition: transform 0.12s var(--ease-out), background 0.12s var(--ease-out);
     padding: 0;
 }
 
@@ -3389,7 +3403,7 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.12s ease;
+    transition: transform 0.12s var(--ease-out);
     padding: 0;
 }
 
@@ -3879,7 +3893,8 @@ html[data-theme="dark"] .month-display {
     justify-content: center;
     cursor: pointer;
     opacity: 0.5;
-    transition: all 0.2s ease;
+    transition: 0.2s var(--ease-out);
+    transition-property: var(--transition-props);
     z-index: 2;
     padding: 0;
 }
@@ -3915,12 +3930,12 @@ html[data-theme="light"] .btn-quick-add {
 .calendar-cell.cell-pressing {
     transform: scale(0.95) !important;
     background: var(--accent-glow) !important;
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease !important;
+    transition: transform 0.2s var(--ease-out), background 0.2s var(--ease-out) !important;
     box-shadow: 0 0 0 2px var(--accent-color) inset !important;
 }
 
 .calendar-cell.cell-pressed {
-    animation: cellPulse 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    animation: cellPulse 0.3s var(--ease-out) !important;
 }
 
 @keyframes cellPulse {
@@ -4191,7 +4206,7 @@ html[data-theme="light"] .daily-item-swipe-wrapper {
     box-shadow: none !important;
     transform: translate3d(0, 0, 0);
     will-change: transform;
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), background var(--transition-fast);
+    transition: transform 0.28s var(--ease-out), background var(--transition-fast);
     box-sizing: border-box;
 }
 
@@ -4298,7 +4313,7 @@ html[data-theme="light"] .daily-item:hover {
     border: none;
     color: var(--text-muted, #86868b);
     cursor: pointer;
-    transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    transition: color 0.18s var(--ease-out), background 0.18s var(--ease-out), transform 0.18s var(--ease-out);
     padding: 0;
     margin: 0;
     -webkit-tap-highlight-color: transparent;
@@ -4408,7 +4423,7 @@ html[data-theme="light"] .daily-item:hover {
     z-index: 10001 !important;
     opacity: 1;
     visibility: visible;
-    transition: opacity 0.2s ease, visibility 0.2s ease;
+    transition: opacity 0.2s var(--ease-out), visibility 0.2s var(--ease-out);
 }
 
 .settings-backdrop.hidden {
@@ -4490,7 +4505,8 @@ html[data-theme="light"] .daily-item:hover {
     justify-content: center;
     padding: 4px;
     border-radius: 50%;
-    transition: all var(--transition-fast);
+    transition: var(--transition-fast);
+    transition-property: var(--transition-props);
 }
 
 .btn-close-dropdown:hover {
@@ -4675,7 +4691,7 @@ html[data-theme="light"] .zalo-tip-card {
         right: calc(100% + 8px);
         top: 0;
         transform-origin: right top;
-        animation: scale-up-sub 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: scale-up-sub 0.18s var(--ease-out) forwards;
     }
     
     /* Hide back button on desktop since they are side-by-side */
@@ -4718,7 +4734,7 @@ html[data-theme="light"] .zalo-tip-card {
     }
     
     .settings-dropdown-menu.animate-scale-up {
-        animation: scale-up-centered 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        animation: scale-up-centered 0.18s var(--ease-out) forwards !important;
     }
     
     .settings-panel {
@@ -4738,7 +4754,7 @@ html[data-theme="light"] .zalo-tip-card {
         background: var(--bg-elevated);
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
-        animation: slide-in-sub 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: slide-in-sub 0.2s var(--ease-out) forwards;
     }
     
     /* Sub-panels back / close actions on mobile */
@@ -4768,7 +4784,8 @@ html[data-theme="light"] .zalo-tip-card {
     padding: 6px;
     border-radius: 50%;
     margin-right: 8px;
-    transition: all var(--transition-fast);
+    transition: var(--transition-fast);
+    transition-property: var(--transition-props);
 }
 
 .btn-back-settings:hover {
@@ -4821,7 +4838,7 @@ html[data-theme="light"] .theme-option-item:hover {
 }
 
 .animate-scale-up {
-    animation: scale-up 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: scale-up 0.22s var(--ease-out) forwards;
 }
 
 /* Dropdown scale-up centered animation for mobile */
@@ -4955,7 +4972,8 @@ html[data-theme="light"] .theme-option-item:hover {
     font-weight: 500 !important;
     font-size: 0.92rem !important;
     cursor: pointer;
-    transition: all var(--transition-normal) !important;
+    transition: var(--transition-normal) !important;
+    transition-property: var(--transition-props) !important;
     box-sizing: border-box;
 }
 
@@ -5143,7 +5161,7 @@ html[data-theme="light"] #google-auth-btn:hover {
     border-bottom: 1px solid rgba(255, 255, 255, 0.02);
     opacity: 0;
     transform: translateY(40px);
-    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 1s var(--ease-out), transform 1s var(--ease-out);
 }
 
 .landing-scroll-section.section-visible {
@@ -5233,7 +5251,7 @@ html[data-theme="light"] #google-auth-btn:hover {
 .scroll-fade-in {
     opacity: 0;
     transform: translateY(20px);
-    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
 }
 
 .scroll-fade-in.fade-in-active {
@@ -5348,7 +5366,8 @@ html[data-theme="light"] #google-auth-btn:hover {
     font-weight: 500;
     padding: 10px 20px;
     border-radius: var(--radius-md);
-    transition: all var(--transition-normal);
+    transition: var(--transition-normal);
+    transition-property: var(--transition-props);
     background: rgba(255, 255, 255, 0.01);
     border: 1px solid rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(8px);
@@ -5568,15 +5587,14 @@ body {
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
-        transform: none !important;
         overflow: hidden !important;
         transform-origin: 70% 95% !important;
-        animation: appleMorphInMobile 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+        animation: appleMorphInMobile 0.28s var(--ease-sheet) forwards !important;
     }
 
     #chatbot-container.closing,
     .chatbot-container.closing {
-        animation: appleMorphOutMobile 0.22s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+        animation: appleMorphOutMobile 0.22s var(--ease-sheet) forwards !important;
         transform-origin: 70% 95% !important;
         pointer-events: none !important;
     }
@@ -5604,7 +5622,7 @@ body {
         color: var(--text-primary) !important;
         border: none !important;
         cursor: pointer !important;
-        transition: transform 0.15s ease, background 0.15s ease !important;
+        transition: transform 0.15s var(--ease-out), background 0.15s var(--ease-out) !important;
         padding: 0 !important;
     }
 
@@ -5670,7 +5688,7 @@ body {
         background: var(--bg-primary, #0c0c0e) !important;
         border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
         backdrop-filter: blur(24px) !important;
-        transition: padding-bottom 0.12s ease !important;
+        transition: padding-bottom 0.12s var(--ease-out) !important;
     }
 
     [data-theme="light"] .chatbot-input-bar {
@@ -6101,7 +6119,8 @@ body {
     align-items: center;
     opacity: 1;
     visibility: visible;
-    transition: all 0.3s ease;
+    transition: 0.3s var(--ease-out);
+    transition-property: var(--transition-props);
     padding: 20px;
 }
 
@@ -6116,7 +6135,8 @@ body {
     width: 100%;
     max-width: 500px;
     transform: translateY(0) scale(1);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: 0.3s var(--ease-spring);
+    transition-property: var(--transition-props);
     max-height: 90vh;
     overflow-y: auto;
 }
@@ -6135,7 +6155,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: 0.2s;
+    transition-property: var(--transition-props);
 }
 
 .btn-close-modal:hover {
@@ -6213,7 +6234,7 @@ body {
     box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.45);
     padding: 18px 22px;
     opacity: 0;
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+    transition: transform 0.35s var(--ease-out), opacity 0.35s var(--ease-out);
     pointer-events: none;
     display: none;
 }
@@ -6281,7 +6302,7 @@ body {
     font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    transition: background-color 0.2s var(--ease-out), transform 0.1s var(--ease-out);
 }
 
 .btn-cookie-accept:hover {
@@ -6298,7 +6319,7 @@ body {
     font-size: 0.82rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
+    transition: background-color 0.2s var(--ease-out), border-color 0.2s var(--ease-out);
 }
 
 .btn-cookie-essential:hover {
@@ -6316,7 +6337,7 @@ body {
     cursor: pointer;
     text-decoration: underline;
     text-underline-offset: 3px;
-    transition: color 0.2s ease;
+    transition: color 0.2s var(--ease-out);
 }
 
 .btn-cookie-customize:hover {
@@ -6342,7 +6363,7 @@ body {
     padding: 16px;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
+    transition: opacity 0.25s var(--ease-out), visibility 0.25s var(--ease-out);
 }
 
 .spendmind-cookie-modal-overlay.show {
@@ -6364,7 +6385,7 @@ body {
     flex-direction: column;
     overflow: hidden;
     transform: scale(0.96) translateY(10px);
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.25s var(--ease-out);
 }
 
 .spendmind-cookie-modal-overlay.show .spendmind-cookie-modal {
@@ -6403,7 +6424,7 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
 }
 
 .cookie-modal-close-btn:hover {
@@ -6427,7 +6448,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s var(--ease-out);
 }
 
 .cookie-category-card:hover {
@@ -6515,7 +6536,8 @@ body {
     font-size: 0.76rem;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: 0.2s var(--ease-out);
+    transition-property: var(--transition-props);
 }
 
 .footer-cookie-btn:hover {
@@ -6580,7 +6602,7 @@ body {
     transform: translateY(120%);
     opacity: 0;
     pointer-events: none;
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+    transition: transform 0.35s var(--ease-out), opacity 0.35s var(--ease-out);
 }
 
 @media (min-width: 769px) {
@@ -6683,7 +6705,7 @@ body {
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
     z-index: 10003;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s var(--ease-out);
 }
 
 .ios-modal-backdrop.hidden {
@@ -6703,7 +6725,7 @@ body {
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
     padding: 20px;
     z-index: 10004;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.3s var(--ease-out);
 }
 
 .ios-install-sheet.hidden {
@@ -6974,7 +6996,7 @@ html[data-theme="light"] .landing-install-card:hover {
     align-items: center;
     opacity: 1;
     visibility: visible;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
+    transition: opacity 0.25s var(--ease-out), visibility 0.25s var(--ease-out);
     padding: 16px;
     box-sizing: border-box;
 }
@@ -7002,7 +7024,7 @@ html[data-theme="light"] .landing-install-card:hover {
     flex-direction: column;
     gap: 16px;
     transform: translateY(0) scale(1);
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    transition: transform 0.25s var(--ease-out), opacity 0.25s var(--ease-out);
 }
 
 [data-theme="light"] .day-edit-card {
@@ -7147,7 +7169,8 @@ html[data-theme="light"] .landing-install-card:hover {
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 14px;
     padding: 10px 12px;
-    transition: all 0.2s ease;
+    transition: 0.2s var(--ease-out);
+    transition-property: var(--transition-props);
     cursor: pointer;
 }
 
@@ -7252,7 +7275,8 @@ html[data-theme="light"] .landing-install-card:hover {
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: 0.2s var(--ease-out);
+    transition-property: var(--transition-props);
 }
 
 .btn-action-edit:active {
@@ -7278,7 +7302,8 @@ html[data-theme="light"] .landing-install-card:hover {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: 0.2s var(--ease-out);
+    transition-property: var(--transition-props);
 }
 
 .btn-action-delete:active {
@@ -7386,10 +7411,10 @@ html[data-theme="light"] .landing-install-card:hover {
 }
 
 /* Staggered Apple Spring Pop for Welcome Suggestions */
-.quick-prompt-card:nth-child(1) { animation: applePromptPop 0.35s 0.04s cubic-bezier(0.34, 1.25, 0.64, 1) both; }
-.quick-prompt-card:nth-child(2) { animation: applePromptPop 0.35s 0.08s cubic-bezier(0.34, 1.25, 0.64, 1) both; }
-.quick-prompt-card:nth-child(3) { animation: applePromptPop 0.35s 0.12s cubic-bezier(0.34, 1.25, 0.64, 1) both; }
-.quick-prompt-card:nth-child(4) { animation: applePromptPop 0.35s 0.16s cubic-bezier(0.34, 1.25, 0.64, 1) both; }
+.quick-prompt-card:nth-child(1) { animation: applePromptPop 0.35s 0.04s var(--ease-spring) both; }
+.quick-prompt-card:nth-child(2) { animation: applePromptPop 0.35s 0.08s var(--ease-spring) both; }
+.quick-prompt-card:nth-child(3) { animation: applePromptPop 0.35s 0.12s var(--ease-spring) both; }
+.quick-prompt-card:nth-child(4) { animation: applePromptPop 0.35s 0.16s var(--ease-spring) both; }
 
 @keyframes applePromptPop {
     0% {
@@ -7402,35 +7427,109 @@ html[data-theme="light"] .landing-install-card:hover {
     }
 }
 
+/* Mobile/tablet: trang chat nở ra từ nút chat ở thanh tab (transform-origin 70% 95%), như lúc mở app trên iPhone */
 @keyframes appleMorphInMobile {
     0% {
         opacity: 0;
-        transform: scale(0.6) translateY(36px);
-        border-radius: 44px;
+        transform: scale(0.12);
     }
-    50% {
+    35% {
         opacity: 1;
-        border-radius: 24px;
     }
     100% {
         opacity: 1;
-        transform: scale(1) translateY(0);
-        border-radius: 0px;
+        transform: scale(1);
     }
 }
 
 @keyframes appleMorphOutMobile {
     0% {
         opacity: 1;
-        transform: scale(1) translateY(0);
-        border-radius: 0px;
+        transform: scale(1);
     }
     100% {
         opacity: 0;
-        transform: scale(0.65) translateY(36px);
-        border-radius: 44px;
+        transform: scale(0.12);
     }
 }
 
+/* ==========================================================================
+   APPLE MOTION REFINEMENTS
+   ========================================================================== */
 
+/* Hiện chữ kiểu Apple: từ mờ sang nét (thay hiệu ứng gõ chữ) */
+@keyframes appleReveal {
+    from {
+        opacity: 0;
+        filter: blur(12px);
+        transform: translateY(12px);
+    }
+}
 
+.apple-reveal {
+    animation: appleReveal 0.9s var(--ease-out) both;
+}
+
+.hero-actions.fade-in-active {
+    transition-delay: 0.3s;
+}
+
+/* Segmented control Thu/Chi: viên nền trượt giữa hai lựa chọn như iOS.
+   Trình duyệt không có :has() giữ kiểu tô màu cũ. */
+@supports selector(:has(*)) {
+    .form-group-toggle {
+        position: relative;
+    }
+
+    .form-group-toggle::before {
+        content: "";
+        position: absolute;
+        top: 3px;
+        bottom: 3px;
+        left: 3px;
+        width: calc((100% - 10px) / 2); /* (khung - padding 2x3px - gap 4px) / 2 cột */
+        border-radius: var(--radius-pill);
+        background: var(--expense-color);
+        transition: transform var(--spring-smooth), background-color var(--spring-smooth);
+    }
+
+    .form-group-toggle:has(#type-income:checked)::before {
+        transform: translateX(calc(100% + 4px));
+        background: var(--income-color);
+    }
+
+    .form-group-toggle .toggle-label {
+        position: relative;
+        z-index: 1;
+    }
+
+    #type-expense:checked + .toggle-label.expense,
+    #type-income:checked + .toggle-label.income {
+        background: transparent !important;
+    }
+}
+
+/* Tôn trọng «Giảm chuyển động» của hệ điều hành (Apple HIG).
+   Các selector có html phía trước để thắng những rule animation đang dùng !important. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after,
+    html #chatbot-container,
+    html #chatbot-container.closing,
+    html .calendar-cell.cell-pressed,
+    html .settings-dropdown-menu.animate-scale-up,
+    html .modal-content.form-card,
+    html .claude-welcome-hero,
+    html .welcome-hero-container,
+    html .gemini-welcome-hero,
+    html .claude-circle-btn.listening,
+    html .day-edit-card {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0s !important;
+        scroll-behavior: auto !important;
+    }
+}
