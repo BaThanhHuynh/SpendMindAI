@@ -119,6 +119,12 @@ window.addEventListener("pageshow", (e) => {
 
 // Secure Session Guard Check
 function checkAuthSession() {
+    if (!navigator.onLine) {
+        console.warn("Offline mode: retaining cached dashboard view, suppressing redirect.");
+        const appDashboard = document.getElementById("app-dashboard");
+        if (appDashboard) appDashboard.classList.remove("hidden");
+        return;
+    }
     fetch(`${API_URL}?action=check_session&include_state=1`)
         .then(res => res.json())
         .then(data => {
@@ -173,13 +179,22 @@ function checkAuthSession() {
                 // Trigger Lazy Cron Check here
                 triggerLazyCronReminderCheck();
             } else {
-                // If not authenticated, kick back to login immediately
-                window.location.href = "login";
+                // If not authenticated and online, kick back to login immediately
+                if (navigator.onLine) {
+                    window.location.href = "login";
+                }
             }
         })
 
         .catch(err => {
             console.error("Auth Guard error:", err);
+            // DO NOT redirect to login if user is offline or fetch failed due to network disconnection
+            if (!navigator.onLine || err.name === 'TypeError' || String(err.message || '').includes('Failed to fetch')) {
+                console.warn("Network offline error. Retaining dashboard UI without redirect.");
+                const appDashboard = document.getElementById("app-dashboard");
+                if (appDashboard) appDashboard.classList.remove("hidden");
+                return;
+            }
             window.location.href = "login";
         });
 }
@@ -210,6 +225,7 @@ function updateAvatarUI(avatarUrl) {
 
 // Lazy Cron reminder checker
 function triggerLazyCronReminderCheck() {
+    if (!navigator.onLine) return;
     fetch(`${API_URL}?action=check_and_send_reminder`)
         .then(res => res.json())
         .then(data => {
@@ -228,10 +244,16 @@ function triggerLazyCronReminderCheck() {
 
 // Fetch all transactions and budgets from server API
 function fetchStateFromServer() {
+    if (!navigator.onLine) {
+        console.warn("Offline mode: skipping fetchStateFromServer to prevent network errors.");
+        return;
+    }
     fetch(API_URL)
         .then(response => {
             if (response.status === 401) {
-                window.location.href = "login";
+                if (navigator.onLine) {
+                    window.location.href = "login";
+                }
                 throw new Error("Phiên làm việc đã hết hạn");
             }
             if (!response.ok) {
@@ -2708,6 +2730,7 @@ function closeSettingsDropdown() {
 
 // Background sync of notification settings without blocking user interaction
 function refreshNotificationSettingsFromServer() {
+    if (!navigator.onLine) return;
     fetch(`${API_URL}?action=get_notification_settings`)
         .then(res => res.json())
         .then(data => {

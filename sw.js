@@ -2,17 +2,21 @@
    SPENDMINDAI - SERVICE WORKER (PWA & Offline Resilience)
    ========================================================================== */
 
-const CACHE_NAME = 'spendmind-v7.13';
+const CACHE_NAME = 'spendmind-v7.14';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
     '/dashboard.html',
     '/login.html',
     '/register.html',
+    '/dashboard',
+    '/login',
+    '/register',
     '/css/skeleton.css',
     '/css/styles.css',
     '/css/mobile.css',
     '/js/skeleton.js',
+    '/js/network-status.js',
     '/js/auth.js',
     '/js/dashboard.js',
     '/js/chatbot.js',
@@ -67,14 +71,25 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // For HTML navigation requests, use Network-First with safe offline cache fallback
-    // This prevents ERR_FAILED caused by caching redirected responses
+    // For HTML navigation requests, use Network-First with safe route-aware offline cache fallback
+    // This strictly prevents cross-page redirect loops (e.g., /login falling back to /dashboard.html)
     if (event.request.mode === 'navigate') {
         event.respondWith(
-            fetch(event.request).catch(() => {
-                return caches.match(event.request).then((cached) => {
-                    return cached || caches.match('/dashboard.html') || caches.match('/index.html') || caches.match('/');
-                });
+            fetch(event.request).catch(async () => {
+                const direct = await caches.match(event.request);
+                if (direct) return direct;
+
+                const path = url.pathname.toLowerCase();
+                if (path.includes('login')) {
+                    return (await caches.match('/login.html')) || (await caches.match('/login'));
+                }
+                if (path.includes('register')) {
+                    return (await caches.match('/register.html')) || (await caches.match('/register'));
+                }
+                if (path.includes('dashboard')) {
+                    return (await caches.match('/dashboard.html')) || (await caches.match('/dashboard'));
+                }
+                return (await caches.match('/index.html')) || (await caches.match('/'));
             })
         );
         return;

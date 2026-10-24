@@ -898,9 +898,11 @@
 
     <!-- Skeleton Loading Screen Library -->
     <script src="js/skeleton.js?v=20261024_v1"></script>
+    <!-- Network Status & Offline Resilience -->
+    <script src="js/network-status.js?v=20261025_v1"></script>
     <!-- Main Dashboard script -->
     <script src="js/chatbot.js?v=20261024_v27"></script>
-    <script src="js/dashboard.js?v=20261024_v29"></script>
+    <script src="js/dashboard.js?v=20261025_v30"></script>
     <!-- Cookie Consent & Preferences System -->
     <script src="js/cookie-consent.js?v=20261024_v24"></script>
     <!-- PWA Install Manager (Android & iOS) -->
@@ -936,7 +938,7 @@
 
                 let refreshing = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (!refreshing) {
+                    if (!refreshing && navigator.onLine) {
                         refreshing = true;
                         window.location.reload();
                     }

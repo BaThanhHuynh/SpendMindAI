@@ -686,6 +686,34 @@
     - **Kiểm chứng:** Cú pháp Node.js pass 100%; kiểm thử cả 3 khu vực người dùng chụp đều có hiệu ứng skeleton loading shimmer rực rỡ, mượt mà; deploy Vercel thành công.
     - **Trạng thái:** [x] RESOLVED.
 
+54. **[P0] Bugfix & Resilience - Triệt Tiêu Hiện Tượng Spam Giật Màn Hình Khi Mất Kết Nối Mạng, Bổ Sung Banner Apple Mất Mạng & Tự Động Làm Mới Khi Có Mạng Trở Lại**
+    - **File:** `js/network-status.js`, `css/styles.css`, `sw.js`, `js/dashboard.js`, `js/auth.js`, `js/index.js`, `dashboard.html`, `index.html`, `login.html`, `register.html`
+    - **Vấn đề:** Khi người dùng test ngắt kết nối mạng (offline / rút dây mạng / tắt Wifi), giao diện bị hiện tượng giật giật nhấp nháy liên tục (layout thrashing & redirect loop spam) với tần suất liên tục không dừng.
+      - **Nguyên nhân cốt lõi (Root Cause):**
+        1. Trong `js/dashboard.js`, hàm `checkAuthSession()` gọi `fetch('api?action=check_session')`. Khi offline, lệnh `fetch` lập tức ném ngoại lệ `TypeError: Failed to fetch`. Khối `.catch()` trước đó xử lý vô điều kiện bằng `window.location.href = "login"`.
+        2. Khi trình duyệt điều hướng sang đường dẫn sạch `/login`, Service Worker (`sw.js`) chặn yêu cầu navigation. Do `/login` chưa được map tĩnh trong cache mà chỉ có `/login.html`, fallback mặc định của `sw.js` là `caches.match('/dashboard.html')`.
+        3. Do đó, việc chuyển hướng đến `/login` lại vô tình nạp lại `/dashboard.html`! Khi `/dashboard.html` nạp lại, sự kiện `DOMContentLoaded` chạy tiếp `checkAuthSession()` -> lại lỗi `Failed to fetch` -> lại redirect sang `login` -> tạo thành vòng lặp chuyển hướng vô tận (infinite redirect loop) chu kỳ ~50ms khiến màn hình bị giật giật liên tục.
+        4. Sự kiện `controllerchange` của Service Worker trong các file HTML gọi `window.location.reload()` vô điều kiện ngay cả khi đang mất kết nối mạng.
+    - **Thay đổi & Giải pháp:**
+      1. **Module Quản Lý Mạng Toàn Cục Tái Sử Dụng (`js/network-status.js`):**
+         - Thiết kế dạng Singleton độc lập, tự động lắng nghe sự kiện `offline` và `online` của trình duyệt.
+         - Tự động dựng phần tử `#offline-network-banner` chuẩn phong cách Apple Frosted Glass (`backdrop-filter: blur(28px) saturate(190%)`, bo góc squircle 20px, icon Lucide `wifi-off` / `wifi`, nhịp thở pulse amber nhấp nháy dịu dàng).
+         - Khi mất mạng (`offline`): Trượt banner xuống từ mép trên màn hình với hiệu ứng lò xo Spring animation nhẹ nhàng, cảnh báo rõ ràng "Mất kết nối mạng - Vui lòng kiểm tra Internet. Trang sẽ tự động tải lại khi có mạng."
+         - Nút bấm "Thử lại" (`#btn-offline-retry`): Cho phép người dùng bấm kiểm tra kết nối chủ động bất kỳ lúc nào với icon xoay 360 độ và ping kiểm tra thực tế `HEAD /favicon.ico?_ping=...` chống cache.
+         - Khi có mạng trở lại (`online`): Tự động chuyển banner sang màu xanh ngọc lục bảo (Emerald Green), cập nhật thông báo "Đã kết nối Internet! Đang tự động làm mới và cập nhật dữ liệu...", và tự động tải lại trang (`window.location.reload()`) một cách êm ái sau 750ms để đồng bộ hóa phiên làm việc mà không hề gây spam.
+      2. **Triệt Tiêu Triệt Để Vòng Lặp Chuyển Hướng (Anti-Spam Redirect Guards):**
+         - Trong `js/dashboard.js`: Bổ sung kiểm tra `if (!navigator.onLine)` ngay đầu `checkAuthSession()`, `fetchStateFromServer()`, `triggerLazyCronReminderCheck()`, và `refreshNotificationSettingsFromServer()`.
+         - Trong khối `.catch()` của `checkAuthSession()`: Kiểm tra nếu `!navigator.onLine` hoặc lỗi dạng `TypeError` / `Failed to fetch`, lập tức bỏ qua lệnh chuyển hướng và bảo tồn giao diện đã cache của người dùng (`classList.remove("hidden")`).
+         - Tương tự bảo vệ hàm `checkAuthSession()` trong `js/auth.js` và `js/index.js`.
+      3. **Gia Cố Service Worker (`sw.js`):**
+         - Bổ sung `/js/network-status.js`, `/login`, `/register`, `/dashboard` vào `STATIC_ASSETS`.
+         - Nâng cấp bộ điều hướng ngoại tuyến (`mode === 'navigate'`): Xác định chính xác URL đang truy cập (`/login` trỏ về `login.html`, `/register` trỏ về `register.html`, `/dashboard` trỏ về `dashboard.html`, `/` trỏ về `index.html`), ngăn chặn triệt để tình trạng redirect chéo giữa dashboard và login khi ngoại tuyến.
+         - Nâng cấp `CACHE_NAME` lên `spendmind-v7.14`.
+      4. **Bảo Vệ Bộ Lắng Nghe Service Worker Trên 4 Trang HTML:**
+         - Trong `dashboard.html`, `index.html`, `login.html`, `register.html`: Thêm script `network-status.js` và cập nhật sự kiện `controllerchange` thành `if (!refreshing && navigator.onLine) window.location.reload()`.
+    - **Kiểm chứng:** Cú pháp Node.js `node --check` đạt 100% không lỗi; ngắt kết nối mạng không còn bất kỳ hiện tượng giật màn hình hay tải lại liên tục nào; banner Apple hiện ra êm ái và tự động reload đồng bộ ngay khi bật lại mạng; deploy Vercel / GitHub thành công.
+    - **Trạng thái:** [x] RESOLVED.
+
 
 
 

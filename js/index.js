@@ -120,6 +120,7 @@ function checkGoogleOAuthRedirect() {
 
 // 4. Router check: If logged in, redirect directly to dashboard.html
 function checkAuthSession() {
+    if (!navigator.onLine) return;
     fetch(`${API_URL}?action=check_session`)
         .then(res => res.ok ? res.json() : null)
         .then(data => {

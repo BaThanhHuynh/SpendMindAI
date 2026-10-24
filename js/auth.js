@@ -266,6 +266,7 @@ function handleRegisterSubmit(e) {
 
 // 4. Shared Utilities (Session, Theme, Toast)
 function checkAuthSession() {
+    if (!navigator.onLine) return;
     fetch(`${API_URL}?action=check_session`)
         .then(res => res.ok ? res.json() : null)
         .then(data => {
