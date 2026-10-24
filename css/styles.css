@@ -7509,6 +7509,14 @@ html[data-theme="light"] .landing-install-card:hover {
     }
 }
 
+/* Mobile/tablet: khung chat co/giãn cùng nhịp bàn phím (iOS ≈ 0.3s) thay vì nhảy cóc,
+   để ô nhập trượt lên/xuống dính theo mép bàn phím như app Claude. */
+@media (max-width: 1024px) {
+    #chatbot-container {
+        transition: height 0.3s var(--ease-sheet), top 0.3s var(--ease-sheet);
+    }
+}
+
 /* Tôn trọng «Giảm chuyển động» của hệ điều hành (Apple HIG).
    Các selector có html phía trước để thắng những rule animation đang dùng !important. */
 @media (prefers-reduced-motion: reduce) {

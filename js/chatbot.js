@@ -300,6 +300,12 @@ function initChatbot() {
 
         inputField.addEventListener("focus", () => {
             if (window.innerWidth <= 1024) {
+                // iOS Safari does not pan the page to reveal an input that is transparent at focus time
+                // (gist kiding/72721a0553fa93198ae2bb6eefaa3299). Without that pan, the container simply
+                // shrinks to the keyboard top in handleVisualViewport (no header jump, no black frame).
+                // ponytail: undocumented WebKit behaviour; if a future iOS drops it we fall back to the pan.
+                inputField.style.opacity = "0";
+                setTimeout(() => inputField.style.removeProperty("opacity"));
                 handleVisualViewport();
                 setTimeout(handleVisualViewport, 80);
                 setTimeout(handleVisualViewport, 200);

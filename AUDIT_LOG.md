@@ -488,3 +488,18 @@
     - **Ghi chú:** Thanh «▲ ▼ ✓» phía trên bàn phím iOS là thanh phụ của Safari (Previous/Next/Done), do hệ điều hành vẽ; trang web không có API để ẩn (chỉ ứng dụng native/WKWebView tự ẩn được).
     - **Kiểm chứng:** Trình duyệt giả lập 375×812, bấm nút chat ở thanh tab → `document.activeElement` là `#chatbot-input`, không bị `disabled`. `node --check js/chatbot.js` pass. Chưa thử trên iPhone thật.
     - **Trạng thái:** [x] RESOLVED.
+
+39. **[P1] Mobile Chat UX - Ô Nhập Trượt Cùng Bàn Phím iOS Như App Claude (Hết Khung Hình Đen, Header Không Còn Tụt/Nảy)**
+    - **File:** `js/chatbot.js`, `css/styles.css`, `dashboard.html`, `sw.js`
+    - **Phân tích (so khung hình 2 video quay màn hình iPhone, 30fps):**
+      - *App Claude:* ô nhập dính mép trên bàn phím ở mọi khung hình (~0.27s), header đứng yên, lời chào căn giữa lại mượt; đóng bàn phím đối xứng.
+      - *Website:* khi mở bàn phím có 1 khung hình đen toàn màn (1.33s, 7.95s), header tụt xuống ~25% rồi nảy về (hoặc vọt lên quá rồi về), ô nhập bị bàn phím che trong lúc chạy và chỉ hiện khi bàn phím đã dừng; khi đóng, nội dung bung về ngay trong lúc bàn phím còn trượt xuống.
+      - *Nguyên nhân:* iOS tự cuộn (pan) khung nhìn để lộ ô nhập đang nằm dưới bàn phím, cùng lúc `handleVisualViewport()` dời container theo `visualViewport.offsetTop` (giá trị cuối đã có từ đầu hoạt cảnh) → hai chuyển động đánh nhau; chiều cao container đổi tức thì, không theo nhịp bàn phím.
+    - **Giải pháp:**
+      - `focus` của `#chatbot-input` (≤1024px): đặt `opacity: 0` rồi trả lại ở tác vụ kế tiếp — iOS Safari không pan tới ô nhập trong suốt lúc focus (ý tưởng từ gist kiding/72721a0553fa93198ae2bb6eefaa3299, tự viết lại). Không pan → `offsetTop` = 0 → container chỉ co theo `visualViewport.height`.
+      - `@media (max-width: 1024px) #chatbot-container { transition: height 0.3s, top 0.3s var(--ease-sheet) }` → ô nhập trượt lên/xuống cùng bàn phím.
+      - Không đổi logic tính toán trong `handleVisualViewport()`: nếu iOS sau này bỏ hành vi trên, trang quay về cách cũ.
+      - Thanh «▲ ▼ ✓» trên bàn phím là của iOS — web không ẩn được (khác biệt còn lại với app native Claude).
+      - Bump `chatbot.js`/`styles.css` `?v=20261024_v26`, `CACHE_NAME` → `spendmind-v6.9`.
+    - **Kiểm chứng:** Trình duyệt giả lập 375×812: bấm nút chat → `#chatbot-input` được focus, `opacity: 0` chỉ tồn tại 5.7ms rồi gỡ, không lỗi JS; container có `transition-property: height, top` với `cubic-bezier(0.32, 0.72, 0, 1)`. `node --check js/chatbot.js` pass. **Chưa kiểm trên iPhone thật** (trình duyệt máy tính không có bàn phím ảo iOS).
+    - **Trạng thái:** [ ] CHỜ KIỂM TRÊN IPHONE.
