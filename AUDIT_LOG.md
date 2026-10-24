@@ -527,3 +527,11 @@
     - **Kiểm chứng:** Browser pane 375×812 và 1280×800, mọi đường đóng (nút X, chạm nền, Esc, «Đã hiểu», lưu/sửa): có hiệu ứng `.closing` đúng tên/thời lượng/đường cong, tua giữa chừng thấy thẻ đang trượt/thu nhỏ, cuối cùng `display: none`; mở vẫn chạy `slideUpMobile`/`slideUpDayEdit`/`scale-up(-centered)`/`slide-up` như cũ; luồng sửa ngày → sửa giao dịch giữ `modal-open` và đúng dữ liệu; «Giảm chuyển động» bật → 0.01ms; không lỗi console. `node --check` pass 2 tệp JS. **Chưa xem bằng mắt chuyển động thật:** khung trình duyệt thử bị ẩn nên không chạy khung hình (hiệu ứng treo ở trạng thái chờ, đóng nhờ hẹn giờ dự phòng); đã kiểm bằng cách tua hiệu ứng và bắn `animationend`.
     - **Còn tồn:** Menu cài đặt trên mobile chỉ mờ, không co (cả lúc mở lẫn đóng) vì `transform: translate(-50%, -50%) !important` thắng transform của animation. Sheet iOS lúc mở không có hiệu ứng (chỉ có `transition`, không chạy khi bỏ `display: none`) nên hiện đóng mượt hơn mở. `.google-modal-overlay` là CSS chết (không phần tử nào dùng).
     - **Trạng thái:** [ ] CHỜ XEM TRÊN THIẾT BỊ THẬT.
+
+42. **[P3] UX - Thẻ Lịch, Form Giao Dịch, Sheet Sửa Ngày Không Co/Nảy Khi Chạm Bên Trong**
+    - **File:** `css/styles.css`, `dashboard.html`, `index.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** Mục 40 chỉ loại thẻ trong `.dashboard-section`; thẻ lịch (`section.card.glass-card.calendar-section`) vẫn khớp `.card:active { scale(0.96) }` → chạm một ô ngày là cả thẻ lịch co rồi bật lại. Tương tự `.form-card` / `.day-edit-card` (`.modal-content.card.glass-card`) co khi chạm ô nhập hay nút bên trong.
+    - **Thay đổi:** Selector nhấn chung `.card` / `.glass-card` thêm `.calendar-section, .modal-content` vào `:not(...)`; dòng giao dịch trong sheet (`.day-edit-tx-item:active`) vẫn giữ hiệu ứng nhấn. Hiệu ứng riêng của ô ngày (nhấn giữ `cell-pressing`, `cellPulse`) giữ nguyên. Bump `styles.css?v=20261024_v29`, `CACHE_NAME` → `spendmind-v7.2`.
+    - **Kiểm chứng:** Browser pane 375×812: rule được trình duyệt parse; `.calendar-section`, `.form-card`, `.day-edit-card` và 4 thẻ dashboard không còn khớp selector nhấn; `.settings-list-item` vẫn khớp; không lỗi console.
+    - **Còn tồn:** `.auth-card` ở `login.html` / `register.html` (`.card.glass-card`) vẫn co 0.96 khi chạm bên trong.
+    - **Trạng thái:** [x] RESOLVED.
