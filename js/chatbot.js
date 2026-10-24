@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function initChatbot() {
     const triggerBtn = document.getElementById("chatbot-trigger-btn");
-    const headerBtn = document.getElementById("btn-header-chatbot");
     const closeBtn = document.getElementById("chatbot-close-btn");
     const backBtn = document.getElementById("chatbot-back-btn");
     const container = document.getElementById("chatbot-container");
@@ -113,11 +112,6 @@ function initChatbot() {
     // Toggle open/close via trigger button
     if (triggerBtn) {
         triggerBtn.addEventListener("click", toggleChatbot);
-    }
-
-    // Toggle open/close via header button
-    if (headerBtn) {
-        headerBtn.addEventListener("click", toggleChatbot);
     }
 
     // Close via close button (X)

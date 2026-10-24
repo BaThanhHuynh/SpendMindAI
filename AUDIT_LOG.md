@@ -347,22 +347,24 @@
     - **Trạng thái:** [x] RESOLVED. Kiểm tra cú pháp JavaScript đạt chuẩn 100%, responsive hoạt động chính xác trên cả Mobile, Tablet và Desktop.
 
 32. **[P1] UI/UX & Native Mobile Experience - Trang Riêng Biệt Cho Khung Chat Trợ Lý AI Trên Mobile & Tablet (Desktop Giữ Nguyên)**
-    - **File:** `dashboard.html`, `js/chatbot.js`, `css/mobile.css`, `css/styles.css`
+    - **File:** `dashboard.html`, `js/chatbot.js`, `css/mobile.css`, `css/styles.css`, `sw.js`
     - **Yêu cầu & Vấn đề:**
-      - Trên giao diện Mobile và Tablet, khi mở Trợ lý AI từ header hoặc thanh điều hướng dưới, chatbot hiển thị dưới dạng một modal nhỏ lơ lửng ở giữa màn hình (như hình chụp người dùng gửi). Giao diện này chật hẹp, giới hạn chiều cao hiển thị tin nhắn và bị che khuất khi bàn phím ảo hiển thị.
-      - Người dùng muốn: Thay vì hiện cửa sổ nhỏ lơ lửng, chuyển thành một **trang riêng biệt hoàn chỉnh** (Full-screen dedicated view) cho khung chat trên Mobile và Tablet.
-      - Trên giao diện Desktop, giữ nguyên hoàn toàn cửa sổ chat nổi góc dưới phải.
+      - Trên giao diện Mobile và Tablet, khi mở Trợ lý AI từ thanh điều hướng dưới (`#nav-btn-chatbot`), chatbot trước đây hiển thị dưới dạng một modal nhỏ lơ lửng ở giữa màn hình (72vh x 380px). Giao diện này chật hẹp, giới hạn chiều cao hiển thị tin nhắn và bị che khuất khi bàn phím ảo hiển thị.
+      - Người dùng muốn: Thay vì hiện cửa sổ nhỏ lơ lửng, chuyển thành một **trang riêng biệt hoàn chỉnh** (Full-screen dedicated view) cho khung chat trên Mobile và Tablet, bỏ nút Trợ lý AI ở Header (tránh rối giao diện), trên Desktop giữ nguyên widget nổi.
     - **Giải pháp:**
-      - **Nút Trợ lý AI trên Header:** Bổ sung `#btn-header-chatbot` trong `header-actions` của `dashboard.html`, đồng bộ sự kiện mở chat từ cả Header, Bottom Nav (`#nav-btn-chatbot`) và Floating Button.
+      - **Loại bỏ nút Trợ lý AI ở Header:** Xóa bỏ `#btn-header-chatbot` khỏi header của `dashboard.html`, giữ header tinh gọn và tập trung mở chat từ thanh Tab Bar dưới đáy (`#nav-btn-chatbot`) trên Mobile.
       - **Toàn màn hình chuyên dụng (Dedicated Full-Page Chat):**
-        - Áp dụng `position: fixed; width: 100vw; height: 100dvh; z-index: 10010; border-radius: 0; border: none;` cho `#chatbot-container` trên Mobile & Tablet ($\le 1024\text{px}$).
+        - Áp dụng `position: fixed; inset: 0; width: 100vw; height: 100dvh; z-index: 10010; border-radius: 0; border: none; overflow: hidden;` cho `#chatbot-container` trên Mobile & Tablet ($\le 1024\text{px}$).
         - Header cố định trên cùng (`safe-area-inset-top`), bổ sung nút **Quay lại** (`#chatbot-back-btn`) với icon mũi tên $\leftarrow$ chuẩn ứng dụng iOS/Android và chỉ báo trạng thái bot "Đang hoạt động".
         - Khung tin nhắn tự động mở rộng 100% không gian dọc, cuộn mượt mà với `-webkit-overflow-scrolling: touch`.
         - Form nhập câu hỏi ghim cố định ở đáy màn hình với đệm `safe-area-inset-bottom`, tự động co giãn theo `window.visualViewport` khi bàn phím ảo bật lên.
-        - Tự động ẩn thanh điều hướng dưới (`#mobile-bottom-nav`) khi mở trang chat để giao diện không bị chật chội.
+        - Tự động ẩn thanh điều hướng dưới (`#mobile-bottom-nav`) khi mở trang chat để giao diện tối đa không gian.
         - Tích hợp lịch sử trình duyệt (`history.pushState` / `popstate`): Cho phép người dùng vuốt quay lại hoặc bấm nút Back vật lý của điện thoại để trở về Dashboard mượt mà.
+      - **Busting Cache & Service Worker Update:**
+        - Nâng cấp Service Worker cache lên `spendmind-v6.0` trong `sw.js` để tự động xóa sạch cache tĩnh cũ trên thiết bị di động.
+        - Bump query string phiên bản asset lên `?v=20261024_v18` trong `dashboard.html` để ép trình duyệt mobile tải ngay CSS/JS mới mà không bị dính cache cũ.
       - **Desktop:** Giữ nguyên 100% widget chat nổi góc phải màn hình (`> 1024px`), ẩn nút quay lại $\leftarrow$.
-    - **Trạng thái:** [x] RESOLVED. Tối ưu UX xuất sắc, giao diện chat toàn màn hình như ứng dụng gốc Native App.
+    - **Trạng thái:** [x] RESOLVED. Tối ưu UX xuất sắc, giao diện chat toàn màn hình như ứng dụng gốc Native App, xóa bỏ cache cũ triệt để.
 
 
 
