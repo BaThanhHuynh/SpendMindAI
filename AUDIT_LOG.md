@@ -480,3 +480,11 @@
       - Bump `?v=` asset và `CACHE_NAME` → `spendmind-v6.7`.
     - **Kiểm chứng:** Chạy `dev_server.py` + trình duyệt: token có giá trị; keyframe mới được nạp (không còn bản trùng); viên nền Thu/Chi rộng 293px, trượt 297px trùng ô «Thu»; khung chat mobile `transform-origin: 70% 95%`, kết thúc scale 1/opacity 1, đóng ẩn sau 220ms; icon tab nhận `navIconBounce`; `runTypewriter`/`typeWriterEffect` hiện đủ chữ + `appleReveal`; Reduce Motion đang bật trong trình duyệt kiểm thử → thời lượng animation bị ép về `1e-05s` (khối reduce hoạt động). `node --check` pass cho `js/index.js`, `sw.js`.
     - **Trạng thái:** [x] RESOLVED.
+
+38. **[P2] UX - Tự Động Đặt Con Trỏ Vào Ô Nhập Khi Mở Trợ Lý Tài Chính Trên Mobile/Tablet**
+    - **File:** `js/chatbot.js`, `dashboard.html`, `sw.js`
+    - **Vấn đề:** `openChatbot()` chỉ gọi `inputField.focus()` khi `window.innerWidth > 1024`; trên điện thoại người dùng phải chạm thêm vào ô nhập mới gõ được.
+    - **Giải pháp:** Bỏ điều kiện độ rộng, gọi `focus()` đồng bộ ngay trong lượt chạm (iOS chỉ mở bàn phím cho `focus()` nằm trong thao tác của người dùng). Bump `chatbot.js?v=20261024_v25`, `CACHE_NAME` → `spendmind-v6.8`.
+    - **Ghi chú:** Thanh «▲ ▼ ✓» phía trên bàn phím iOS là thanh phụ của Safari (Previous/Next/Done), do hệ điều hành vẽ; trang web không có API để ẩn (chỉ ứng dụng native/WKWebView tự ẩn được).
+    - **Kiểm chứng:** Trình duyệt giả lập 375×812, bấm nút chat ở thanh tab → `document.activeElement` là `#chatbot-input`, không bị `disabled`. `node --check js/chatbot.js` pass. Chưa thử trên iPhone thật.
+    - **Trạng thái:** [x] RESOLVED.

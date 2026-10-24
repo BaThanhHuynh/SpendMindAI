@@ -103,8 +103,9 @@ function initChatbot() {
             });
         }
 
-        // Focus input only on desktop (on mobile/tablet let user see the greeting first)
-        if (inputField && window.innerWidth > 1024) {
+        // Focus input on every device. Must stay synchronous inside the tap handler:
+        // iOS only opens the keyboard for focus() called within a user gesture.
+        if (inputField) {
             inputField.focus();
         }
     }
