@@ -1222,6 +1222,30 @@ function initEventListeners() {
                 dailyList.innerHTML = window.SkeletonRenderer.renderFeedListSkeleton(4);
             }
         }
+        // Daily Summary Bar skeleton (Photo 1)
+        const dailyIncomeVal = document.getElementById("daily-income-val");
+        const dailyExpenseVal = document.getElementById("daily-expense-val");
+        const dailyNetVal = document.getElementById("daily-net-val");
+        const selectedDateTotal = document.getElementById("selected-date-total");
+        if (dailyIncomeVal) dailyIncomeVal.innerHTML = '<span class="skeleton-bone skeleton-summary-val"></span>';
+        if (dailyExpenseVal) dailyExpenseVal.innerHTML = '<span class="skeleton-bone skeleton-summary-val"></span>';
+        if (dailyNetVal) dailyNetVal.innerHTML = '<span class="skeleton-bone skeleton-summary-val"></span>';
+        if (selectedDateTotal) selectedDateTotal.innerHTML = '<span class="skeleton-bone" style="display: inline-block; width: 85px; height: 18px; border-radius: 4px;"></span>';
+
+        // Charts Skeletons (Photo 2)
+        const donutSkeleton = document.getElementById("category-chart-skeleton");
+        const donutCanvas = document.getElementById("categoryChart");
+        const chartNoData = document.getElementById("chart-no-data");
+        if (donutSkeleton) donutSkeleton.style.display = "flex";
+        if (donutCanvas) donutCanvas.style.display = "none";
+        if (chartNoData) chartNoData.style.display = "none";
+
+        const trendSkeleton = document.getElementById("trend-chart-skeleton");
+        const trendCanvas = document.getElementById("trendChart");
+        const trendNoData = document.getElementById("trend-no-data");
+        if (trendSkeleton) trendSkeleton.style.display = "flex";
+        if (trendCanvas) trendCanvas.style.display = "none";
+        if (trendNoData) trendNoData.style.display = "none";
     }
 
     // Calendar navigation
@@ -2203,6 +2227,8 @@ function renderCharts(categoryExpenses = null) {
     // -- CHART 1: DONUT CATEGORY EXPENSES (RESTORE ORIGINAL VIVID PALETTE) --
     const donutCanvas = document.getElementById("categoryChart");
     const chartNoData = document.getElementById("chart-no-data");
+    const donutSkeleton = document.getElementById("category-chart-skeleton");
+    if (donutSkeleton) donutSkeleton.style.display = "none";
     
     const expenseLabels = [];
     const expenseAmounts = [];
@@ -2357,6 +2383,9 @@ function renderCharts(categoryExpenses = null) {
     const displayDates = datesArray.slice(-7);
     const trendIncome = displayDates.map(d => datesWithEntries[d].income);
     const trendExpense = displayDates.map(d => datesWithEntries[d].expense);
+
+    const trendSkeleton = document.getElementById("trend-chart-skeleton");
+    if (trendSkeleton) trendSkeleton.style.display = "none";
 
     if (displayDates.length === 0) {
         trendCanvas.style.display = "none";

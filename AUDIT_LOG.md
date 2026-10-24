@@ -667,7 +667,25 @@
          - Thêm `/css/skeleton.css` và `/js/skeleton.js` vào danh sách `STATIC_ASSETS`.
          - Nâng cấp `CACHE_NAME` lên `spendmind-v7.12`, đồng thời cập nhật cache versioning cho toàn bộ file HTML.
     - **Kiểm chứng:** Cú pháp Node.js `node --check` đạt 100% không lỗi; giao diện load tức thì không chớp màn hình đen/trắng, không giật layout (CLS = 0); deploy Vercel thành công.
+53. **[P1] Feature & UX - Mở Rộng Skeleton Loading Cho Thanh Tổng Kết Ngày (Daily Summary) Và 2 Thẻ Biểu Đồ (Charts) Kèm Tăng Cường Độ Tương Phản Ánh Sáng Shimmer**
+    - **File:** `css/skeleton.css`, `dashboard.html`, `js/dashboard.js`, `sw.js`
+    - **Vấn đề:** Người dùng chụp ảnh các phần còn thiếu hiệu ứng skeleton loading:
+      1. **Ảnh 1:** Thanh tóm tắt thu chi ngày (`.daily-summary-bar` gồm Thu nhập, Chi tiêu, Tổng) hiển thị số "0đ" tĩnh thay vì khối skeleton.
+      2. **Ảnh 2:** Hai thẻ biểu đồ "Phân bổ chi tiêu" và "Xu hướng thu chi" hiển thị thông điệp trống ("Chưa có giao dịch...", "Chưa đủ dữ liệu...") thay vì biểu đồ khung xương đang tải.
+      3. **Ảnh 3:** Khối skeleton ở thẻ số dư khả dụng và header có độ tương phản shimmer thấp trong Dark Mode (`0.09` so với nền `0.08`), dẫn đến cảm giác khối xám tĩnh thiếu sức sống.
+    - **Thay đổi:**
+      1. **Tăng cường độ sáng Shimmer:** Nâng độ trong suốt của dải sáng gradient trong Dark Mode từ `0.09` lên `0.22` (`rgba(255, 255, 255, 0.22)`) giúp luồng sáng lướt qua rõ nét, sinh động chuẩn Apple OLED.
+      2. **Skeleton Donut Chart & Trend Chart:**
+         - Tạo khối `.skeleton-chart-donut-wrapper` với vòng tròn donut xoay vát 110px bo cong 50% cùng 3 item chú thích (legend dots) bên dưới.
+         - Tạo khối `.skeleton-chart-trend-wrapper` với 7 thanh cột shimmer đa dạng chiều cao (35% -> 95%) cùng vạch trục và nhãn bên dưới.
+         - Ẩn triệt để thông điệp `no-data-msg` trong lúc đang tải (`isLoading`); khi dữ liệu tính toán xong mới hiển thị canvas hoặc thông điệp thật.
+      3. **Skeleton Thanh Tổng Kết Ngày (Daily Summary):**
+         - Thêm `.skeleton-summary-val` cho 3 giá trị Thu nhập, Chi tiêu, Tổng (`#daily-income-val`, `#daily-expense-val`, `#daily-net-val`) và khối tiêu đề ngày (`#selected-date-label`, `#selected-date-total`).
+         - Tích hợp vào `showMonthSkeletonLoading()` để khi người dùng đổi tháng, các phần tử đều hiển thị skeleton mượt mà trong lúc tính toán.
+      4. Bump `CACHE_NAME` lên `spendmind-v7.13`.
+    - **Kiểm chứng:** Cú pháp Node.js pass 100%; kiểm thử cả 3 khu vực người dùng chụp đều có hiệu ứng skeleton loading shimmer rực rỡ, mượt mà; deploy Vercel thành công.
     - **Trạng thái:** [x] RESOLVED.
+
 
 
 

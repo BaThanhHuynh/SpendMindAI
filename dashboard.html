@@ -32,7 +32,7 @@
     <link rel="apple-touch-icon" href="images/logoapp.png?v=20260911_v8">
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/skeleton.css?v=20261024_v1">
+    <link rel="stylesheet" href="css/skeleton.css?v=20261024_v2">
     <link rel="stylesheet" href="css/styles.css?v=20261024_v39">
     <link rel="stylesheet" href="css/mobile.css?v=20261024_v27">
     
@@ -119,9 +119,17 @@
                             <h3 class="card-title">Phân bổ chi tiêu</h3>
                             <i data-lucide="pie-chart" class="text-muted"></i>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="categoryChart"></canvas>
-                            <div class="no-data-msg" id="chart-no-data">Chưa có giao dịch chi tiêu nào để hiển thị biểu đồ.</div>
+                        <div class="chart-container" id="category-chart-container">
+                            <div class="skeleton-chart-donut-wrapper" id="category-chart-skeleton">
+                                <div class="skeleton-donut-ring skeleton-bone"></div>
+                                <div class="skeleton-donut-legends">
+                                    <div class="skeleton-legend-item"><span class="skeleton-bone skeleton-legend-dot"></span><span class="skeleton-bone skeleton-legend-text"></span></div>
+                                    <div class="skeleton-legend-item"><span class="skeleton-bone skeleton-legend-dot"></span><span class="skeleton-bone skeleton-legend-text" style="width: 60px;"></span></div>
+                                    <div class="skeleton-legend-item"><span class="skeleton-bone skeleton-legend-dot"></span><span class="skeleton-bone skeleton-legend-text" style="width: 45px;"></span></div>
+                                </div>
+                            </div>
+                            <canvas id="categoryChart" style="display: none;"></canvas>
+                            <div class="no-data-msg" id="chart-no-data" style="display: none;">Chưa có giao dịch chi tiêu nào để hiển thị biểu đồ.</div>
                         </div>
                     </div>
 
@@ -131,9 +139,29 @@
                             <h3 class="card-title">Xu hướng thu chi</h3>
                             <i data-lucide="trending-up" class="text-muted"></i>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="trendChart"></canvas>
-                            <div class="no-data-msg" id="trend-no-data">Chưa đủ dữ liệu để tạo biểu đồ xu hướng.</div>
+                        <div class="chart-container" id="trend-chart-container">
+                            <div class="skeleton-chart-trend-wrapper" id="trend-chart-skeleton">
+                                <div class="skeleton-trend-bars">
+                                    <div class="skeleton-bone skeleton-trend-bar" style="height: 35%;"></div>
+                                    <div class="skeleton-bone skeleton-trend-bar" style="height: 65%;"></div>
+                                    <div class="skeleton-bone skeleton-trend-bar" style="height: 50%;"></div>
+                                    <div class="skeleton-bone skeleton-trend-bar" style="height: 85%;"></div>
+                                    <div class="skeleton-bone skeleton-trend-bar" style="height: 60%;"></div>
+                                    <div class="skeleton-bone skeleton-trend-bar" style="height: 95%;"></div>
+                                    <div class="skeleton-bone skeleton-trend-bar" style="height: 45%;"></div>
+                                </div>
+                                <div class="skeleton-trend-axis">
+                                    <span class="skeleton-bone skeleton-axis-label"></span>
+                                    <span class="skeleton-bone skeleton-axis-label"></span>
+                                    <span class="skeleton-bone skeleton-axis-label"></span>
+                                    <span class="skeleton-bone skeleton-axis-label"></span>
+                                    <span class="skeleton-bone skeleton-axis-label"></span>
+                                    <span class="skeleton-bone skeleton-axis-label"></span>
+                                    <span class="skeleton-bone skeleton-axis-label"></span>
+                                </div>
+                            </div>
+                            <canvas id="trendChart" style="display: none;"></canvas>
+                            <div class="no-data-msg" id="trend-no-data" style="display: none;">Chưa đủ dữ liệu để tạo biểu đồ xu hướng.</div>
                         </div>
                     </div>
                 </div>
@@ -268,23 +296,23 @@
                     <div class="daily-summary-bar">
                         <div class="summary-col">
                             <span class="lbl">Thu nhập</span>
-                            <strong id="daily-income-val" class="val-income">0đ</strong>
+                            <strong id="daily-income-val" class="val-income"><span class="skeleton-bone skeleton-summary-val"></span></strong>
                         </div>
                         <div class="summary-col">
                             <span class="lbl">Chi tiêu</span>
-                            <strong id="daily-expense-val" class="val-expense">0đ</strong>
+                            <strong id="daily-expense-val" class="val-expense"><span class="skeleton-bone skeleton-summary-val"></span></strong>
                         </div>
                         <div class="summary-col">
                             <span class="lbl">Tổng</span>
-                            <strong id="daily-net-val">0đ</strong>
+                            <strong id="daily-net-val"><span class="skeleton-bone skeleton-summary-val"></span></strong>
                         </div>
                     </div>
 
                     <!-- Daily Transactions Title & List -->
                     <div class="daily-transactions-section">
                         <div class="daily-header">
-                            <span id="selected-date-label">16/06/2026 (Thứ 3)</span>
-                            <strong id="selected-date-total">-5,000,000đ</strong>
+                            <span id="selected-date-label"><span class="skeleton-bone" style="display: inline-block; width: 140px; height: 16px; border-radius: 4px;"></span></span>
+                            <strong id="selected-date-total"><span class="skeleton-bone" style="display: inline-block; width: 85px; height: 18px; border-radius: 4px;"></span></strong>
                         </div>
                         <div class="daily-list" id="daily-transactions-list">
                             <div class="skeleton-daily-item" aria-hidden="true">
@@ -872,7 +900,7 @@
     <script src="js/skeleton.js?v=20261024_v1"></script>
     <!-- Main Dashboard script -->
     <script src="js/chatbot.js?v=20261024_v27"></script>
-    <script src="js/dashboard.js?v=20261024_v28"></script>
+    <script src="js/dashboard.js?v=20261024_v29"></script>
     <!-- Cookie Consent & Preferences System -->
     <script src="js/cookie-consent.js?v=20261024_v24"></script>
     <!-- PWA Install Manager (Android & iOS) -->
