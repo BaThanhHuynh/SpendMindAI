@@ -62,7 +62,7 @@
     <script src="https://unpkg.com/lucide@0.460.0" defer></script>
 
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="css/styles.css?v=20261024_v31">
+    <link rel="stylesheet" href="css/styles.css?v=20261024_v32">
 </head>
 
 <body class="landing-page-body">
@@ -143,35 +143,42 @@
             </nav>
 
             <!-- Desktop Nav Actions removed per request -->
-            <!-- Hamburger Button for Mobile -->
-            <button id="hamburger-btn" class="hamburger-btn" aria-label="Toggle Menu">
-                <i data-lucide="menu" id="hamburger-icon"></i>
+            <!-- Hamburger Button for Mobile (3-bar standard cross-platform UI) -->
+            <button id="hamburger-btn" class="hamburger-btn" aria-label="Toggle Menu" aria-expanded="false">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
             </button>
+
+            <!-- Backdrop for Mobile Navigation -->
+            <div id="mobile-nav-backdrop" class="mobile-nav-backdrop"></div>
 
             <!-- Mobile Navigation Overlay Dropdown -->
             <div id="mobile-nav-dropdown" class="mobile-nav-dropdown">
-                <a href="#" class="mobile-menu-link">
-                    <i data-lucide="sparkles"></i> Tính năng
+                <a href="#section-cashflow" class="mobile-menu-link">
+                    <i data-lucide="sparkles"></i> <span>Tính năng</span>
                 </a>
-                <a href="#" class="mobile-menu-link">
-                    <i data-lucide="lightbulb"></i> Giải pháp
+                <a href="#section-chatbot" class="mobile-menu-link">
+                    <i data-lucide="lightbulb"></i> <span>Giải pháp</span>
                 </a>
-                <a href="#" class="mobile-menu-link">
-                    <i data-lucide="tag"></i> Bảng giá
+                <a href="#section-budget" class="mobile-menu-link">
+                    <i data-lucide="tag"></i> <span>Bảng giá</span>
                 </a>
-                <a href="#" class="mobile-menu-link">
-                    <i data-lucide="book-open"></i> Blog
+                <a href="#section-charts" class="mobile-menu-link">
+                    <i data-lucide="book-open"></i> <span>Blog</span>
                 </a>
-                <a href="#" class="mobile-menu-link">
-                    <i data-lucide="folder-open"></i> Tài nguyên
+                <a href="#section-app-install" class="mobile-menu-link">
+                    <i data-lucide="folder-open"></i> <span>Tài nguyên</span>
                 </a>
                 <hr class="mobile-menu-divider">
-                <a href="login" class="mobile-menu-link highlight">
-                    <i data-lucide="log-in"></i> Đăng nhập
-                </a>
-                <a href="register" class="btn btn-primary btn-mobile-nav">
-                    <i data-lucide="user-plus"></i> Bắt đầu ngay
-                </a>
+                <div class="mobile-menu-actions">
+                    <a href="login" class="btn-mobile-login">
+                        <i data-lucide="log-in"></i> <span>Đăng nhập</span>
+                    </a>
+                    <a href="register" class="btn btn-primary btn-mobile-nav">
+                        <i data-lucide="user-plus"></i> <span>Bắt đầu ngay</span>
+                    </a>
+                </div>
             </div>
         </header>
 
@@ -333,7 +340,7 @@
     </div>
 
     <!-- Script index -->
-    <script src="js/index.js?v=20261024_v15"></script>
+    <script src="js/index.js?v=20261024_v16"></script>
     <!-- Cookie Consent & Preferences System -->
     <script src="js/cookie-consent.js?v=20261023_v10"></script>
     <!-- PWA Install Manager (Android & iOS) -->

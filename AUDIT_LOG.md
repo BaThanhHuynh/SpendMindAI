@@ -550,3 +550,18 @@
     - **Kiểm chứng:** CSS parse hợp lệ; khi rê chuột vào thẻ ngân sách, lịch, biểu đồ, form modal hay khung đăng nhập, màu nền và vị trí không đổi; di chuột hoàn toàn tự nhiên và ổn định.
     - **Trạng thái:** [x] RESOLVED.
 
+45. **[P2] UX - Khôi Phục Hiệu Ứng Gõ Chữ (Typewriter) Trang Index & Chuẩn Hóa UI Menu Hamburger 3 Gạch Chuẩn Mọi Hệ Điều Hành**
+    - **File:** `js/index.js`, `index.html`, `css/styles.css`, `dashboard.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** 
+      1. Hiệu ứng gõ chữ typewriter ở tiêu đề hero (`#typewriter-target`) và các đoạn mô tả cuộn trang (`.scroll-typewriter-target`, copyright) trước đây bị thay bằng hiệu ứng hiện mờ, làm mất chuyển động gõ chữ.
+      2. Menu hamburger trên mobile bị cố định 220px lệch góc phải, màu nền cứng `slate-900` không đồng bộ theme, không có lớp phủ mờ (backdrop) và nút 3 gạch không đổi sang 'X' chuẩn mực khi mở.
+    - **Thay đổi:**
+      1. Khôi phục `runTypewriter()` và `typeWriterEffect()` gõ từng ký tự mượt mà kèm con trỏ nhấp nháy (`.typewriter-cursor`) và vùng đệm chữ ẩn chống giật layout (zero CLS).
+      2. Nâng cấp nút hamburger chuẩn 3 gạch (`span.hamburger-line`), tự động chuyển dạng 'X' mượt mà khi mở mà không phụ thuộc font/icon bên ngoài.
+      3. Bổ sung lớp nền mờ `mobile-nav-backdrop`, thiết kế menu dropdown phủ rộng cân xứng toàn màn hình chuẩn iOS / Android / Windows, bổ sung cụm nút đăng nhập/bắt đầu bo tròn đẹp mắt, hỗ trợ đầy đủ cả Dark Mode và Light Mode.
+      4. Đóng menu tự động khi bấm ra ngoài, bấm phím Esc hoặc bấm bất kỳ liên kết nào.
+      5. Bump `styles.css?v=20261024_v32`, `index.js?v=20261024_v16`, `CACHE_NAME` → `spendmind-v7.5`.
+    - **Kiểm chứng:** Node syntax check pass; CSS parse hợp lệ; kiểm tra gõ chữ chạy trơn tru; menu mở đóng mượt mà trên mobile.
+    - **Trạng thái:** [x] RESOLVED.
+
+

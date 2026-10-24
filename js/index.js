@@ -24,21 +24,33 @@ window.addEventListener("pageshow", (e) => {
 
 const API_URL = "api";
 
-// 1. Hero slogan – hiện kiểu Apple (từ mờ sang nét) thay cho gõ chữ
+// 1. Typewriter phrase configuration for Hero Section
 const typewriterPhrases = [
     "Định hình tư duy chi tiêu - Làm chủ tương lai tài chính"
 ];
+let typewriterCharIdx = 0;
+let isTypewriterRunning = false;
 
 function runTypewriter() {
     const target = document.getElementById("typewriter-target");
     if (!target) return;
 
-    target.textContent = typewriterPhrases[0];
-    target.classList.add("apple-reveal");
-    // Make hero items fade in
-    const heroActions = document.querySelector(".hero-actions");
-    if (heroActions) {
-        heroActions.classList.add("fade-in-active");
+    const currentPhrase = typewriterPhrases[0];
+
+    if (typewriterCharIdx < currentPhrase.length) {
+        const typedText = currentPhrase.substring(0, typewriterCharIdx + 1);
+        const untypedText = currentPhrase.substring(typewriterCharIdx + 1);
+        target.innerHTML = typedText + '<span class="typewriter-cursor">|</span><span style="opacity: 0;">' + untypedText + '</span>';
+        
+        typewriterCharIdx++;
+        setTimeout(runTypewriter, Math.random() * 25 + 25);
+    } else {
+        target.innerHTML = currentPhrase + '<span class="typewriter-cursor">|</span>';
+        // Make hero items fade in
+        const heroActions = document.querySelector(".hero-actions");
+        if (heroActions) {
+            heroActions.classList.add("fade-in-active");
+        }
     }
 }
 
@@ -249,34 +261,57 @@ function initSplashScreen() {
 function initMobileNav() {
     const hamburgerBtn = document.getElementById("hamburger-btn");
     const mobileNavDropdown = document.getElementById("mobile-nav-dropdown");
-    const icon = document.getElementById("hamburger-icon");
+    const backdrop = document.getElementById("mobile-nav-backdrop");
 
     if (hamburgerBtn && mobileNavDropdown) {
+        const toggleMenu = (open) => {
+            const shouldOpen = open !== undefined ? open : !mobileNavDropdown.classList.contains("active");
+            if (shouldOpen) {
+                mobileNavDropdown.classList.add("active");
+                hamburgerBtn.classList.add("active");
+                hamburgerBtn.setAttribute("aria-expanded", "true");
+                if (backdrop) backdrop.classList.add("active");
+                document.body.classList.add("nav-open");
+            } else {
+                mobileNavDropdown.classList.remove("active");
+                hamburgerBtn.classList.remove("active");
+                hamburgerBtn.setAttribute("aria-expanded", "false");
+                if (backdrop) backdrop.classList.remove("active");
+                document.body.classList.remove("nav-open");
+            }
+        };
+
         hamburgerBtn.addEventListener("click", (e) => {
             e.stopPropagation();
-            mobileNavDropdown.classList.toggle("active");
-
-            if (mobileNavDropdown.classList.contains("active")) {
-                icon.setAttribute("data-lucide", "x");
-            } else {
-                icon.setAttribute("data-lucide", "menu");
-            }
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
+            toggleMenu();
         });
+
+        if (backdrop) {
+            backdrop.addEventListener("click", () => toggleMenu(false));
+        }
 
         // Close when clicking outside
         document.addEventListener("click", (e) => {
             if (!mobileNavDropdown.contains(e.target) && !hamburgerBtn.contains(e.target)) {
                 if (mobileNavDropdown.classList.contains("active")) {
-                    mobileNavDropdown.classList.remove("active");
-                    icon.setAttribute("data-lucide", "menu");
-                    if (typeof lucide !== 'undefined') {
-                        lucide.createIcons();
-                    }
+                    toggleMenu(false);
                 }
             }
+        });
+
+        // Close when pressing Escape key
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && mobileNavDropdown.classList.contains("active")) {
+                toggleMenu(false);
+            }
+        });
+
+        // Close when tapping any navigation link inside
+        const menuLinks = mobileNavDropdown.querySelectorAll("a, button");
+        menuLinks.forEach((link) => {
+            link.addEventListener("click", () => {
+                toggleMenu(false);
+            });
         });
     }
 }
@@ -339,7 +374,16 @@ function initScrollTypewriter() {
 }
 
 function typeWriterEffect(element, text, charIdx, callback) {
-    element.textContent = text;
-    element.classList.add("apple-reveal");
-    if (callback) callback();
+    if (charIdx < text.length) {
+        const typedText = text.substring(0, charIdx + 1);
+        const untypedText = text.substring(charIdx + 1);
+        element.innerHTML = typedText + '<span class="typewriter-cursor">|</span><span style="opacity: 0;">' + untypedText + '</span>';
+        
+        setTimeout(() => {
+            typeWriterEffect(element, text, charIdx + 1, callback);
+        }, Math.random() * 10 + 8);
+    } else {
+        element.innerHTML = text;
+        if (callback) callback();
+    }
 }

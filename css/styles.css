@@ -5045,48 +5045,122 @@ html[data-theme="light"] #google-auth-btn:hover {
    LANDING SCROLL SECTIONS & MOBILE HAMBURGER MENU STYLES
    ========================================================================== */
 
-/* Hamburger Button */
+/* Hamburger Button (Default native 3-line cross-platform UI for Windows, iOS, Android) */
 .hamburger-btn {
     display: none;
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: background-color var(--transition-fast);
+    padding: 0;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    border-radius: var(--radius-md, 12px);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+    z-index: 102;
 }
 
-.hamburger-btn:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+html[data-theme="light"] .hamburger-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.10);
 }
 
-.hamburger-btn i {
-    width: 24px;
-    height: 24px;
+.hamburger-btn:hover,
+.hamburger-btn:active {
+    background: rgba(255, 255, 255, 0.14);
+    transform: scale(0.96);
 }
 
-/* Mobile Dropdown Nav */
+html[data-theme="light"] .hamburger-btn:hover,
+html[data-theme="light"] .hamburger-btn:active {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.hamburger-line {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background-color: var(--text-primary);
+    border-radius: 2px;
+    transition: transform 0.24s var(--ease-out), opacity 0.2s ease, width 0.2s ease;
+    transform-origin: center;
+}
+
+/* Morph to standard X icon when menu is active */
+.hamburger-btn.active .hamburger-line:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Mobile Nav Backdrop Overlay (Cross-platform modal focus) */
+.mobile-nav-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 99;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+}
+
+.mobile-nav-backdrop.active {
+    display: block;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Mobile Dropdown Nav (Symmetrical, full-width responsive across iOS/Android/Windows) */
 .mobile-nav-dropdown {
     display: none;
     position: absolute;
     top: calc(100% + 10px);
+    left: 0;
     right: 0;
-    width: 220px;
-    background: rgba(15, 23, 42, 0.96);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-lg);
-    padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(22, 22, 24, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-xl, 20px);
+    padding: 14px;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     z-index: 100;
-    backdrop-filter: blur(20px);
-    box-shadow: var(--shadow-lg), 0 0 20px rgba(16, 185, 129, 0.06);
-    transform: translateY(-8px) scale(0.97);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    box-shadow: 0 24px 50px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    transform: translateY(-8px) scale(0.98);
     opacity: 0;
     pointer-events: none;
-    transition: transform var(--transition-normal), opacity var(--transition-normal);
-    transform-origin: top right;
+    transition: transform 0.22s var(--ease-out), opacity 0.2s var(--ease-out);
+    transform-origin: top center;
+}
+
+html[data-theme="light"] .mobile-nav-dropdown {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(0, 0, 0, 0.10);
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 .mobile-nav-dropdown.active {
@@ -5099,51 +5173,107 @@ html[data-theme="light"] #google-auth-btn:hover {
 .mobile-menu-link {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
+    gap: 12px;
+    padding: 12px 16px;
     color: var(--text-secondary);
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 500;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-md, 12px);
     transition: color var(--transition-fast), background-color var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
 }
 
 .mobile-menu-link i {
     width: 18px;
     height: 18px;
     flex-shrink: 0;
+    color: var(--text-muted);
+    transition: color var(--transition-fast);
 }
 
-.mobile-menu-link:hover {
+.mobile-menu-link:hover,
+.mobile-menu-link:active {
     color: var(--text-primary);
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
-.mobile-menu-link.highlight {
-    color: var(--accent-color);
+html[data-theme="light"] .mobile-menu-link:hover,
+html[data-theme="light"] .mobile-menu-link:active {
+    color: var(--text-primary);
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.mobile-menu-link:hover i,
+.mobile-menu-link:active i {
+    color: var(--text-primary);
 }
 
 .mobile-menu-divider {
     border: none;
-    border-top: 1px solid var(--card-border);
-    margin: 6px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 8px 0;
 }
 
-.btn-mobile-nav {
-    margin-top: 2px;
-    width: 100%;
+html[data-theme="light"] .mobile-menu-divider {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.mobile-menu-actions {
     display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.btn-mobile-login {
+    flex: 1;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    font-size: 0.9rem;
-    padding: 10px 14px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
 }
 
-.btn-mobile-nav i {
-    width: 18px;
-    height: 18px;
+html[data-theme="light"] .btn-mobile-login {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.btn-mobile-login:hover,
+.btn-mobile-login:active {
+    background: rgba(255, 255, 255, 0.14);
+    transform: scale(0.98);
+}
+
+html[data-theme="light"] .btn-mobile-login:hover,
+html[data-theme="light"] .btn-mobile-login:active {
+    background: rgba(0, 0, 0, 0.09);
+}
+
+.btn-mobile-nav {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 50px !important;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: transform var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-mobile-nav:active {
+    transform: scale(0.98);
 }
 
 /* Scrollable layout elements */
@@ -5301,7 +5431,7 @@ html[data-theme="light"] #google-auth-btn:hover {
     }
     
     .hamburger-btn {
-        display: block;
+        display: flex;
     }
 }
 
