@@ -562,6 +562,20 @@
       4. Đóng menu tự động khi bấm ra ngoài, bấm phím Esc hoặc bấm bất kỳ liên kết nào.
       5. Bump `styles.css?v=20261024_v32`, `index.js?v=20261024_v16`, `CACHE_NAME` → `spendmind-v7.5`.
     - **Kiểm chứng:** Node syntax check pass; CSS parse hợp lệ; kiểm tra gõ chữ chạy trơn tru; menu mở đóng mượt mà trên mobile.
+46. **[P2] UX - Nâng Cấp Hiệu Ứng Chuyển Động Cuộn Mượt Mà (Scroll Reveal, Floating Mockup & Scroll Indicator) Trang Index**
+    - **File:** `css/styles.css`, `index.html`, `js/index.js`, `dashboard.html`, `login.html`, `register.html`, `sw.js`
+    - **Vấn đề:** Khi người dùng cuộn trang landing page (`index.html`), các section và mockup xuất hiện đột ngột hoặc thiếu chiều sâu chuyển động; không có chỉ báo cuộn hướng dẫn khám phá; chưa có hiệu ứng so le linh hoạt trên màn hình lớn.
+    - **Thay đổi:**
+      1. Kích hoạt cuộn mượt toàn cục: `html { scroll-behavior: smooth; }`.
+      2. Nâng cấp hiệu ứng cuộn trang `.landing-scroll-section`: chuyển sang hàm gia tốc `cubic-bezier(0.16, 1, 0.3, 1)` chuẩn Apple/Linear, xuất hiện phân tầng (staggered): tiêu đề xuất hiện trước (`0.05s delay`), văn bản bắt đầu gõ typewriter, mockup hiển thị nhẹ nhàng (`scale(0.96) -> 1` với `0.15s delay`).
+      3. Bổ sung chuyển động bồng bềnh nhẹ nhàng (`@keyframes mockupFloating`) trên các mockup sau khi cuộn tới, tạo cảm giác sống động, cao cấp.
+      4. Bố cục so le hiện đại trên desktop: các section chẵn tự động đảo chiều (`flex-direction: row-reverse`) tạo nhịp điệu thị giác tự nhiên.
+      5. Thêm nút chỉ báo cuộn mượt mà (`.hero-scroll-indicator`) ngay dưới nút Hero, có hoạt ảnh nhấp nhô nhẹ (`@keyframes scrollBounce`) và tự động ẩn êm ái khi người dùng bắt đầu cuộn xuống (`scrollY > 40`).
+      6. Giữ nguyên trải nghiệm di chuột trung tính (không phát sáng viền chói mắt), tôn trọng chế độ `prefers-reduced-motion`.
+      7. Tinh chỉnh `IntersectionObserver` với `rootMargin: "0px 0px -40px 0px"` và `threshold: 0.1` để kích hoạt hiệu ứng nhanh nhạy, tự nhiên cả trên mobile và desktop.
+      8. Bump `styles.css?v=20261024_v33`, `index.js?v=20261024_v17`, `CACHE_NAME` → `spendmind-v7.6`.
+    - **Kiểm chứng:** Node syntax check pass; CSS parse hợp lệ; cuộn trang mượt mà; các mockup và tiêu đề xuất hiện nhịp nhàng; deploy Vercel thành công.
     - **Trạng thái:** [x] RESOLVED.
+
 
 

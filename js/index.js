@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     initMobileNav();
     initScrollTypewriter();
+    initScrollIndicator();
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
@@ -50,6 +51,10 @@ function runTypewriter() {
         const heroActions = document.querySelector(".hero-actions");
         if (heroActions) {
             heroActions.classList.add("fade-in-active");
+        }
+        const scrollIndicator = document.getElementById("hero-scroll-indicator");
+        if (scrollIndicator) {
+            scrollIndicator.classList.add("fade-in-active");
         }
     }
 }
@@ -318,12 +323,12 @@ function initMobileNav() {
 
 // 6. Intersection Observer for scroll-triggered typewriter and fade-in elements
 function initScrollTypewriter() {
-    const sections = document.querySelectorAll(".landing-scroll-section, .landing-footer");
+    const sections = document.querySelectorAll(".landing-scroll-section, .landing-install-section, .landing-footer");
 
     const observerOptions = {
         root: null,
-        rootMargin: "0px 0px -100px 0px",
-        threshold: 0.15
+        rootMargin: "0px 0px -40px 0px",
+        threshold: 0.1
     };
 
     const sectionObserver = new IntersectionObserver((entries, observer) => {
@@ -386,4 +391,18 @@ function typeWriterEffect(element, text, charIdx, callback) {
         element.innerHTML = text;
         if (callback) callback();
     }
+}
+
+// 7. Hero Scroll Indicator interaction
+function initScrollIndicator() {
+    const indicator = document.getElementById("hero-scroll-indicator");
+    if (!indicator) return;
+
+    window.addEventListener("scroll", () => {
+        if (window.scrollY > 40) {
+            indicator.classList.add("scrolled-away");
+        } else {
+            indicator.classList.remove("scrolled-away");
+        }
+    }, { passive: true });
 }
