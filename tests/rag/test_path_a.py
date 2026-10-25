@@ -68,6 +68,7 @@ lite.executemany("INSERT INTO transactions VALUES (?, ?, ?, ?, ?, ?, ?)",
 class FakeConn:  # đủ cho `with conn, conn.cursor() as cur` + DictCursor của pymysql
     def __init__(self, **kw):
         assert kw["cursorclass"] is rag.pymysql.cursors.DictCursor and kw["database"] == "spendmind"
+        FakeConn.kw = kw
 
     def __enter__(self):
         return self
@@ -100,5 +101,15 @@ for intent, flt in [("finance_list", goc), ("finance_aggregate", {"month": "2026
     if "keyword" not in flt:
         n, s = lite.execute(f"SELECT COUNT(*), SUM(amount) FROM transactions WHERE {where}").fetchone()
         assert f"SỐ GIAO DỊCH: {n} · TỔNG: {rag.vnd(s)}" in reply(my, intent, flt), (flt, n, s)
+assert FakeConn.kw["host"] == "db.example" and FakeConn.kw["port"] == 4000 and FakeConn.kw["ssl"] is not None
+
+# production có thể chỉ đặt DB_HOST / DB_USER / … như api/config/database.php, không có DATABASE_URL
+os.environ.pop("DATABASE_URL")
+os.environ |= {"DB_HOST": "db.example", "DB_USER": "u", "DB_PASS": "p", "DB_NAME": "spendmind"}
+assert len(rag.load_transactions(1)) == len(tx)
+assert (FakeConn.kw["port"], FakeConn.kw["user"], FakeConn.kw["password"], FakeConn.kw["ssl"] is not None) == (3306, "u", "p", True)
+os.environ["DB_SSL"] = "false"
+rag.load_transactions(1)
+assert FakeConn.kw["ssl"] is None
 
 print(f"test_path_a: đạt ({len(graded)} ca chấm bằng run_eval.judge, nhánh MySQL khớp COUNT/SUM của SQL)")

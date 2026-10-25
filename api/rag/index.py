@@ -77,16 +77,22 @@ def smalltalk(message):
 
 def load_transactions(user_id):
     """Mọi giao dịch của người dùng, tải một lần mỗi yêu cầu (chỉ mục idx_user_date, database.sql:38).
-    Có DATABASE_URL → MySQL/TiDB; không có → local_dev_data.json."""
-    url = os.environ.get("DATABASE_URL")
-    if not url:
+    Đọc CSDL bằng đúng các biến của api/config/database.php: DATABASE_URL / MYSQL_URL, trường nào thiếu lấy DB_HOST,
+    DB_PORT, DB_USER, DB_PASS, DB_NAME; cùng luật SSL (DB_SSL). Không có biến nào → local_dev_data.json (chạy ở máy)."""
+    env = os.environ.get
+    raw = env("DATABASE_URL") or env("MYSQL_URL") or ""
+    u = urlsplit(raw)
+    host = u.hostname or env("DB_HOST")
+    if not host:
         # ponytail: tệp chạy thử trên máy chỉ có một người dùng nên bỏ qua user_id
         return json.loads(LOCAL_DATA.read_text(encoding="utf-8"))["transactions"]
-    u = urlsplit(url)
-    conn = pymysql.connect(host=u.hostname, port=u.port or 3306, user=unquote(u.username or ""),
-                           password=unquote(u.password or ""), database=u.path.lstrip("/"), connect_timeout=5,
-                           ssl=None if u.hostname in ("127.0.0.1", "localhost", "::1") else ssl.create_default_context(),
-                           cursorclass=pymysql.cursors.DictCursor)
+    use_ssl = env("DB_SSL") == "true" or "ssl" in raw or (host not in ("127.0.0.1", "localhost", "::1", "db", "mysql")
+                                                           and env("DB_SSL") != "false")
+    conn = pymysql.connect(host=host, port=u.port or int(env("DB_PORT") or 3306),
+                           user=unquote(u.username) if u.username else env("DB_USER", "root"),
+                           password=unquote(u.password) if u.password is not None else env("DB_PASS", ""),
+                           database=u.path.lstrip("/") or env("DB_NAME", "quan_ly_chi_tieu"), connect_timeout=5,
+                           ssl=ssl.create_default_context() if use_ssl else None, cursorclass=pymysql.cursors.DictCursor)
     with conn, conn.cursor() as cur:
         cur.execute("SELECT id, type, amount, category, date, description FROM transactions WHERE user_id = %s", (user_id,))
         # pymysql trả DECIMAL → Decimal, DATE → date: đưa về cùng dạng với local_dev_data.json
