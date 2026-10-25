@@ -621,6 +621,50 @@ function initChatbot() {
         }
     });
 
+    // Bước 5 (thiết kế §3.5): chatbot chỉ đề xuất. Dữ liệu chỉ đổi khi người dùng bấm Xác nhận, qua đúng API
+    // save_transaction / delete_transaction mà dashboard dùng (máy chủ tự kiểm chủ sở hữu giao dịch).
+    function renderProposal(p) {
+        const card = document.createElement("div");
+        card.className = "chat-message bot";
+        const ok = document.createElement("button");
+        const cancel = document.createElement("button");
+        const note = document.createElement("span");
+        const isDelete = p.action === "delete";
+        ok.textContent = isDelete ? "Xác nhận xoá" : "Xác nhận";
+        cancel.textContent = "Huỷ";
+        [ok, cancel].forEach((b, i) => {
+            b.type = "button";
+            b.style.cssText = "margin-right:8px; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:600; border:1px solid var(--accent-color, #0071e3);"
+                + (i === 0 ? "background:var(--accent-color, #0071e3); color:#fff;" : "background:transparent; color:var(--accent-color, #0071e3);");
+        });
+        note.style.cssText = "display:block; margin-top:6px; font-size:12px; opacity:0.85;";
+        card.append(ok, cancel, note);
+        const finish = (text) => { card.textContent = text; };
+        cancel.addEventListener("click", () => finish("Đã huỷ — dữ liệu không đổi."));
+        ok.addEventListener("click", () => {
+            ok.disabled = cancel.disabled = true;
+            note.textContent = "Đang lưu...";
+            fetch(`api?action=${isDelete ? "delete" : "save"}_transaction`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(isDelete ? { id: p.tx_id } : { ...p.tx, ...p.changes, id: p.tx_id })
+            })
+            .then(res => res.json().then(d => {
+                if (!res.ok || !d.success) throw new Error(d.message || "Lưu thất bại");
+            }))
+            .then(() => {
+                finish(isDelete ? "Đã xoá giao dịch." : "Đã lưu thay đổi.");
+                if (typeof fetchStateFromServer === "function") fetchStateFromServer();
+            })
+            .catch(err => {
+                ok.disabled = cancel.disabled = false;
+                note.textContent = String(err.message || err);
+            });
+        });
+        messagesContainer.appendChild(card);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
     function handleUserMessage(text) {
         clearActiveTyping();
         const welcomeHero = messagesContainer.querySelector(".claude-welcome-hero, .welcome-hero-container, .gemini-welcome-hero, .chatbot-welcome-intro");
@@ -705,6 +749,7 @@ function initChatbot() {
                 chatState = data.state || null;
 
                 renderBotReply(replyText);
+                if (data.proposal) renderProposal(data.proposal);
             } else {
                 throw new Error("Không nhận được nội dung từ trợ lý AI.");
             }

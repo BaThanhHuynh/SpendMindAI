@@ -5,6 +5,7 @@ suất, rồi gọi vào đây kèm chữ ký HMAC-SHA256 trên "<timestamp>.<bo
 
 Bước 3: regex xã giao (§3.2) → một lần gọi LLM viết lại câu hỏi + phân loại ý định (§3.3) → code kiểm lại bộ lọc.
 Bước 4: Đường A (§3.4) — code lọc theo bộ lọc đã kiểm, tự đếm / cộng / liệt kê, dựng khối SỰ KIỆN + bảng giao dịch.
+Bước 5: sửa / xoá qua chat (§3.5) — chỉ trả đề xuất; dữ liệu chỉ đổi khi người dùng bấm Xác nhận ở js/chatbot.js.
 """
 import difflib
 import hashlib
@@ -107,13 +108,14 @@ def user_categories(tx):
 # ---------- Lớp 1: viết lại câu hỏi + phân loại ý định, một lần gọi LLM (§3.3) ----------
 
 _NULLABLE = {"type": "STRING", "nullable": True}
-SCHEMA = {"type": "OBJECT", "required": ["rewritten", "intent", "filters", "clarify"], "properties": {
+SCHEMA = {"type": "OBJECT", "required": ["rewritten", "intent", "filters", "clarify", "action", "new_category"], "properties": {
     "rewritten": {"type": "STRING"},
     "intent": {"type": "STRING", "enum": INTENTS},
     "filters": {"type": "OBJECT", "required": list(FILTER_KEYS), "properties": {
         "month": _NULLABLE, "category": _NULLABLE,
         "type": {"type": "STRING", "enum": ["expense", "income"], "nullable": True}, "keyword": _NULLABLE}},
-    "clarify": _NULLABLE}}
+    "clarify": _NULLABLE,
+    "action": {"type": "STRING", "enum": ["update", "delete"], "nullable": True}, "new_category": _NULLABLE}}
 
 SYSTEM = """Bạn là bộ phân tích câu hỏi cho trợ lý chi tiêu SpendMindAI. KHÔNG trả lời câu hỏi; chỉ trả JSON theo lược đồ.
 
@@ -146,7 +148,13 @@ filters:
 - type: "income" khi hỏi về thu nhập, còn lại "expense".
 - keyword: tên món / nơi / việc cần tìm trong ghi chú giao dịch, chữ thường, giữ cách viết của người dùng, bỏ động từ
   đi kèm («tiền đi net» → «net», «uống monster» → «monster»); không có → null.
-clarify: null, trừ khi intent là unclear."""
+clarify: null, trừ khi intent là unclear.
+
+Với modify_data và complaint:
+- filters mô tả giao dịch CẦN sửa (ghi chú, danh mục hiện tại, tháng) — không ghi giá trị mới vào filters.
+- new_category: danh mục MỚI người dùng muốn chuyển sang («sang ăn uống», «nó là ăn uống»), ghi đúng mã trong «Danh mục
+  của người dùng»; không nêu → null. Ý định khác → null.
+- action: "update" khi chuyển / sửa, "delete" khi xoá; ý định khác → null."""
 
 
 def build_prompt(message, history, prev, cats, today):
@@ -244,6 +252,14 @@ def vnd(x):
     return f"{round(x):,}".replace(",", ".") + "đ"
 
 
+def label(c):
+    return CATEGORIES[c][0] if c in CATEGORIES else c
+
+
+def dmy(d):
+    return f"{d[8:]}/{d[5:7]}/{d[:4]}"
+
+
 def select(tx, month, f):
     """Giao dịch khớp bộ lọc, cũ → mới. month=None: mọi thời gian. keyword: nguyên từ trong ghi chú, bỏ dấu."""
     kw = fold(f["keyword"])
@@ -255,7 +271,7 @@ def select(tx, month, f):
 
 def path_a(tx, intent, f):
     """(khối SỰ KIỆN, bảng giao dịch). Mọi con số do code tính; Bước 7 cho LLM diễn đạt lại SỰ KIỆN, bảng gắn nguyên."""
-    rows, label = select(tx, f["month"], f), lambda c: CATEGORIES[c][0] if c in CATEGORIES else c
+    rows = select(tx, f["month"], f)
     mmyyyy = lambda ym: f"{ym[5:]}/{ym[:4]}"  # «10/2026» — không ghi dạng ngày/tháng để bộ chấm không tưởng là dòng giao dịch
     total = sum(t["amount"] for t in rows)
     facts = [" · ".join([f"KỲ: {mmyyyy(f['month']) if f['month'] else 'mọi thời gian'}",
@@ -274,9 +290,38 @@ def path_a(tx, intent, f):
         return "\n".join(facts), ""
     cat = not f["category"]  # không lọc danh mục → thêm cột danh mục
     table = ["| Ngày | Số tiền |" + (" Danh mục |" if cat else "") + " Ghi chú |", "|---|---|" + ("---|" if cat else "") + "---|"]
-    table += [f"| {t['date'][8:]}/{t['date'][5:7]}/{t['date'][:4]} | {vnd(t['amount'])} |" + (f" {label(t['category'])} |" if cat else "")
+    table += [f"| {dmy(t['date'])} | {vnd(t['amount'])} |" + (f" {label(t['category'])} |" if cat else "")
               + f" {' '.join((t.get('description') or '').replace('|', '/').split())} |" for t in rows]
     return "\n".join(facts), "\n".join(table)
+
+
+# ---------- Ý định sửa dữ liệu — chỉ đề xuất, không ghi (§3.5) ----------
+
+def propose(tx, f, action, new_cat, cats):
+    """(câu trả lời, đề xuất | None). Chỉ đề xuất khi khớp đúng MỘT giao dịch; nhiều hay không khớp thì hỏi lại."""
+    action = action if action in ("update", "delete") else ("update" if new_cat else None)
+    if not action:
+        return "Bạn muốn xoá giao dịch đó hay chuyển nó sang danh mục nào?", None
+    if action == "update" and not new_cat:
+        return "Bạn muốn chuyển giao dịch đó sang danh mục nào?", None
+    if f["category"] == new_cat:  # LLM ghi nhầm danh mục mới vào bộ lọc → bỏ, tìm theo ghi chú / tháng
+        f = f | {"category": None}
+    # ponytail: chỉ đổi danh mục hoặc xoá; thêm sửa số tiền / ngày / ghi chú khi người dùng cần
+    rows = select(tx, f["month"], f)
+    if len(rows) != 1:
+        if not rows:
+            return "Mình không tìm thấy giao dịch nào khớp. Bạn nêu rõ giúp ngày, số tiền hoặc ghi chú nhé?", None
+        return (f"Có {len(rows)} giao dịch khớp — bạn muốn {'xoá' if action == 'delete' else 'chuyển'} giao dịch nào? "
+                "Nêu thêm ngày hoặc số tiền nhé.\n\n" + path_a(tx, "finance_list", f)[1]), None
+    t = rows[0]
+    what = f"{dmy(t['date'])} · {vnd(t['amount'])} · {t.get('description') or ''}"
+    if action == "delete":
+        return (f"Xoá giao dịch {what} ({label(t['category'])})? Bấm Xác nhận để xoá, Huỷ để giữ nguyên.",
+                {"action": "delete", "tx_id": t["id"], "changes": {}, "tx": t})
+    if new_cat == t["category"]:
+        return f"Giao dịch {what} đang ở mục {label(new_cat)} rồi.", None
+    return (f"Chuyển giao dịch {what} từ {label(t['category'])} sang {label(new_cat)}? Bấm Xác nhận để lưu, Huỷ để giữ nguyên.",
+            {"action": "update", "tx_id": t["id"], "changes": {"category": new_cat, "type": cats[new_cat]}, "tx": t})
 
 
 # ---------- HTTP ----------
@@ -312,11 +357,22 @@ def answer(data):
     else:
         out, calls = understand(build_prompt(message, history, prev, cats, today))
     intent, filters, clarify, state = resolve(out, prev, cats, today)
-    if clarify or intent not in FINANCE:
-        reply = clarify or "Trợ lý RAG đang được xây dựng."  # Bước 5+: complaint, modify_data, advice…
-    else:
+    new_cat, proposal = match_category(_text(out, "new_category") or "", cats), None
+    if intent == "complaint" and not new_cat and isinstance(prev, dict) and prev.get("intent") in FINANCE:
+        # «liệt kê thiếu», «sai rồi» mà không nêu danh mục đúng → chạy lại yêu cầu tài chính lượt trước (§8 ca 6)
+        intent, filters, clarify, state = resolve({"intent": prev["intent"]}, prev, cats, today)
+    if clarify:
+        reply = clarify
+    elif intent in FINANCE:
         reply = "\n\n".join(p for p in path_a(tx, intent, filters) if p)  # Bước 7: LLM diễn đạt lại khối SỰ KIỆN
-    return {"reply": reply, "state": state, "proposal": None,
+    elif intent == "modify_data":
+        reply, proposal = propose(tx, filters, out.get("action"), new_cat, cats)
+    elif intent == "complaint":  # câu mơ hồ («nó là ăn uống») → hỏi lại, không tự đoán giao dịch (§3.5)
+        reply = (f"Bạn muốn chuyển giao dịch nào sang {label(new_cat)}? Nêu ngày, số tiền hoặc ghi chú, mình sẽ hiện thẻ để "
+                 "bạn xác nhận." if new_cat else "Mình chưa rõ chỗ nào sai. Bạn nói rõ giúp giao dịch hoặc con số nào nhé?")
+    else:
+        reply = "Trợ lý RAG đang được xây dựng."  # Bước 7: advice, out_of_scope, unclear
+    return {"reply": reply, "state": state, "proposal": proposal,
             "meta": {"intent": intent, "rewritten": _text(out, "rewritten") or message, "llm_calls": calls,
                      "finish_reason": "STOP"}}
 
