@@ -408,8 +408,12 @@ function closeWithAnimation(el, onHidden) {
         if (onHidden) onHidden();
         return;
     }
+    // Apple fluid haptic feedback on close
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(6); } catch (e) {}
+    }
     const finish = (e) => {
-        if (e && e.target !== el) return;
+        if (e && e.target !== el && !e.target.classList.contains("modal-content") && !e.target.classList.contains("day-edit-card")) return;
         el.removeEventListener("animationend", finish);
         clearTimeout(timer);
         el._finishClose = null;
@@ -417,7 +421,7 @@ function closeWithAnimation(el, onHidden) {
         el.classList.add("hidden");
         if (onHidden) onHidden();
     };
-    const timer = setTimeout(() => finish(), 400);
+    const timer = setTimeout(() => finish(), 220);
     el._finishClose = finish;
     el.addEventListener("animationend", finish);
     el.classList.add("closing");
@@ -432,6 +436,10 @@ function openTransactionModal() {
     const modal = document.getElementById("transaction-modal");
     if (modal) {
         finishClosing(modal);
+        // Apple fluid haptic feedback on open
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate(8); } catch (e) {}
+        }
         modal.classList.remove("hidden");
         document.body.classList.add("modal-open");
     }
@@ -456,6 +464,10 @@ function openDayEditModal(time) {
     const modal = document.getElementById("day-edit-modal");
     if (modal) {
         finishClosing(modal);
+        // Apple fluid haptic feedback on open
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate(8); } catch (e) {}
+        }
         modal.classList.remove("hidden");
         document.body.classList.add("modal-open");
     }
@@ -1468,7 +1480,6 @@ function handleFormSubmit(e) {
 
 // Cancel editing a transaction
 function cancelEditMode() {
-    resetTransactionForm();
     closeTransactionModal();
 }
 
@@ -1503,6 +1514,11 @@ function resetTransactionForm() {
 function editTransaction(id) {
     const transaction = state.transactions.find(t => t.id === id);
     if (!transaction) return;
+
+    // Tactile confirmation for entering edit mode
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate([10, 30, 10]); } catch (e) {}
+    }
 
     openTransactionModal();
 
@@ -2715,10 +2731,20 @@ function toggleSettingsDropdown(forceOpen) {
     const btnSettings = document.getElementById("btn-settings");
     if (!dropdown) return;
 
+    if (dropdown.classList.contains("closing")) return;
+
     const isCurrentlyActive = dropdown.classList.contains("active");
     const shouldOpen = forceOpen !== undefined ? forceOpen : !isCurrentlyActive;
 
     if (shouldOpen) {
+        // Haptic feedback
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate(8); } catch (e) {}
+        }
+
+        dropdown.classList.remove("closing");
+        if (backdrop) backdrop.classList.remove("closing");
+
         // Close any open sub panels first
         closeSubPanels();
         
@@ -2789,12 +2815,24 @@ function closeSettingsDropdown() {
     const btnSettings = document.getElementById("btn-settings");
     const navBtnSettings = document.getElementById("nav-btn-settings");
 
-    if (dropdown) dropdown.classList.remove("active");
-    if (backdrop) backdrop.classList.remove("active");
+    if (!dropdown || dropdown.classList.contains("closing") || !dropdown.classList.contains("active")) return;
+
+    // Haptic feedback
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(6); } catch (e) {}
+    }
+
+    dropdown.classList.add("closing");
+    if (backdrop) backdrop.classList.add("closing");
     if (btnSettings) btnSettings.classList.remove("active");
     if (navBtnSettings) navBtnSettings.classList.remove("active");
-    document.body.classList.remove("settings-open");
-    closeSubPanels();
+
+    setTimeout(() => {
+        dropdown.classList.remove("active", "closing");
+        if (backdrop) backdrop.classList.remove("active", "closing");
+        document.body.classList.remove("settings-open");
+        closeSubPanels();
+    }, 220);
 }
 
 // Background sync of notification settings without blocking user interaction

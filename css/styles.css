@@ -2551,6 +2551,11 @@ body {
 
 /* --- Ambient glow refinement --- */
 .bg-glow { opacity: 0.95; }
+body.chatbot-open .bg-glow,
+body.modal-open .bg-glow,
+body.settings-open .bg-glow {
+    display: none !important;
+}
 
 /* --- Cards: refined glass, hairline border, layered shadow --- */
 .card {
@@ -4544,6 +4549,11 @@ html[data-theme="light"] .daily-item:hover {
     pointer-events: auto;
 }
 
+.settings-backdrop.closing {
+    animation: sheet-fade-out 0.22s var(--ease-sheet) forwards !important;
+    pointer-events: none !important;
+}
+
 .settings-dropdown-menu {
     position: fixed;
     z-index: 10002 !important;
@@ -4858,17 +4868,20 @@ html[data-theme="light"] .zalo-tip-card {
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
-        transform: scale(0.92) translateY(-8px);
-        transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-                    transform 0.26s cubic-bezier(0.16, 1, 0.3, 1),
-                    visibility 0.26s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .settings-dropdown-menu.active {
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
-        transform: scale(1) translateY(0);
+        animation: appleDropdownIn 0.32s var(--ease-spring) forwards !important;
+        transform-origin: top right;
+    }
+
+    .settings-dropdown-menu.closing {
+        animation: appleDropdownOut 0.22s var(--ease-sheet) forwards !important;
+        transform-origin: top right;
+        pointer-events: none !important;
     }
 
     .settings-panel {
@@ -4915,7 +4928,6 @@ html[data-theme="light"] .zalo-tip-card {
         left: 50% !important;
         right: auto !important;
         bottom: auto !important;
-        transform: translate(-50%, -50%) !important;
         width: calc(100vw - 32px) !important;
         max-width: 360px !important;
         max-height: 85vh !important;
@@ -4933,10 +4945,6 @@ html[data-theme="light"] .zalo-tip-card {
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
-        transform: translate(-50%, -46%) scale(0.92);
-        transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-                    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-                    visibility 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     html[data-theme="light"] .settings-dropdown-menu {
@@ -4949,7 +4957,12 @@ html[data-theme="light"] .zalo-tip-card {
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
-        transform: translate(-50%, -50%) scale(1);
+        animation: appleModalCenterIn 0.32s var(--ease-spring) forwards !important;
+    }
+
+    .settings-dropdown-menu.closing {
+        animation: appleModalCenterOut 0.22s var(--ease-sheet) forwards !important;
+        pointer-events: none !important;
     }
     
     .settings-panel {
@@ -6125,7 +6138,9 @@ body {
         visibility: hidden !important;
     }
 
-    body.chatbot-open .bg-glow {
+    body.chatbot-open .bg-glow,
+    body.modal-open .bg-glow,
+    body.settings-open .bg-glow {
         display: none !important;
     }
 }
@@ -6528,16 +6543,15 @@ body {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     z-index: 10000 !important;
     display: flex;
     justify-content: center;
     align-items: center;
     opacity: 1;
     visibility: visible;
-    transition: 0.3s var(--ease-out);
-    transition-property: var(--transition-props);
+    transition: opacity 0.28s var(--ease-sheet), visibility 0.28s var(--ease-sheet);
     padding: 20px;
 }
 
@@ -6551,15 +6565,32 @@ body {
 .modal-content {
     width: 100%;
     max-width: 500px;
-    transform: translateY(0) scale(1);
-    transition: 0.3s var(--ease-spring);
-    transition-property: var(--transition-props);
     max-height: 90vh;
     overflow-y: auto;
+    transform-origin: center center;
 }
 
-.modal-overlay.hidden .modal-content {
-    transform: translateY(30px) scale(0.95);
+/* Modal Open Animation (Desktop): Apple Spring Pop - đồng bộ chatbot-open */
+.modal-overlay:not(.hidden) .modal-content,
+.modal-overlay:not(.hidden) .day-edit-card {
+    animation: appleModalPopIn 0.32s var(--ease-spring) forwards !important;
+}
+
+/* Staggered Cascade cho các trường trong form khi mở */
+.modal-overlay:not(.hidden) .form-group-toggle {
+    animation: appleFadeSlideUp 0.28s 0.04s var(--ease-spring) both;
+}
+.modal-overlay:not(.hidden) .form-row:nth-of-type(1) {
+    animation: appleFadeSlideUp 0.28s 0.08s var(--ease-spring) both;
+}
+.modal-overlay:not(.hidden) .form-row:nth-of-type(2) {
+    animation: appleFadeSlideUp 0.28s 0.12s var(--ease-spring) both;
+}
+.modal-overlay:not(.hidden) .form-row:nth-of-type(3) {
+    animation: appleFadeSlideUp 0.28s 0.16s var(--ease-spring) both;
+}
+.modal-overlay:not(.hidden) .form-actions {
+    animation: appleFadeSlideUp 0.28s 0.20s var(--ease-spring) both;
 }
 
 .btn-close-modal {
@@ -7960,12 +7991,98 @@ html[data-theme="light"] .landing-install-card:hover {
     to { opacity: 0; }
 }
 
+@keyframes appleDropdownIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.88) translateY(-10px);
+    }
+    40% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes appleDropdownOut {
+    0% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.88) translateY(-8px);
+    }
+}
+
+@keyframes appleModalCenterIn {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -44%) scale(0.88);
+    }
+    35% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes appleModalCenterOut {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -46%) scale(0.88);
+    }
+}
+
+@keyframes appleModalPopIn {
+    0% {
+        opacity: 0;
+        transform: translateY(22px) scale(0.92);
+    }
+    40% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes appleModalPopOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(18px) scale(0.92);
+    }
+}
+
+@keyframes appleFadeSlideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @keyframes card-scale-down {
     to { opacity: 0; transform: translateY(20px) scale(0.96); }
 }
 
 @keyframes sheet-slide-down {
-    to { opacity: 0.5; transform: translateY(100%); }
+    to { opacity: 0; transform: translateY(100%); }
 }
 
 @keyframes scale-down {
@@ -7982,22 +8099,24 @@ html[data-theme="light"] .landing-install-card:hover {
 }
 
 .modal-overlay.closing {
-    animation: overlay-clear 0.26s var(--ease-sheet) forwards;
-    pointer-events: none;
+    animation: overlay-clear 0.22s var(--ease-sheet) forwards !important;
+    pointer-events: none !important;
 }
 
 .ios-modal-backdrop.closing {
-    animation: sheet-fade-out 0.26s var(--ease-sheet) forwards;
-    pointer-events: none;
+    animation: sheet-fade-out 0.22s var(--ease-sheet) forwards !important;
+    pointer-events: none !important;
 }
 
-.modal-overlay.closing .modal-content {
-    animation: card-scale-down 0.26s var(--ease-sheet) forwards;
+.modal-overlay.closing .modal-content,
+.modal-overlay.closing .day-edit-card {
+    animation: appleModalPopOut 0.22s var(--ease-sheet) forwards !important;
+    pointer-events: none !important;
 }
 
 .ios-install-sheet.closing {
-    animation: sheet-slide-down 0.26s var(--ease-sheet) forwards;
-    pointer-events: none;
+    animation: sheet-slide-down 0.22s var(--ease-sheet) forwards !important;
+    pointer-events: none !important;
 }
 
 /* Tôn trọng «Giảm chuyển động» của hệ điều hành (Apple HIG).
@@ -8009,6 +8128,8 @@ html[data-theme="light"] .landing-install-card:hover {
     html #chatbot-container,
     html #chatbot-container.closing,
     html .calendar-cell.cell-pressed,
+    html .settings-dropdown-menu,
+    html .settings-dropdown-menu.closing,
     html .settings-dropdown-menu.animate-scale-up,
     html .settings-dropdown-menu.animate-scale-up.closing,
     html .modal-overlay.closing .modal-content.form-card,
