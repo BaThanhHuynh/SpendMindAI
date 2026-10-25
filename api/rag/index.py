@@ -6,6 +6,7 @@ suất, rồi gọi vào đây kèm chữ ký HMAC-SHA256 trên "<timestamp>.<bo
 Bước 3: regex xã giao (§3.2) → một lần gọi LLM viết lại câu hỏi + phân loại ý định (§3.3) → code kiểm lại bộ lọc.
 Bước 4: Đường A (§3.4) — code lọc theo bộ lọc đã kiểm, tự đếm / cộng / liệt kê, dựng khối SỰ KIỆN + bảng giao dịch.
 Bước 5: sửa / xoá qua chat (§3.5) — chỉ trả đề xuất; dữ liệu chỉ đổi khi người dùng bấm Xác nhận ở js/chatbot.js.
+Bước 7: LLM diễn đạt SỰ KIỆN + tín hiệu do code tính thành 1–3 câu và gợi ý; code kiểm lại số trước khi trả (§3.6).
 """
 import difflib
 import hashlib
@@ -76,8 +77,8 @@ def smalltalk(message):
 
 # ---------- Dữ liệu giao dịch của người dùng ----------
 
-def load_transactions(user_id):
-    """Mọi giao dịch của người dùng, tải một lần mỗi yêu cầu (chỉ mục idx_user_date, database.sql:38).
+def load_user(user_id):
+    """(mọi giao dịch, ngân sách {danh mục: hạn mức}) của người dùng, tải một lần mỗi yêu cầu (idx_user_date, database.sql:38).
     Đọc CSDL bằng đúng các biến của api/config/database.php: DATABASE_URL / MYSQL_URL, trường nào thiếu lấy DB_HOST,
     DB_PORT, DB_USER, DB_PASS, DB_NAME; cùng luật SSL (DB_SSL). Không có biến nào → local_dev_data.json (chạy ở máy)."""
     env = os.environ.get
@@ -86,7 +87,8 @@ def load_transactions(user_id):
     host = u.hostname or env("DB_HOST")
     if not host:
         # ponytail: tệp chạy thử trên máy chỉ có một người dùng nên bỏ qua user_id
-        return json.loads(LOCAL_DATA.read_text(encoding="utf-8"))["transactions"]
+        d = json.loads(LOCAL_DATA.read_text(encoding="utf-8"))
+        return d["transactions"], d.get("budgets") or {}
     use_ssl = env("DB_SSL") == "true" or "ssl" in raw or (host not in ("127.0.0.1", "localhost", "::1", "db", "mysql")
                                                            and env("DB_SSL") != "false")
     conn = pymysql.connect(host=host, port=u.port or int(env("DB_PORT") or 3306),
@@ -97,7 +99,9 @@ def load_transactions(user_id):
     with conn, conn.cursor() as cur:
         cur.execute("SELECT id, type, amount, category, date, description FROM transactions WHERE user_id = %s", (user_id,))
         # pymysql trả DECIMAL → Decimal, DATE → date: đưa về cùng dạng với local_dev_data.json
-        return [r | {"amount": float(r["amount"]), "date": r["date"].isoformat()} for r in cur.fetchall()]
+        tx = [r | {"amount": float(r["amount"]), "date": r["date"].isoformat()} for r in cur.fetchall()]
+        cur.execute("SELECT category, limit_amount FROM budgets WHERE user_id = %s", (user_id,))
+        return tx, {r["category"]: float(r["limit_amount"]) for r in cur.fetchall()}
 
 
 def user_categories(tx):
@@ -170,11 +174,11 @@ def build_prompt(message, history, prev, cats, today):
             f"Câu hỏi mới: {message}")
 
 
-def gemini(model, timeout, prompt):
-    cfg = {"temperature": 0, "maxOutputTokens": 1024, "responseMimeType": "application/json", "responseSchema": SCHEMA}
+def gemini(model, timeout, prompt, system=SYSTEM, schema=SCHEMA):
+    cfg = {"temperature": 0, "maxOutputTokens": 1024, "responseMimeType": "application/json", "responseSchema": schema}
     if model.startswith("gemini-3"):
         cfg["thinkingConfig"] = {"thinkingLevel": "minimal"}
-    body = json.dumps({"system_instruction": {"parts": [{"text": SYSTEM}]},
+    body = json.dumps({"system_instruction": {"parts": [{"text": system}]},
                        "contents": [{"role": "user", "parts": [{"text": prompt}]}], "generationConfig": cfg},
                       ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", body,
@@ -260,6 +264,14 @@ def dmy(d):
     return f"{d[8:]}/{d[5:7]}/{d[:4]}"
 
 
+def mmyyyy(ym):
+    return f"{ym[5:]}/{ym[:4]}"  # «10/2026» — không ghi dạng ngày/tháng để bộ chấm không tưởng là dòng giao dịch
+
+
+def prev_month(ym):
+    return (date.fromisoformat(ym + "-01") - timedelta(days=1)).strftime("%Y-%m")
+
+
 def select(tx, month, f):
     """Giao dịch khớp bộ lọc, cũ → mới. month=None: mọi thời gian. keyword: nguyên từ trong ghi chú, bỏ dấu."""
     kw = fold(f["keyword"])
@@ -272,20 +284,27 @@ def select(tx, month, f):
 def path_a(tx, intent, f):
     """(khối SỰ KIỆN, bảng giao dịch). Mọi con số do code tính; Bước 7 cho LLM diễn đạt lại SỰ KIỆN, bảng gắn nguyên."""
     rows = select(tx, f["month"], f)
-    mmyyyy = lambda ym: f"{ym[5:]}/{ym[:4]}"  # «10/2026» — không ghi dạng ngày/tháng để bộ chấm không tưởng là dòng giao dịch
     total = sum(t["amount"] for t in rows)
     facts = [" · ".join([f"KỲ: {mmyyyy(f['month']) if f['month'] else 'mọi thời gian'}",
                          f"DANH MỤC: {label(f['category']) if f['category'] else 'tất cả'}",
                          f"LOẠI: {'thu' if f['type'] == 'income' else 'chi'}"] + ([f"GHI CHÚ CÓ: «{f['keyword']}»"] if f["keyword"] else [])),
              f"SỐ GIAO DỊCH: {len(rows)} · TỔNG: {vnd(total)}" + (f" · TB/GD: {vnd(total / len(rows))}" if rows else "")]
+    if rows and not f["category"]:
+        by = {}
+        for t in rows:
+            by[t["category"]] = by.get(t["category"], 0) + t["amount"]
+        facts.append("THEO DANH MỤC: " + " · ".join(f"{label(c)} {vnd(s)}" for c, s in sorted(by.items(), key=lambda kv: -kv[1])[:6]))
     if f["month"]:
         # ponytail: chỉ so với tháng liền trước — thêm tháng thứ hai vào lược đồ §3.3 khi gặp «tháng 10 so với tháng 8»
-        pm = (date.fromisoformat(f["month"] + "-01") - timedelta(days=1)).strftime("%Y-%m")
+        pm = prev_month(f["month"])
         prev = select(tx, pm, f)
         p = sum(t["amount"] for t in prev)
         facts.append(f"SO VỚI {mmyyyy(pm)}: {len(prev)} giao dịch · TỔNG: {vnd(p)} · {'tăng' if total >= p else 'giảm'} {vnd(abs(total - p))}")
     if not rows:
-        return "\n".join(facts), "Không tìm thấy giao dịch nào khớp" + (f" «{f['keyword']}»" if f["keyword"] else "") + "."
+        return "\n".join(facts), (f"Không tìm thấy giao dịch {'thu' if f['type'] == 'income' else 'chi'} nào"
+                                   + (f" mục {label(f['category'])}" if f["category"] else "")
+                                   + (f" tháng {mmyyyy(f['month'])}" if f["month"] else "")
+                                   + (f" có ghi chú «{f['keyword']}»" if f["keyword"] else "") + ".")
     if intent in ("finance_aggregate", "finance_compare"):
         return "\n".join(facts), ""
     cat = not f["category"]  # không lọc danh mục → thêm cột danh mục
@@ -293,6 +312,75 @@ def path_a(tx, intent, f):
     table += [f"| {dmy(t['date'])} | {vnd(t['amount'])} |" + (f" {label(t['category'])} |" if cat else "")
               + f" {' '.join((t.get('description') or '').replace('|', '/').split())} |" for t in rows]
     return "\n".join(facts), "\n".join(table)
+
+
+# ---------- Lớp 3 — LLM diễn đạt SỰ KIỆN + gợi ý, code kiểm lại số (§3.6) ----------
+
+def spend(tx, month):
+    """{danh mục: (tổng chi, số giao dịch)} trong tháng."""
+    out = {}
+    for t in tx:
+        if t["type"] == "expense" and t["date"].startswith(month):
+            s, n = out.get(t["category"], (0, 0))
+            out[t["category"]] = (s + t["amount"], n + 1)
+    return out
+
+
+def signals(tx, budgets, month, cat):
+    """Tín hiệu cho gợi ý — code tính, LLM chỉ diễn đạt: vượt / sắp chạm ngân sách, tăng > 20% so với tháng trước,
+    nhiều giao dịch nhỏ, chi > thu (chỉ khi không lọc danh mục)."""
+    now, before, out = spend(tx, month), spend(tx, prev_month(month)), []
+    inc = sum(t["amount"] for t in tx if t["type"] == "income" and t["date"].startswith(month))
+    exp = sum(s for s, _ in now.values())
+    if not cat and exp > inc:  # tín hiệu cấp tháng đứng đầu để không bị cắt
+        out.append(f"CHI > THU tháng {mmyyyy(month)}: chi {vnd(exp)}, thu {vnd(inc)}")
+    for c, (s, n) in sorted(now.items(), key=lambda kv: -kv[1][0]):
+        if cat and c != cat:
+            continue
+        lim, p = budgets.get(c) or 0, before.get(c, (0, 0))[0]
+        if lim and s > lim:
+            out.append(f"{label(c)} VƯỢT NGÂN SÁCH: đã chi {vnd(s)} / hạn mức {vnd(lim)}")
+        elif lim and s >= 0.8 * lim:
+            out.append(f"{label(c)} đã dùng {round(s / lim * 100)}% ngân sách ({vnd(s)} / {vnd(lim)})")
+        if p and s > 1.2 * p:
+            out.append(f"{label(c)} TĂNG {round((s - p) / p * 100)}% so với tháng trước ({vnd(p)} → {vnd(s)})")
+        if n >= 10 and s / n < 50000:
+            out.append(f"{label(c)}: {n} giao dịch nhỏ, TB {vnd(s / n)}")
+    return out[:4]
+
+
+ANSWER_SCHEMA = {"type": "OBJECT", "required": ["answer"], "properties": {"answer": {"type": "STRING"}}}
+ANSWER_SYSTEM = """Bạn là trợ lý chi tiêu SpendMindAI. Trả lời «Câu hỏi» bằng tiếng Việt, CHỈ dựa trên SỰ KIỆN và TÍN HIỆU.
+1. Chỉ dùng con số có trong SỰ KIỆN / TÍN HIỆU, chép đúng cách viết (vd 921.000đ). Không tự cộng, trừ, làm tròn hay đổi
+   đơn vị. Câu hỏi nhắc số khác dữ liệu (vd «19 giao dịch» mà SỰ KIỆN ghi 21) → dùng số của SỰ KIỆN.
+2. Luôn nêu SỐ GIAO DỊCH và TỔNG khi SỰ KIỆN có; câu so sánh nêu cả tổng của tháng được so.
+3. 1–3 câu, không đánh số, không nêu ngày cụ thể, không chép bảng — bảng giao dịch được gắn sẵn ngay dưới câu trả lời.
+4. Bạn không sửa được dữ liệu: không bao giờ nói đã sửa / đã xoá / đã cập nhật.
+5. Kết thúc bằng 1–2 gợi ý tài chính cụ thể dựa trên TÍN HIỆU; không có tín hiệu → một gợi ý chung, ngắn.
+6. Không chào hỏi, không mở bài. Có thể in đậm con số bằng **…**."""
+CLAIM = re.compile(r"\bda (cap nhat|sua|xoa|thay doi|chuyen)")
+DAY = re.compile(r"\b\d{1,2}/\d{1,2}\b")  # «12/10»: ngày cụ thể chỉ nằm trong bảng; «10/2026» không khớp
+
+
+def nums(s):
+    return {int(re.sub(r"[.,]", "", m)) for m in re.findall(r"\d{1,3}(?:[.,]\d{3})+|\d+", s)}
+
+
+def phrase(model, question, facts, sig, must, deadline):
+    """(câu trả lời, số lần gọi LLM). Code kiểm lại câu LLM: số không có trong SỰ KIỆN, thiếu số bắt buộc, nêu ngày,
+    nhận đã sửa dữ liệu, lỗi hay hết giờ → câu mẫu dựng từ SỰ KIỆN. Đây là chốt «đúng số liệu»."""
+    tips = sig or ["Đặt hạn mức cho từng danh mục để biết sớm khi sắp chi quá tay."]
+    block = facts + "\nTÍN HIỆU:\n" + "\n".join(f"- {s}" for s in tips)
+    fallback = facts + "\n\nĐáng chú ý:\n" + "\n".join(f"- {s}" for s in tips)
+    left = deadline - time.monotonic()
+    if left < 2:
+        return fallback, 0
+    try:
+        text = _text(gemini(model, min(5, left - 0.5), f"Câu hỏi: {question}\n\n{block}", ANSWER_SYSTEM, ANSWER_SCHEMA), "answer")
+    except (urllib.error.URLError, TimeoutError, ValueError, KeyError):
+        return fallback, 1
+    ok = text and nums(text) <= nums(block) and must <= nums(text) and not DAY.search(text) and not CLAIM.search(fold(text))
+    return (text if ok else fallback), 1
 
 
 # ---------- Ý định sửa dữ liệu — chỉ đề xuất, không ghi (§3.5) ----------
@@ -346,8 +434,9 @@ def answer(data):
     if reply:
         return {"reply": reply, "state": prev, "proposal": None,
                 "meta": {"intent": "smalltalk", "rewritten": message, "llm_calls": 0, "finish_reason": "STOP"}}
+    deadline = time.monotonic() + 12  # PHP chờ 13s (ChatbotController::forwardToRag)
     today = date.fromisoformat(data.get("today") or date.today().isoformat())
-    tx = load_transactions(data["user_id"])  # user_id chỉ lấy từ body đã ký, không bao giờ từ LLM
+    tx, budgets = load_user(data["user_id"])  # user_id chỉ lấy từ body đã ký, không bao giờ từ LLM
     cats = user_categories(tx)
     raw = data.get("history")
     history = [h for h in (raw if isinstance(raw, list) else []) if isinstance(h, dict) and isinstance(h.get("text"), str)][-6:]
@@ -361,17 +450,32 @@ def answer(data):
     if intent == "complaint" and not new_cat and isinstance(prev, dict) and prev.get("intent") in FINANCE:
         # «liệt kê thiếu», «sai rồi» mà không nêu danh mục đúng → chạy lại yêu cầu tài chính lượt trước (§8 ca 6)
         intent, filters, clarify, state = resolve({"intent": prev["intent"]}, prev, cats, today)
+    model, question = MODELS[max(calls, 1) - 1][0], _text(out, "rewritten") or message
     if clarify:
         reply = clarify
-    elif intent in FINANCE:
-        reply = "\n\n".join(p for p in path_a(tx, intent, filters) if p)  # Bước 7: LLM diễn đạt lại khối SỰ KIỆN
+    elif intent in FINANCE or intent == "advice":
+        # advice: gợi ý dựa trên tín hiệu thật của tháng này (§3.6)
+        f = filters if intent in FINANCE else {"month": f"{today:%Y-%m}", "category": None, "type": "expense", "keyword": None}
+        facts, table = path_a(tx, intent if intent in FINANCE else "finance_aggregate", f)
+        rows = select(tx, f["month"], f)
+        if not rows:
+            reply = table  # «không tìm thấy …»: không cần LLM
+        else:
+            must = {len(rows), round(sum(t["amount"] for t in rows))} if intent in FINANCE else set()
+            if intent == "finance_compare":
+                must.add(round(sum(t["amount"] for t in select(tx, prev_month(f["month"]), f))))
+            sig = signals(tx, budgets, f["month"] or f"{today:%Y-%m}", f["category"]) if f["type"] == "expense" and not f["keyword"] else []
+            text, n = phrase(model, question, facts, sig, must, deadline)
+            reply, calls = "\n\n".join(p for p in (text, table) if p), calls + n
     elif intent == "modify_data":
         reply, proposal = propose(tx, filters, out.get("action"), new_cat, cats)
     elif intent == "complaint":  # câu mơ hồ («nó là ăn uống») → hỏi lại, không tự đoán giao dịch (§3.5)
         reply = (f"Bạn muốn chuyển giao dịch nào sang {label(new_cat)}? Nêu ngày, số tiền hoặc ghi chú, mình sẽ hiện thẻ để "
                  "bạn xác nhận." if new_cat else "Mình chưa rõ chỗ nào sai. Bạn nói rõ giúp giao dịch hoặc con số nào nhé?")
-    else:
-        reply = "Trợ lý RAG đang được xây dựng."  # Bước 7: advice, out_of_scope, unclear
+    elif intent == "out_of_scope":
+        reply = "Mình chỉ trả lời được câu hỏi về thu chi của bạn trong SpendMindAI."
+    else:  # smalltalk mà regex không bắt, unclear không kèm câu hỏi lại
+        reply = "Bạn hỏi cụ thể hơn giúp mình nhé, ví dụ «tháng này mình chi bao nhiêu cho ăn uống?»."
     return {"reply": reply, "state": state, "proposal": proposal,
             "meta": {"intent": intent, "rewritten": _text(out, "rewritten") or message, "llm_calls": calls,
                      "finish_reason": "STOP"}}

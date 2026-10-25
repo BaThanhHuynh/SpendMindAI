@@ -17,6 +17,7 @@ import run_eval  # noqa: E402
 
 for k in ("DATABASE_URL", "MYSQL_URL", "DB_HOST"):
     os.environ.pop(k, None)
+rag.gemini = lambda *a, **k: (_ for _ in ()).throw(ValueError("không gọi LLM trong test"))  # Bước 7 → câu mẫu
 db = json.loads(run_eval.DATA.read_text(encoding="utf-8"))
 turns = {t["id"]: t for c in json.loads(run_eval.CASES.read_text(encoding="utf-8"))["conversations"] for t in c["turns"]}
 before = hashlib.sha256(run_eval.DATA.read_bytes()).digest()

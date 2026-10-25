@@ -23,7 +23,8 @@ import run_eval  # noqa: E402
 db = json.loads(run_eval.DATA.read_text(encoding="utf-8"))
 cases = json.loads(run_eval.CASES.read_text(encoding="utf-8"))
 os.environ.pop("DATABASE_URL", None)
-tx = rag.load_transactions(1)
+tx, _ = rag.load_user(1)
+rag.gemini = lambda *a, **k: (_ for _ in ()).throw(ValueError("không gọi LLM trong test"))  # Bước 7 → câu mẫu
 
 
 def reply(rows, intent, flt):
@@ -51,11 +52,12 @@ assert all(f"| {t['description']} |" in out for t in run_eval.pick(db, goc)), "m
 # so sánh mà LLM bỏ trống tháng → tháng này (ca 18 từng ra «mọi thời gian»)
 empty = {"month": None, "category": None, "type": None, "keyword": None}
 assert rag.resolve({"intent": "finance_compare", "filters": empty}, None, rag.user_categories(tx), date(2026, 10, 25))[1]["month"] == "2026-10"
-# «Làm lại» sau lời phàn nàn (ca 8): code chạy lại lượt tài chính trước, 0 lần gọi LLM, chấm đủ mọi kiểm của ca
+# «Làm lại» sau lời phàn nàn (ca 8): code chạy lại lượt tài chính trước, không gọi bước hiểu câu hỏi, chấm đủ mọi kiểm
+rag.understand = lambda prompt: (_ for _ in ()).throw(AssertionError("«làm lại» không được hỏi LLM"))
 prev = {"intent": "finance_list", "filters": {"month": "2026-10", "category": "entertainment", "type": "expense", "keyword": None}}
 res = rag.answer({"user_id": 1, "message": "Làm lại!", "state": prev, "today": "2026-10-25"})
 case8 = next(t for c in cases["conversations"] for t in c["turns"] if t["id"] == "8")
-assert res["meta"]["llm_calls"] == 0 and not run_eval.judge(case8, res, db, 2026, False), res["meta"]
+assert not run_eval.judge(case8, res, db, 2026, False), res["meta"]
 
 # 2. Nhánh MySQL — dữ liệu cùng tệp mẫu + một giao dịch của người dùng khác (phải bị loại)
 lite = sqlite3.connect(":memory:")
@@ -63,6 +65,8 @@ lite.execute("CREATE TABLE transactions (id TEXT, user_id INT, type TEXT, amount
 lite.executemany("INSERT INTO transactions VALUES (?, ?, ?, ?, ?, ?, ?)",
                  [(t["id"], 1, t["type"], t["amount"], t["category"], t["date"], t.get("description")) for t in db["transactions"]]
                  + [("khac", 2, "expense", 999000, "entertainment", "2026-10-01", "người khác")])
+lite.execute("CREATE TABLE budgets (user_id INT, category TEXT, limit_amount NUMERIC)")
+lite.executemany("INSERT INTO budgets VALUES (?, ?, ?)", [(1, c, v) for c, v in db["budgets"].items()] + [(2, "food", 1)])
 
 
 class FakeConn:  # đủ cho `with conn, conn.cursor() as cur` + DictCursor của pymysql
@@ -83,7 +87,11 @@ class FakeConn:  # đủ cho `with conn, conn.cursor() as cur` + DictCursor củ
         cols = [d[0] for d in cur.description]
         self.rows = [dict(zip(cols, r)) for r in cur.fetchall()]
         for r in self.rows:
-            r["amount"], r["date"] = decimal.Decimal(str(r["amount"])), date.fromisoformat(r["date"])
+            for k in ("amount", "limit_amount"):
+                if k in r:
+                    r[k] = decimal.Decimal(str(r[k]))
+            if "date" in r:
+                r["date"] = date.fromisoformat(r["date"])
 
     def fetchall(self):
         return self.rows
@@ -91,8 +99,8 @@ class FakeConn:  # đủ cho `with conn, conn.cursor() as cur` + DictCursor củ
 
 os.environ["DATABASE_URL"] = "mysql://u:p@db.example:4000/spendmind"
 rag.pymysql.connect = FakeConn
-my = rag.load_transactions(1)
-assert len(my) == len(tx) and rag.user_categories(my) == rag.user_categories(tx)
+my, budgets = rag.load_user(1)
+assert len(my) == len(tx) and rag.user_categories(my) == rag.user_categories(tx) and budgets == db["budgets"]
 for intent, flt in [("finance_list", goc), ("finance_aggregate", {"month": "2026-10"}), ("finance_search", {"keyword": "net"}),
                     ("finance_aggregate", {"month": "2026-09", "category": "transport"})]:
     assert reply(my, intent, flt) == reply(tx, intent, flt), flt
@@ -106,10 +114,10 @@ assert FakeConn.kw["host"] == "db.example" and FakeConn.kw["port"] == 4000 and F
 # production có thể chỉ đặt DB_HOST / DB_USER / … như api/config/database.php, không có DATABASE_URL
 os.environ.pop("DATABASE_URL")
 os.environ |= {"DB_HOST": "db.example", "DB_USER": "u", "DB_PASS": "p", "DB_NAME": "spendmind"}
-assert len(rag.load_transactions(1)) == len(tx)
+assert len(rag.load_user(1)[0]) == len(tx)
 assert (FakeConn.kw["port"], FakeConn.kw["user"], FakeConn.kw["password"], FakeConn.kw["ssl"] is not None) == (3306, "u", "p", True)
 os.environ["DB_SSL"] = "false"
-rag.load_transactions(1)
+rag.load_user(1)
 assert FakeConn.kw["ssl"] is None
 
 print(f"test_path_a: đạt ({len(graded)} ca chấm bằng run_eval.judge, nhánh MySQL khớp COUNT/SUM của SQL)")
