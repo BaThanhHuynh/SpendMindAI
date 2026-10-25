@@ -9,7 +9,7 @@ LLM chính `gemini-3.1-flash-lite` (dự phòng `gemini-2.5-flash-lite`).
 |---|---|---|
 | 0. Bộ kiểm thử hồi quy | ✅ Xong | `tests/chatbot_eval/` — target `oracle` / `old` / `php` / http |
 | 1. Chữa cháy trong PHP | ✅ Mã xong · ⚠️ chưa chấm được hành vi LLM | Khoá Gemini hết hạn mức (429) lúc làm → chạy lại `--target php --only goc` khi hạn mức hồi |
-| 2. Khung FastAPI + PHP chuyển tiếp | ✅ Xong ở máy | Chưa bật trên production: cần đặt `RAG_URL` + `RAG_INTERNAL_SECRET` trên Vercel |
+| 2. Khung FastAPI + PHP chuyển tiếp | ✅ Xong, đã lên production (commit 4d93427) | `/api/rag/healthz` 200; POST `/api/rag/chat` không chữ ký 401. Chưa bật: cần đặt `RAG_URL` + `RAG_INTERNAL_SECRET` trên Vercel |
 | 3. Regex + viết lại câu hỏi + phân loại | ⬜ Bước tiếp theo | |
 | 4–8 | ⬜ Chưa làm | |
 
