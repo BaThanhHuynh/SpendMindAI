@@ -207,6 +207,8 @@ function initChatbot() {
                 activeChatAbortController = null;
             }
             messagesContainer.innerHTML = "";
+            chatHistory = [];
+            chatState = null;
             sendWelcomeMessage();
             if (inputField) {
                 inputField.value = "";
@@ -609,7 +611,8 @@ function initChatbot() {
     }
 
     let activeChatAbortController = null;
-    const queryCache = new Map(); // Fast local cache for identical repeated queries (TTL: 45s)
+    let chatHistory = []; // 6 tin gần nhất gửi kèm để chatbot hiểu câu nối tiếp như «chi tiết», «làm lại»
+    let chatState = null;
 
     // Allow user to click to immediately finish/skip typing effect
     messagesContainer.addEventListener("click", () => {
@@ -632,11 +635,6 @@ function initChatbot() {
         const sendBtn = document.getElementById("chatbot-send-btn");
         if (sendBtn) sendBtn.disabled = true;
         if (inputField) inputField.disabled = true;
-
-        // Check local memory cache for identical query within 45s
-        const cacheKey = trimmedText.toLowerCase();
-        const cachedItem = queryCache.get(cacheKey);
-        const now = Date.now();
 
         function renderBotReply(replyText) {
             indicator.remove();
@@ -674,16 +672,6 @@ function initChatbot() {
             }, 8);
         }
 
-        if (cachedItem && (now - cachedItem.time < 45000)) {
-            renderBotReply(cachedItem.reply);
-            if (sendBtn) sendBtn.disabled = false;
-            if (inputField) {
-                inputField.disabled = false;
-                inputField.focus();
-            }
-            return;
-        }
-
         if (activeChatAbortController) {
             activeChatAbortController.abort();
         }
@@ -692,7 +680,7 @@ function initChatbot() {
         fetch("api?action=chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: trimmedText }),
+            body: JSON.stringify({ message: trimmedText, history: chatHistory, state: chatState }),
             signal: activeChatAbortController.signal
         })
         .then(async res => {
@@ -710,12 +698,11 @@ function initChatbot() {
         .then(data => {
             const replyText = data.reply;
             if (replyText) {
-                // Save to cache (limit size to 20 entries)
-                if (queryCache.size >= 20) {
-                    const firstKey = queryCache.keys().next().value;
-                    queryCache.delete(firstKey);
-                }
-                queryCache.set(cacheKey, { reply: replyText, time: Date.now() });
+                chatHistory = chatHistory.concat(
+                    { role: "user", text: trimmedText },
+                    { role: "bot", text: replyText }
+                ).slice(-6);
+                chatState = data.state || null;
 
                 renderBotReply(replyText);
             } else {

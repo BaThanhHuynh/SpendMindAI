@@ -8,6 +8,7 @@ dev_server.py
 local_demo_server.py
 watch_deploy.py
 test_*.py
+tests/
 temp_*.py
 local_dev_data.json
 

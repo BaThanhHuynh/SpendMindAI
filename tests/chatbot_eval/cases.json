@@ -1,0 +1,135 @@
+{
+  "_ghi_chu": "Ca kiểm thử từ đoạn hội thoại lỗi (docs/knowledge/chatbot-rag-thiet-ke.md §8). Không ghi số đáp án ở đây: run_eval.py tính từ local_dev_data.json theo 'filter' (type mặc định 'expense'). Regex 'forbid'/'require' so trên câu trả lời đã bỏ dấu, chữ thường. Hội thoại 'goc' chạy nối tiếp: lịch sử là câu trả lời thật của target.",
+  "today": "2026-10-25",
+  "conversations": [
+    {
+      "id": "goc",
+      "turns": [
+        {
+          "id": "1",
+          "say": "Mục giải trí tôi đã chi gì",
+          "loi_cu": "Chỉ nêu tổng 921.000đ, không liệt kê giao dịch",
+          "expect": [
+            {"check": "lists", "filter": {"month": "2026-10", "category": "entertainment"}},
+            {"check": "mentions", "values": [
+              {"agg": "sum", "filter": {"month": "2026-10", "category": "entertainment"}},
+              {"agg": "count", "filter": {"month": "2026-10", "category": "entertainment"}}
+            ]},
+            {"check": "intent", "any": ["finance_list"]},
+            {"check": "rewritten", "has": ["giai tri", "10"]}
+          ]
+        },
+        {
+          "id": "2",
+          "say": "Chi tiết cho tôi",
+          "loi_cu": "Đổ toàn bộ tổng quan tài chính (số dư, tổng thu, mọi danh mục) rồi bị cắt ở '**168.00'",
+          "expect": [
+            {"check": "lists", "filter": {"month": "2026-10", "category": "entertainment"}},
+            {"check": "forbid", "regex": "so du|tong thu"},
+            {"check": "intent", "any": ["finance_list"]},
+            {"check": "rewritten", "has": ["giai tri", "10"]}
+          ]
+        },
+        {
+          "id": "3",
+          "say": "Trong tháng 10 mục giải trí tôi đã chi cái gì",
+          "loi_cu": "Chỉ nêu tổng và số giao dịch",
+          "expect": [
+            {"check": "lists", "filter": {"month": "2026-10", "category": "entertainment"}},
+            {"check": "mentions", "values": [
+              {"agg": "sum", "filter": {"month": "2026-10", "category": "entertainment"}},
+              {"agg": "count", "filter": {"month": "2026-10", "category": "entertainment"}}
+            ]},
+            {"check": "intent", "any": ["finance_list"]}
+          ]
+        },
+        {
+          "id": "4",
+          "say": "19 giao dịch cụ thể là chi vào gì",
+          "loi_cu": "Trả số giao dịch theo từng danh mục: Ăn uống 54, Giải trí 19, Di chuyển 13",
+          "expect": [
+            {"check": "lists", "filter": {"month": "2026-10", "category": "entertainment"}},
+            {"check": "intent", "any": ["finance_list"]},
+            {"check": "rewritten", "has": ["giai tri", "10"]}
+          ]
+        },
+        {
+          "id": "5",
+          "say": "Chi tiêu chi tiết giải trí trong tháng 10",
+          "loi_cu": "Chỉ liệt kê 2/19 giao dịch",
+          "expect": [
+            {"check": "lists", "filter": {"month": "2026-10", "category": "entertainment"}},
+            {"check": "intent", "any": ["finance_list"]}
+          ]
+        },
+        {
+          "id": "6",
+          "say": "Bạn liệt kê chi tôi là 19 giao dịch đây mới có 2 Thiếu 17 giao dịch nữa",
+          "loi_cu": "Liệt kê giao dịch Ăn uống ngày 19-20/10 thay vì Giải trí, rồi bị cắt",
+          "expect": [
+            {"check": "lists", "filter": {"month": "2026-10", "category": "entertainment"}},
+            {"check": "intent", "any": ["finance_list", "complaint"]},
+            {"check": "rewritten", "has": ["giai tri", "10"]}
+          ]
+        },
+        {
+          "id": "7",
+          "say": "Nó là ăn uống không phải giải trí",
+          "loi_cu": "Trả lời 'Đã cập nhật giao dịch ngày 2026-10-24, 28.000đ sang Ăn uống' dù không có đường ghi dữ liệu",
+          "expect": [
+            {"check": "intent", "any": ["complaint"]},
+            {"check": "require", "regex": "\\?", "oracle": "Bạn muốn chuyển giao dịch nào sang Ăn uống?"}
+          ]
+        },
+        {
+          "id": "8",
+          "say": "Làm lại",
+          "loi_cu": "Hỏi lại 'Bạn muốn tôi làm lại điều gì?'",
+          "expect": [
+            {"check": "lists", "filter": {"month": "2026-10", "category": "entertainment"}},
+            {"check": "intent", "any": ["finance_list"]}
+          ]
+        }
+      ]
+    },
+    {"id": "9a", "turns": [{"id": "9a", "say": "Xin chào", "expect": [
+      {"check": "llm_calls", "max": 0}, {"check": "forbid", "regex": "\\d"}]}]},
+    {"id": "9b", "turns": [{"id": "9b", "say": "Cảm ơn", "expect": [
+      {"check": "llm_calls", "max": 0}, {"check": "forbid", "regex": "\\d"}]}]},
+    {"id": "9c", "turns": [{"id": "9c", "say": "Tạm biệt", "expect": [
+      {"check": "llm_calls", "max": 0}, {"check": "forbid", "regex": "\\d"}]}]},
+    {"id": "10", "turns": [{"id": "10", "say": "Chào, tháng 10 tôi chi bao nhiêu", "expect": [
+      {"check": "mentions", "values": [{"agg": "sum", "filter": {"month": "2026-10"}}]},
+      {"check": "intent", "any": ["finance_aggregate"]}]}]},
+    {"id": "11", "turns": [{"id": "11", "say": "Tháng 9 tôi chi bao nhiêu cho di chuyển", "expect": [
+      {"check": "mentions", "values": [{"agg": "sum", "filter": {"month": "2026-09", "category": "transport"}}]},
+      {"check": "intent", "any": ["finance_aggregate"]}]}]},
+    {"id": "12", "turns": [{"id": "12", "say": "Tôi uống monster mấy lần rồi", "expect": [
+      {"check": "mentions", "values": [{"agg": "count", "filter": {"keyword": "monster"}}]},
+      {"check": "intent", "any": ["finance_search"]}]}]},
+    {"id": "13", "turns": [{"id": "13", "say": "Tiền đi net tháng này", "expect": [
+      {"check": "lists", "filter": {"month": "2026-10", "keyword": "net"}},
+      {"check": "intent", "any": ["finance_search"]}]}]},
+    {"id": "14", "turns": [{"id": "14", "say": "Chuyển giao dịch ún monster sang ăn uống", "expect": [
+      {"check": "proposal", "action": "update", "filter": {"keyword": "monster"}, "set": {"category": "food"}},
+      {"check": "intent", "any": ["modify_data"]}]}]},
+    {"id": "15", "turns": [{"id": "15", "say": "Xoá giao dịch Net", "expect": [
+      {"check": "proposal", "action": "delete", "filter": {"keyword": "net"}},
+      {"check": "intent", "any": ["modify_data"]}]}]},
+    {"id": "16", "turns": [{"id": "16", "say": "Thời tiết Hà Nội hôm nay thế nào", "expect": [
+      {"check": "forbid", "regex": "\\d{3}"},
+      {"check": "intent", "any": ["out_of_scope"]}]}]},
+    {"id": "17", "turns": [{"id": "17", "say": "Tôi chi bao nhiêu cho du thuyền", "expect": [
+      {"check": "lists", "filter": {"keyword": "du thuyen"}, "allow_empty": true},
+      {"check": "forbid", "regex": "\\d{3}"},
+      {"check": "intent", "any": ["finance_search"]}]}]},
+    {"id": "18", "turns": [{"id": "18", "say": "Tháng này so với tháng trước", "expect": [
+      {"check": "mentions", "values": [
+        {"agg": "sum", "filter": {"month": "2026-10"}},
+        {"agg": "sum", "filter": {"month": "2026-09"}}
+      ]},
+      {"check": "intent", "any": ["finance_compare"]}]}]},
+    {"id": "19", "turns": [{"id": "19", "say": "Làm sao tiết kiệm hơn", "expect": [
+      {"check": "intent", "any": ["advice"]}]}]}
+  ]
+}
