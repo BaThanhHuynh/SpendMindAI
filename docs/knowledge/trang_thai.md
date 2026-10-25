@@ -10,8 +10,9 @@ LLM chính `gemini-3.1-flash-lite` (dự phòng `gemini-2.5-flash-lite`).
 | 0. Bộ kiểm thử hồi quy | ✅ Xong | `tests/chatbot_eval/` — target `oracle` / `old` / `php` / http |
 | 1. Chữa cháy trong PHP | ✅ Mã xong · ⚠️ chưa chấm được hành vi LLM | Khoá Gemini hết hạn mức (429) lúc làm → chạy lại `--target php --only goc` khi hạn mức hồi |
 | 2. Khung FastAPI + PHP chuyển tiếp | ✅ Xong, đã lên production (commit 4d93427) | `/api/rag/healthz` 200; POST `/api/rag/chat` không chữ ký 401. Chưa bật: cần đặt `RAG_URL` + `RAG_INTERNAL_SECRET` trên Vercel |
-| 3. Regex + viết lại câu hỏi + phân loại | ⬜ Bước tiếp theo | |
-| 4–8 | ⬜ Chưa làm | |
+| 3. Regex + viết lại câu hỏi + phân loại | ✅ Mã xong · ⚠️ chưa chấm với model đã chốt | 21/21 đạt `--checks intent,rewritten,llm_calls,filters` nhưng bằng model thay thế (3.1/2.5-flash-lite hết hạn mức ngày) → chạy lại khi hồi; nhánh MySQL chưa chạy. Nhật ký CB.9 |
+| 4. Đường A có cấu trúc + khối SỰ KIỆN | ⬜ Bước tiếp theo | Truy xuất theo `state.filters`; nối nhánh MySQL vào đây và kiểm cùng |
+| 5–8 | ⬜ Chưa làm | |
 
-Kiểm lại trên máy: PHP bản zip ở scratchpad phiên trước sẽ mất — tải lại theo nhật ký CB.7 (SHA256 ở đó).
+Chạy RAG ở máy: nhật ký CB.9 (cách chạy uvicorn). Kiểm lại trên máy: PHP bản zip ở scratchpad phiên trước sẽ mất — tải lại theo nhật ký CB.7 (SHA256 ở đó).
 Còn ngỏ ở §9 thiết kế: sửa dữ liệu qua chat có nút xác nhận hay không; lịch sử giữ ở trình duyệt hay máy chủ.

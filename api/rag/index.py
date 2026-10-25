@@ -1,19 +1,223 @@
-"""Dịch vụ RAG của SpendMindAI — Bước 2: khung (docs/knowledge/chatbot-rag-thiet-ke.md §6, §7).
+"""Dịch vụ RAG của SpendMindAI (docs/knowledge/chatbot-rag-thiet-ke.md §3, §6, §7).
 
 PHP (api/controllers/ChatbotController.php::forwardToRag) là cửa duy nhất: nó kiểm phiên đăng nhập và giới hạn tần
 suất, rồi gọi vào đây kèm chữ ký HMAC-SHA256 trên "<timestamp>.<body>". Hợp đồng vào/ra: tests/chatbot_eval/run_eval.py.
+
+Bước 3: regex xã giao (§3.2) → một lần gọi LLM viết lại câu hỏi + phân loại ý định (§3.3) → code kiểm lại bộ lọc.
 """
+import difflib
 import hashlib
 import hmac
 import json
 import os
+import re
+import ssl
 import time
+import unicodedata
+import urllib.error
+import urllib.request
+from datetime import date, timedelta
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
+import pymysql
 from fastapi import FastAPI, HTTPException, Request
+from starlette.concurrency import run_in_threadpool
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 MAX_SKEW = 300  # giây: chặn việc gửi lại một yêu cầu cũ bị bắt được
+MODELS = (("gemini-3.1-flash-lite", 6), ("gemini-2.5-flash-lite", 5))  # (model, giây chờ): tổng < 13s PHP chờ
+LOCAL_DATA = Path(__file__).resolve().parents[2] / "local_dev_data.json"
 
+# Danh mục chuẩn — trùng js/dashboard.js:7-17. Danh mục tự đặt là giá trị lạ trong transactions.category.
+CATEGORIES = {"food": ("Ăn uống", "expense"), "transport": ("Di chuyển", "expense"),
+              "shopping": ("Mua sắm", "expense"), "entertainment": ("Giải trí", "expense"),
+              "home": ("Nhà cửa", "expense"), "other_expense": ("Khác (Chi)", "expense"),
+              "salary": ("Lương", "income"), "freelance": ("Freelance / Thêm", "income"),
+              "investment": ("Đầu tư", "income"), "gift": ("Được tặng / Khác", "income")}
+FINANCE = ["finance_aggregate", "finance_list", "finance_compare", "finance_search"]
+INTENTS = ["smalltalk", *FINANCE, "advice", "complaint", "modify_data", "out_of_scope", "unclear"]
+FILTER_KEYS = ("month", "category", "type", "keyword")
+
+
+def fold(s):
+    """Chữ thường, bỏ dấu tiếng Việt: «Cảm ơn» → «cam on»."""
+    s = unicodedata.normalize("NFD", (s or "").lower().replace("đ", "d"))
+    return "".join(c for c in s if unicodedata.category(c) != "Mn")
+
+
+# ---------- Lớp 0: regex xã giao (§3.2) ----------
+
+_TAIL = r"(?: (?:ban|bot|em|nhe|nha|nhieu|lam|a|oi))*"
+SMALLTALK = [
+    (re.compile(rf"(?:xin )?(?:chao|hi|hello|alo|hey){_TAIL}"), "Chào bạn! Bạn muốn xem chi tiêu nào?"),
+    (re.compile(rf"(?:ok )?(?:cam on|thank you|thanks|thank|tks){_TAIL}"), "Không có gì! Cần gì cứ hỏi nhé."),
+    (re.compile(rf"(?:tam biet|bye|bye bye|goodbye|hen gap lai){_TAIL}"), "Tạm biệt! Hẹn gặp lại."),
+    (re.compile(rf"(?:ban la ai|ban lam duoc gi|ban giup duoc gi){_TAIL}"),
+     "Mình là trợ lý chi tiêu SpendMindAI: xem tổng chi, liệt kê giao dịch theo danh mục hay tháng, "
+     "so sánh các tháng và gợi ý cách tiết kiệm."),
+]
+
+
+def smalltalk(message):
+    """Câu trả lời mẫu nếu CẢ câu (≤ 6 từ) là xã giao; câu có thêm nội dung khác thì để LLM xử lý."""
+    words = re.sub(r"[^\w ]+", " ", fold(message)).split()
+    if len(words) > 6:
+        return None
+    return next((reply for rx, reply in SMALLTALK if rx.fullmatch(" ".join(words))), None)
+
+
+# ---------- Dữ liệu danh mục của người dùng ----------
+
+def user_categories(user_id):
+    """{mã/tên danh mục: "expense"|"income"} — danh mục chuẩn + danh mục tự đặt của chính người dùng."""
+    url = os.environ.get("DATABASE_URL")
+    if url:
+        u = urlsplit(url)
+        conn = pymysql.connect(host=u.hostname, port=u.port or 3306, user=unquote(u.username or ""),
+                               password=unquote(u.password or ""), database=u.path.lstrip("/"), connect_timeout=5,
+                               ssl=None if u.hostname in ("127.0.0.1", "localhost", "::1") else ssl.create_default_context())
+        with conn, conn.cursor() as cur:
+            cur.execute("SELECT DISTINCT category, type FROM transactions WHERE user_id = %s", (user_id,))
+            rows = cur.fetchall()
+    else:
+        # ponytail: tệp chạy thử trên máy chỉ có một người dùng nên bỏ qua user_id
+        rows = {(t["category"], t["type"]) for t in json.loads(LOCAL_DATA.read_text(encoding="utf-8"))["transactions"]}
+    return {k: v[1] for k, v in CATEGORIES.items()} | {c: t for c, t in rows if c not in CATEGORIES}
+
+
+# ---------- Lớp 1: viết lại câu hỏi + phân loại ý định, một lần gọi LLM (§3.3) ----------
+
+_NULLABLE = {"type": "STRING", "nullable": True}
+SCHEMA = {"type": "OBJECT", "required": ["rewritten", "intent", "filters", "clarify"], "properties": {
+    "rewritten": {"type": "STRING"},
+    "intent": {"type": "STRING", "enum": INTENTS},
+    "filters": {"type": "OBJECT", "required": list(FILTER_KEYS), "properties": {
+        "month": _NULLABLE, "category": _NULLABLE,
+        "type": {"type": "STRING", "enum": ["expense", "income"], "nullable": True}, "keyword": _NULLABLE}},
+    "clarify": _NULLABLE}}
+
+SYSTEM = """Bạn là bộ phân tích câu hỏi cho trợ lý chi tiêu SpendMindAI. KHÔNG trả lời câu hỏi; chỉ trả JSON theo lược đồ.
+
+rewritten: viết lại «Câu hỏi mới» thành một câu tự đủ nghĩa, không cần đọc lịch sử. Dùng tên danh mục tiếng Việt
+(Giải trí, Ăn uống…) và tháng dạng «tháng M/YYYY». Câu nối tiếp («chi tiết cho tôi», «19 giao dịch đó», «làm lại»)
+phải nêu lại đủ danh mục và tháng đang bàn.
+
+intent — chọn một:
+- smalltalk: xã giao («bạn khoẻ không»)
+- finance_aggregate: hỏi tổng tiền hoặc số giao dịch theo tháng / danh mục («tháng 10 giải trí bao nhiêu»)
+- finance_list: muốn xem từng giao dịch («chi tiết giải trí tháng 10», «đã chi gì», «chi vào gì», «liệt kê», «còn thiếu giao dịch»)
+- finance_compare: so sánh hai kỳ («tháng này so với tháng trước»)
+- finance_search: hỏi về một món, nơi, việc cụ thể ghi trong ghi chú giao dịch chứ không phải tên danh mục — kể cả khi
+  hỏi tổng tiền hay số lần («uống monster mấy lần», «tiền đi net», «chi bao nhiêu cho du thuyền»)
+- advice: xin lời khuyên chi tiêu, tiết kiệm
+- complaint: người dùng bảo trợ lý sai, hoặc giao dịch bị xếp sai danh mục («nó là ăn uống không phải giải trí») — chưa phải lệnh sửa
+- modify_data: yêu cầu rõ ràng sửa / chuyển / xoá giao dịch («chuyển giao dịch X sang ăn uống», «xoá giao dịch net»)
+- out_of_scope: ngoài chi tiêu cá nhân (thời tiết, tin tức…)
+- unclear: không hiểu được kể cả khi đọc lịch sử; khi đó ghi câu hỏi lại vào clarify
+
+«Làm lại», «còn nữa không», «chi tiết hơn», «chi tiết cho tôi» = lặp lại yêu cầu tài chính trong «Trạng thái lượt trước»,
+giữ nguyên bộ lọc của trạng thái đó; lời phàn nàn ở lượt giữa không làm đổi bộ lọc.
+
+filters:
+- month: "YYYY-MM". «tháng này», «tháng trước» tính theo hôm nay; tháng không ghi năm → năm gần nhất không ở tương lai.
+  Câu không nêu thời gian → tháng của trạng thái lượt trước, không có thì tháng này; riêng finance_search không nêu
+  thời gian → null (mọi thời gian).
+- category: chỉ chọn trong «Danh mục của người dùng», ghi đúng mã ở đầu dòng; không nhắc danh mục → null.
+  Món / nơi / việc không phải danh mục → đưa vào keyword, không đưa vào category.
+- type: "income" khi hỏi về thu nhập, còn lại "expense".
+- keyword: từ cần tìm trong ghi chú giao dịch, chữ thường, giữ cách viết của người dùng; không có → null.
+clarify: null, trừ khi intent là unclear."""
+
+
+def build_prompt(message, history, prev, cats, today):
+    cat_lines = [f"- {c}" + (f" = {CATEGORIES[c][0]}" if c in CATEGORIES else "") + f" · {'thu' if t == 'income' else 'chi'}"
+                 for c, t in cats.items()]
+    # ponytail: cắt mỗi tin 600 ký tự — danh sách dài của trợ lý chỉ cần phần đầu để hiểu ngữ cảnh
+    turns = [f"{'Trợ lý' if h.get('role') == 'bot' else 'Người dùng'}: {h['text'][:600]}" for h in history]
+    last_month = (today.replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+    return (f"Hôm nay: {today.isoformat()} (tháng này {today:%Y-%m}, tháng trước {last_month})\n"
+            "Danh mục của người dùng (mã = tên hiển thị · chi/thu):\n" + "\n".join(cat_lines) + "\n"
+            f"Trạng thái lượt trước: {json.dumps(prev, ensure_ascii=False) if prev else 'không có'}\n"
+            "Hội thoại gần nhất:\n" + ("\n".join(turns) or "(chưa có)") + "\n"
+            f"Câu hỏi mới: {message}")
+
+
+def gemini(model, timeout, prompt):
+    cfg = {"temperature": 0, "maxOutputTokens": 1024, "responseMimeType": "application/json", "responseSchema": SCHEMA}
+    if model.startswith("gemini-3"):
+        cfg["thinkingConfig"] = {"thinkingLevel": "minimal"}
+    body = json.dumps({"system_instruction": {"parts": [{"text": SYSTEM}]},
+                       "contents": [{"role": "user", "parts": [{"text": prompt}]}], "generationConfig": cfg},
+                      ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", body,
+                                 {"Content-Type": "application/json; charset=UTF-8",
+                                  "x-goog-api-key": os.environ.get("GEMINI_API_KEY", "")})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        c = (json.load(r).get("candidates") or [{}])[0]
+    if c.get("finishReason") != "STOP":
+        raise ValueError(f"finishReason={c.get('finishReason')}")
+    return json.loads("".join(p.get("text", "") for p in c["content"]["parts"] if not p.get("thought")))
+
+
+def understand(prompt):
+    """(JSON của LLM, số lần gọi). Model chính lỗi (429, quá giờ, JSON hỏng, bị cắt) → model dự phòng; cả hai lỗi → 503."""
+    errors = []
+    for calls, (model, timeout) in enumerate(MODELS, 1):
+        try:
+            return gemini(model, timeout, prompt), calls
+        except urllib.error.HTTPError as e:
+            errors.append(f"{model} HTTP {e.code}: {' '.join(e.read()[:300].decode('utf-8', 'replace').split())}")
+        except (urllib.error.URLError, TimeoutError, ValueError, KeyError) as e:
+            errors.append(f"{model}: {e!r}")
+    raise HTTPException(503, "; ".join(errors))
+
+
+# ---------- Code kiểm lại đầu ra LLM (§3.3) ----------
+
+def match_category(raw, cats):
+    """Tên LLM đưa → mã danh mục có thật, khớp mờ trên bản bỏ dấu theo mã lẫn tên hiển thị; không khớp → None."""
+    names = {fold(c): c for c in cats} | {fold(CATEGORIES[c][0]): c for c in cats if c in CATEGORIES}
+    hit = difflib.get_close_matches(fold(raw), names, n=1, cutoff=0.8)
+    return names[hit[0]] if hit else None
+
+
+def fix_month(raw, today):
+    """"YYYY-MM" hợp lệ; tháng ở tương lai lùi về năm gần nhất đã qua («tháng 12» hỏi vào tháng 10). Sai dạng → None."""
+    m = re.fullmatch(r"(\d{4})-(\d{2})", raw or "")
+    if not m or not 1 <= int(m[2]) <= 12:
+        return None
+    mo = int(m[2])
+    return f"{min(int(m[1]), today.year if mo <= today.month else today.year - 1):04d}-{mo:02d}"
+
+
+def _text(d, k):
+    v = d.get(k) if isinstance(d, dict) else None
+    return v.strip() if isinstance(v, str) and v.strip() else None
+
+
+def resolve(out, prev, cats, today):
+    """(intent, filters, clarify, state mới). State chỉ ghi mới ở lượt tài chính: lượt complaint, xã giao… giữ state cũ."""
+    intent = out.get("intent") if out.get("intent") in INTENTS else "unclear"
+    prev = prev if isinstance(prev, dict) and isinstance(prev.get("filters"), dict) else None
+    f = {k: _text(out.get("filters"), k) for k in FILTER_KEYS}
+    if intent in FINANCE and prev:
+        # Chốt chặn cho «Làm lại», «chi tiết hơn»: thừa kế bằng code, không trông vào LLM.
+        # ponytail: thừa kế từng trường — «tổng chi tháng 9» sau một lượt có danh mục vẫn giữ danh mục; thêm giá trị
+        # «tất cả» vào lược đồ khi gặp ca thật.
+        f = {k: f[k] or _text(prev["filters"], k) for k in FILTER_KEYS}
+    clarify = _text(out, "clarify")
+    if f["category"]:
+        cat = match_category(f["category"], cats)
+        if not cat:
+            clarify = clarify or f"Mình không thấy danh mục «{f['category']}» trong dữ liệu của bạn. Bạn muốn xem danh mục nào?"
+        f["category"] = cat
+    f["month"] = fix_month(f["month"], today)
+    f["type"] = cats[f["category"]] if f["category"] else (f["type"] if f["type"] in ("expense", "income") else "expense")
+    return intent, f, clarify, ({"intent": intent, "filters": f} if intent in FINANCE else prev)
+
+
+# ---------- HTTP ----------
 
 def verify(headers, body: bytes) -> dict:
     secret = os.environ.get("RAG_INTERNAL_SECRET", "")
@@ -29,6 +233,24 @@ def verify(headers, body: bytes) -> dict:
     return data
 
 
+def answer(data):
+    message, prev = data["message"], data.get("state")
+    reply = smalltalk(message)
+    if reply:
+        return {"reply": reply, "state": prev, "proposal": None,
+                "meta": {"intent": "smalltalk", "rewritten": message, "llm_calls": 0, "finish_reason": "STOP"}}
+    today = date.fromisoformat(data.get("today") or date.today().isoformat())
+    cats = user_categories(data["user_id"])  # user_id chỉ lấy từ body đã ký, không bao giờ từ LLM
+    raw = data.get("history")
+    history = [h for h in (raw if isinstance(raw, list) else []) if isinstance(h, dict) and isinstance(h.get("text"), str)][-6:]
+    out, calls = understand(build_prompt(message, history, prev, cats, today))
+    intent, filters, clarify, state = resolve(out, prev, cats, today)
+    # Bước 4+ thay câu tạm bằng truy xuất theo `filters` + sinh câu trả lời
+    return {"reply": clarify or "Trợ lý RAG đang được xây dựng.", "state": state, "proposal": None,
+            "meta": {"intent": intent, "rewritten": _text(out, "rewritten") or message, "llm_calls": calls,
+                     "finish_reason": "STOP"}}
+
+
 @app.get("/api/rag/healthz")
 def healthz():
     return {"ok": True}
@@ -37,6 +259,4 @@ def healthz():
 @app.post("/api/rag/chat")
 async def chat(request: Request):
     data = verify(request.headers, await request.body())
-    # Bước 3+ thay phần này bằng pipeline: regex → viết lại câu hỏi → truy xuất → sinh câu trả lời
-    return {"reply": "Trợ lý RAG đang được xây dựng.", "state": data.get("state"), "proposal": None,
-            "meta": {"intent": None, "rewritten": data["message"], "llm_calls": 0, "finish_reason": "STOP"}}
+    return await run_in_threadpool(answer, data)  # gọi Gemini / MySQL là chặn → chạy ngoài vòng sự kiện

@@ -6,10 +6,12 @@
   python -X utf8 tests/chatbot_eval/run_eval.py --target old      # chatbot TRƯỚC Bước 1 dựng lại + Gemini thật: ca 1-8 phải TRƯỢT
   PHP_BIN=<php.exe> .venv/Scripts/python -X utf8 tests/chatbot_eval/run_eval.py --target php   # ChatbotController.php thật
   python -X utf8 tests/chatbot_eval/run_eval.py --target http://localhost:8080/api/rag/chat --only goc -v
+  ... --checks intent,rewritten,llm_calls,filters   # chỉ chấm các kiểm của một bước (vd Bước 3)
 
 Hợp đồng API hệ mới (target http):
   gửi  {"message", "history": [{"role": "user"|"bot", "text"}] (6 tin gần nhất), "state", "today": "YYYY-MM-DD"}
-  nhận {"reply", "state", "proposal": {"action": "update"|"delete", "tx_id", "changes": {...}} | null,
+  nhận {"reply", "state": {"intent", "filters": {"month", "category", "type", "keyword"}} | null,
+        "proposal": {"action": "update"|"delete", "tx_id", "changes": {...}} | null,
         "meta": {"intent", "rewritten", "llm_calls", "finish_reason"}}
   Gọi thẳng dịch vụ RAG (api/rag, bỏ qua PHP): đặt RAG_INTERNAL_SECRET để bộ chạy tự ký và gửi user_id như PHP.
 """
@@ -116,6 +118,10 @@ def judge(turn, res, db, year, changed):
                   and all((p.get("changes") or {}).get(a) == b for a, b in e.get("set", {}).items()))
             if not ok:
                 errs.append("không có đề xuất xác nhận đúng")
+        elif k == "filters":
+            got = (res.get("state") or {}).get("filters") or {}
+            if any(got.get(a) != b for a, b in e["want"].items()):
+                errs.append(f"bộ lọc {got} ≠ {e['want']}")
         elif not meta:
             if "không có meta" not in errs:
                 errs.append("không có meta")
@@ -141,7 +147,7 @@ def validate(cases, db):
 # ---------- target: oracle (đáp án mẫu dựng từ chính kỳ vọng — để kiểm bộ chấm) ----------
 
 def oracle(turn, db):
-    lines, prop = [], None
+    lines, prop, state = [], None, None
     meta = {"intent": None, "rewritten": "", "llm_calls": 1, "finish_reason": "STOP"}
     for e in turn.get("expect", []):
         k = e["check"]
@@ -160,7 +166,9 @@ def oracle(turn, db):
             meta["rewritten"] = " ".join(e["has"])
         elif k == "llm_calls":
             meta["llm_calls"] = e["max"]
-    return {"reply": "\n".join(lines) or "Ok.", "meta": meta, "proposal": prop}
+        elif k == "filters":
+            state = {"filters": e["want"]}
+    return {"reply": "\n".join(lines) or "Ok.", "meta": meta, "proposal": prop, "state": state}
 
 
 # ---------- target: old (dựng lại api/controllers/ChatbotController.php::handleChat, không lịch sử) ----------
@@ -306,12 +314,14 @@ def main():
     ap.add_argument("--target", required=True, help="oracle | old | php | http(s)://...")
     ap.add_argument("--only", help="danh sách id hội thoại, cách nhau dấu phẩy (vd: goc,9a)")
     ap.add_argument("-v", action="store_true", help="in câu trả lời của target")
+    ap.add_argument("--checks", help="chỉ chấm các kiểm này, cách nhau dấu phẩy (vd: intent,rewritten,llm_calls,filters)")
     a = ap.parse_args()
     cases, db = json.loads(CASES.read_text(encoding="utf-8")), json.loads(DATA.read_text(encoding="utf-8"))
     bad = validate(cases, db)
     if bad:
         sys.exit("Ca không hợp lệ với dữ liệu hiện tại:\n  " + "\n  ".join(bad))
     today, only = date.fromisoformat(cases["today"]), set((a.only or "").split(",")) - {""}
+    checks = set((a.checks or "").split(",")) - {""}
     tally = collections.Counter()
     for conv in cases["conversations"]:
         if only and conv["id"] not in only:
@@ -331,7 +341,8 @@ def main():
             if res.get("error"):
                 status, why = "LỖI", res["error"]
             else:
-                errs = judge(turn, res, db, today.year, changed)
+                graded = {**turn, "expect": [e for e in turn.get("expect", []) if e["check"] in checks]} if checks else turn
+                errs = judge(graded, res, db, today.year, changed)
                 status, why = ("TRƯỢT" if errs else "ĐẠT"), "; ".join(errs)
             if res.get("debug"):
                 why += f"  [{res['debug']}]"

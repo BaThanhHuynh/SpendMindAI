@@ -87,7 +87,8 @@
           "loi_cu": "Hỏi lại 'Bạn muốn tôi làm lại điều gì?'",
           "expect": [
             {"check": "lists", "filter": {"month": "2026-10", "category": "entertainment"}},
-            {"check": "intent", "any": ["finance_list"]}
+            {"check": "intent", "any": ["finance_list"]},
+            {"check": "filters", "want": {"month": "2026-10", "category": "entertainment"}}
           ]
         }
       ]
