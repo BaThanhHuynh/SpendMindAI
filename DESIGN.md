@@ -1,7 +1,7 @@
 ---
 version: 2.1.0
-name: SpendMindAI-Apple-Borderless-Emerald-Design-System
-description: Official Apple Borderless Design System for SpendMindAI. Combining Apple Human Interface Guidelines (HIG) with modern emerald accents, 100% borderless surfaces separated by subtle elevation and depth, dynamic 4-level monthly budget thresholds (Green/Yellow/Orange/Red), and restored vibrant data visualizations.
+name: SpendMindAI-Apple-Borderless-Sky-Design-System
+description: Official Apple Borderless Design System for SpendMindAI. Combining Apple Human Interface Guidelines (HIG) with modern sky-blue accents, 100% borderless surfaces separated by subtle elevation and depth, dynamic 4-level monthly budget thresholds (Green/Yellow/Orange/Red), and restored vibrant data visualizations.
 
 colors:
   dark:
@@ -13,11 +13,11 @@ colors:
     text-primary: "#f5f5f7"
     text-secondary: "#a1a1a6"
     text-muted: "#86868b"
-    accent: "#10b981"
-    accent-hover: "#059669"
+    accent: "#0ea5e9"
+    accent-hover: "#0284c7"
     accent-text: "#ffffff"
-    income: "#30d158"
-    income-bg: "rgba(48, 209, 88, 0.08)"
+    income: "#64d2ff"
+    income-bg: "rgba(100, 210, 255, 0.08)"
     expense: "#ff453a"
     expense-bg: "rgba(255, 69, 58, 0.08)"
   light:
@@ -29,18 +29,18 @@ colors:
     text-primary: "#1d1d1f"
     text-secondary: "#6e6e73"
     text-muted: "#86868b"
-    accent: "#059669"
-    accent-hover: "#047857"
+    accent: "#0284c7"
+    accent-hover: "#0369a1"
     accent-text: "#ffffff"
-    income: "#248a3d"
-    income-bg: "rgba(36, 138, 61, 0.07)"
+    income: "#0071a4"
+    income-bg: "rgba(0, 113, 164, 0.07)"
     expense: "#d70015"
     expense-bg: "rgba(215, 0, 21, 0.07)"
 
 budget-thresholds:
   level-safe:
     range: "< 70%"
-    color: "#10b981"
+    color: "#0ea5e9"
     badge: "An toàn"
   level-caution:
     range: "70% - 85%"
@@ -64,8 +64,8 @@ typography:
 components:
   borderless: "All cards, panels, inputs, buttons, tables, badges, and modals have zero borders (border: none !important)"
   button-primary:
-    dark: "background: #10b981; color: #ffffff; font-weight: 600; border-radius: 9999px; border: none;"
-    light: "background: #059669; color: #ffffff; font-weight: 600; border-radius: 9999px; border: none;"
+    dark: "background: #0ea5e9; color: #ffffff; font-weight: 600; border-radius: 9999px; border: none;"
+    light: "background: #0284c7; color: #ffffff; font-weight: 600; border-radius: 9999px; border: none;"
   button-secondary:
     dark: "background: rgba(255, 255, 255, 0.08); color: #f5f5f7; border: none;"
     light: "background: rgba(0, 0, 0, 0.04); color: #1d1d1f; border: none;"
@@ -73,5 +73,5 @@ components:
     dark: "background: #1c1c1e; border: none; amount: #ffffff;"
     light: "background: #ffffff; border: none; amount: #1d1d1f;"
   charts:
-    category-donut: "Vibrant Apple multi-tint palette: Emerald, Blue, Amber, Pink, Purple, Cyan, Orange, Lime"
-    trends-bar: "Income: #10b981; Expense: #ef4444; clean borderless columns"
+    trends-bar: "Income: #0ea5e9; Expense: #ef4444; clean borderless columns; running-balance line #8b5cf6 on a right axis"
+  tearoff-calendar: "Daily tear-off page: daisy photo under a 72% (dark) / 80% (light) veil, accent-colored band, Cormorant Garamond 300 lining digits; month grid and balance open in centered popovers"

@@ -785,6 +785,17 @@
     - **Kiểm chứng:** `node --check` 3 tệp JS đạt; Edge headless qua CDP trên `dev_server.py` (1280px và 375px): lưới ẩn mặc định, ‹ › qua ranh giới 31/10 ↔ 01/11 đúng tháng, "Cả tháng"/tìm kiếm mở lưới, nút Thêm điền đúng ngày, Xuất/Nhập và 3 nút giao diện hiển thị và đổi theme đúng, ngân sách mở/đóng, mobile ẩn nút header và không tràn ngang; console 0 lỗi.
     - **Trạng thái:** [x] RESOLVED.
 
+58. **[P2] UI/UX - Lịch Xé Giấy, Cửa Sổ Nổi Lịch Tháng & Số Dư, Biểu Đồ Cột + Đường, Ngân Sách Gọn, Tông Xanh Da Trời**
+    - **Vấn đề:** Lịch ngày còn đơn điệu; lưới tháng, tìm kiếm/bộ lọc và số dư chiếm chỗ trên thẻ; biểu đồ tròn trùng thông tin với ngân sách; nhãn trạng thái và phần trăm ngân sách làm rối; tông xanh lá không theo nhận diện mới.
+    - **Giải pháp:**
+      1. Trang lịch xé (`#tearoff-page`): ngày dương/âm (Intl `ca-chinese`), can chi, giờ hoàng đạo; ‹ › đổi ngày kèm hiệu ứng xé/rơi; nền ảnh `images/cuc-hoa-mi.webp` dưới lớp phủ; chữ số Cormorant Garamond 300 (`lining-nums`); dải tiêu đề theo `--accent-color`.
+      2. Cửa sổ nổi giữa màn hình dùng chung `togglePopover()` + lớp `settings-dropdown-menu`: "Lịch tháng" (nút biểu tượng trên tờ lịch; máy tính bố trí ngang, tìm kiếm + bộ lọc bên trái) và "Số dư & thu chi" (nút cạnh tiêu đề Lịch). Hiệu ứng đồng bộ chatbot/Cài đặt: `appleModalCenterIn/Out`, `body.popover-open` (ẩn nền phát sáng, khoá cuộn mobile, chặn pull-to-refresh), rung nhẹ, nội dung hiện lần lượt (`is-opening`, lưới theo hàng tuần).
+      3. Bỏ biểu đồ tròn; "Xu hướng thu chi" rộng hết hàng, thêm đường "Số dư lũy kế" (trục phải, tím).
+      4. Ngân sách: bỏ nhãn trạng thái và "(x%)"; phần trăm hiện khi rê chuột (máy tính) / chạm (mobile) trên thanh, có `role="progressbar"`.
+      5. Đổi toàn bộ xanh lá sang xanh da trời (86 chỗ màu; giữ logo Google), cập nhật `DESIGN.md`; đồng bộ `?v=` trên 4 trang, `CACHE_NAME` → `spendmind-v7.29`.
+    - **Kiểm chứng:** `node --check` các tệp JS; Edge headless (CDP) trên `dev_server.py` ở 1342px và 375px: lịch âm 28/1/2024 = 18 tháng Chạp, Tân Mão / Ất Sửu / Quý Mão; cửa sổ nổi nằm trọn và giữa màn hình; tìm kiếm/bộ lọc lọc đúng lưới; số dư hiển thị đúng; phần trăm ngân sách hiện khi hover/chạm; quét màu chỉ còn xanh lá của logo Google; console 0 lỗi.
+    - **Trạng thái:** [x] RESOLVED.
+
 
 
 

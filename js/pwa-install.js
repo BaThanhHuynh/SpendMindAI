@@ -140,12 +140,12 @@
         if (badge) {
             if (installed) {
                 badge.textContent = "Đã cài";
-                badge.style.background = "rgba(16, 185, 129, 0.15)";
-                badge.style.color = "#10b981";
+                badge.style.background = "rgba(14, 165, 233, 0.15)";
+                badge.style.color = "#0ea5e9";
             } else if (available) {
                 badge.textContent = isIOS ? "Thêm vào MH" : "Cài ngay";
-                badge.style.background = "rgba(16, 185, 129, 0.15)";
-                badge.style.color = "#10b981";
+                badge.style.background = "rgba(14, 165, 233, 0.15)";
+                badge.style.color = "#0ea5e9";
             }
         }
 

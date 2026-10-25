@@ -13,6 +13,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Thin decorative digits for the tear-off calendar (digits-only subset) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300&text=0123456789&display=swap" rel="stylesheet">
 
     <!-- Lucide Icons CDN (pinned version for consistent + faster loading) -->
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js" defer></script>
@@ -21,7 +23,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 
     <!-- PWA & Mobile Web App Meta -->
-    <link rel="manifest" href="manifest.json?v=20260912_v3">
+    <link rel="manifest" href="manifest.json?v=20261025_v5">
     <meta name="theme-color" content="#0071e3">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -32,9 +34,9 @@
     <link rel="apple-touch-icon" href="images/logoapp.png?v=20260911_v8">
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/skeleton.css?v=20261024_v2">
-    <link rel="stylesheet" href="css/styles.css?v=20261025_v42">
-    <link rel="stylesheet" href="css/mobile.css?v=20261025_v30">
+    <link rel="stylesheet" href="css/skeleton.css?v=20261025_v3">
+    <link rel="stylesheet" href="css/styles.css?v=20261025_v54">
+    <link rel="stylesheet" href="css/mobile.css?v=20261025_v33">
     
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -90,49 +92,145 @@
                 <!-- Summary Balance Card -->
                 <div class="balance-card-wrapper">
                     <div class="balance-card">
-                        <div class="balance-label">Tổng số dư khả dụng</div>
-                        <div class="balance-amount" id="total-balance"><span class="skeleton-bone skeleton-balance-amount" style="display: block; width: 180px; height: 38px; margin: 4px 0;"></span></div>
-                        <div class="balance-indicators">
-                            <div class="indicator income">
-                                <i data-lucide="arrow-down-left"></i>
-                                <div>
-                                    <span>Thu nhập</span>
-                                    <strong id="summary-income"><span class="skeleton-bone" style="display: block; width: 75px; height: 16px;"></span></strong>
+                        <!-- Calendar (inside the balance card) -->
+                        <section class="calendar-section">
+                            <div class="card-header flex-wrap gap-4" style="border-bottom: none !important;">
+                                <div class="flex-grow">
+                                    <h3 class="card-title">Lịch</h3>
+                                </div>
+                                <button type="button" id="btn-balance-popover" class="btn-text" aria-controls="balance-popover" aria-expanded="false"><i data-lucide="wallet"></i> <span>Xem số dư &amp; thu chi</span></button>
+                            </div>
+
+                            <!-- Calendar Layout Wrapper (2 Columns on Desktop) -->
+                            <div class="calendar-layout-wrapper">
+                                <!-- Right Column: Daily Summary & Transactions List -->
+                                <div class="calendar-right-col">
+                                    <!-- Tear-off calendar page for the selected day -->
+                                    <div class="tearoff-page" id="tearoff-page">
+                                        <div class="tearoff-band">
+                                            <span id="tearoff-month"></span>
+                                            <span class="tearoff-today">Hôm nay</span>
+                                            <span class="tearoff-band-right"><span id="tearoff-month-en"></span><button type="button" id="btn-toggle-month" class="tearoff-month-btn" aria-controls="month-popover" title="Xem cả tháng" aria-label="Xem cả tháng" aria-expanded="false"><i data-lucide="calendar"></i></button></span>
+                                        </div>
+                                        <div class="tearoff-day-row">
+                                            <button type="button" id="btn-prev-day" class="btn-month-nav" title="Ngày trước" aria-label="Ngày trước"><i data-lucide="chevron-left"></i></button>
+                                            <span class="tearoff-day" id="tearoff-day"></span>
+                                            <button type="button" id="btn-next-day" class="btn-month-nav" title="Ngày sau" aria-label="Ngày sau"><i data-lucide="chevron-right"></i></button>
+                                        </div>
+                                        <div class="tearoff-weekday">
+                                            <span id="tearoff-weekday"></span>
+                                            <span id="tearoff-weekday-en"></span>
+                                        </div>
+                                        <div class="tearoff-lunar">
+                                            <div class="tearoff-canchi">
+                                                <span id="tearoff-canchi-day"></span>
+                                                <span id="tearoff-canchi-month"></span>
+                                                <span id="tearoff-canchi-year"></span>
+                                            </div>
+                                            <div class="tearoff-lunar-date">
+                                                <strong id="tearoff-lunar-day"></strong>
+                                                <span id="tearoff-lunar-month"></span>
+                                                <small>Âm lịch</small>
+                                            </div>
+                                            <div class="tearoff-hours">
+                                                <small>Giờ hoàng đạo</small>
+                                                <span id="tearoff-hours"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Daily Summary Cards -->
+                                    <div class="daily-summary-bar">
+                                        <div class="summary-col">
+                                            <span class="lbl">Thu nhập</span>
+                                            <strong id="daily-income-val" class="val-income"><span class="skeleton-bone skeleton-summary-val"></span></strong>
+                                        </div>
+                                        <div class="summary-col">
+                                            <span class="lbl">Chi tiêu</span>
+                                            <strong id="daily-expense-val" class="val-expense"><span class="skeleton-bone skeleton-summary-val"></span></strong>
+                                        </div>
+                                        <div class="summary-col">
+                                            <span class="lbl">Tổng</span>
+                                            <strong id="daily-net-val"><span class="skeleton-bone skeleton-summary-val"></span></strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- Daily Transactions Title & List -->
+                                    <div class="daily-transactions-section">
+                                        <div class="daily-list" id="daily-transactions-list">
+                                            <div class="skeleton-daily-item" aria-hidden="true">
+                                                <div class="skeleton-daily-left">
+                                                    <div class="skeleton-bone skeleton-avatar"></div>
+                                                    <div class="skeleton-daily-info">
+                                                        <div class="skeleton-bone skeleton-daily-title"></div>
+                                                        <div class="skeleton-bone skeleton-daily-desc"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="skeleton-daily-right">
+                                                    <div class="skeleton-bone skeleton-daily-amount"></div>
+                                                </div>
+                                            </div>
+                                            <div class="skeleton-daily-item" aria-hidden="true">
+                                                <div class="skeleton-daily-left">
+                                                    <div class="skeleton-bone skeleton-avatar"></div>
+                                                    <div class="skeleton-daily-info">
+                                                        <div class="skeleton-bone skeleton-daily-title"></div>
+                                                        <div class="skeleton-bone skeleton-daily-desc"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="skeleton-daily-right">
+                                                    <div class="skeleton-bone skeleton-daily-amount"></div>
+                                                </div>
+                                            </div>
+                                            <div class="skeleton-daily-item" aria-hidden="true">
+                                                <div class="skeleton-daily-left">
+                                                    <div class="skeleton-bone skeleton-avatar"></div>
+                                                    <div class="skeleton-daily-info">
+                                                        <div class="skeleton-bone skeleton-daily-title"></div>
+                                                        <div class="skeleton-bone skeleton-daily-desc"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="skeleton-daily-right">
+                                                    <div class="skeleton-bone skeleton-daily-amount"></div>
+                                                </div>
+                                            </div>
+                                            <div class="skeleton-daily-item" aria-hidden="true">
+                                                <div class="skeleton-daily-left">
+                                                    <div class="skeleton-bone skeleton-avatar"></div>
+                                                    <div class="skeleton-daily-info">
+                                                        <div class="skeleton-bone skeleton-daily-title"></div>
+                                                        <div class="skeleton-bone skeleton-daily-desc"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="skeleton-daily-right">
+                                                    <div class="skeleton-bone skeleton-daily-amount"></div>
+                                                </div>
+                                            </div>
+                                            <div class="skeleton-daily-item" aria-hidden="true">
+                                                <div class="skeleton-daily-left">
+                                                    <div class="skeleton-bone skeleton-avatar"></div>
+                                                    <div class="skeleton-daily-info">
+                                                        <div class="skeleton-bone skeleton-daily-title"></div>
+                                                        <div class="skeleton-bone skeleton-daily-desc"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="skeleton-daily-right">
+                                                    <div class="skeleton-bone skeleton-daily-amount"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="empty-state" id="daily-transactions-empty" style="display: none;">
+                                            <div class="empty-icon"><i data-lucide="receipt"></i></div>
+                                            <p>Không có giao dịch nào trong ngày này.</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="indicator expense">
-                                <i data-lucide="arrow-up-right"></i>
-                                <div>
-                                    <span>Chi tiêu</span>
-                                    <strong id="summary-expense"><span class="skeleton-bone" style="display: block; width: 75px; height: 16px;"></span></strong>
-                                </div>
-                            </div>
-                        </div>
+                        </section>
                     </div>
                 </div>
 
-                <!-- Charts Layout Grid -->
-                <div class="charts-grid">
-                    <!-- Chart 1: Category Distribution -->
-                    <div class="card glass-card chart-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Phân bổ chi tiêu</h3>
-                        </div>
-                        <div class="chart-container" id="category-chart-container">
-                            <div class="skeleton-chart-donut-wrapper" id="category-chart-skeleton">
-                                <div class="skeleton-donut-ring skeleton-bone"></div>
-                                <div class="skeleton-donut-legends">
-                                    <div class="skeleton-legend-item"><span class="skeleton-bone skeleton-legend-dot"></span><span class="skeleton-bone skeleton-legend-text"></span></div>
-                                    <div class="skeleton-legend-item"><span class="skeleton-bone skeleton-legend-dot"></span><span class="skeleton-bone skeleton-legend-text" style="width: 60px;"></span></div>
-                                    <div class="skeleton-legend-item"><span class="skeleton-bone skeleton-legend-dot"></span><span class="skeleton-bone skeleton-legend-text" style="width: 45px;"></span></div>
-                                </div>
-                            </div>
-                            <canvas id="categoryChart" style="display: none;"></canvas>
-                            <div class="no-data-msg" id="chart-no-data" style="display: none;">Chưa có giao dịch chi tiêu nào để hiển thị biểu đồ.</div>
-                        </div>
-                    </div>
-
-                    <!-- Chart 2: Monthly Trends -->
+                    <!-- Trend chart: income/expense bars + running balance line -->
                     <div class="card glass-card chart-card">
                         <div class="card-header">
                             <h3 class="card-title">Xu hướng thu chi</h3>
@@ -162,7 +260,6 @@
                             <div class="no-data-msg" id="trend-no-data" style="display: none;">Chưa đủ dữ liệu để tạo biểu đồ xu hướng.</div>
                         </div>
                     </div>
-                </div>
 
                 <!-- Budget Limits Card -->
                 <div class="card glass-card budget-card">
@@ -220,168 +317,6 @@
                     </div>
                 </div>
             </section>
-        <section class="card glass-card calendar-section">
-            <div class="card-header flex-wrap gap-4" style="border-bottom: none !important;">
-                <div class="flex-grow">
-                    <h3 class="card-title">Lịch</h3>
-                </div>
-
-                <div class="calendar-header-actions">
-                    <button id="btn-toggle-search" class="theme-toggle-btn" title="Tìm kiếm giao dịch">
-                        <i data-lucide="search" style="width: 20px; height: 20px; color: var(--text-primary);"></i>
-                    </button>
-                    <button type="button" id="btn-toggle-month" class="btn-text" aria-expanded="false">
-                        <i data-lucide="calendar"></i> <span>Cả tháng</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Expandable Search & Filter Controls -->
-            <div id="calendar-filter-panel" class="filter-controls collapsed" style="transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); overflow: hidden; max-height: 0; opacity: 0; margin-bottom: 0;">
-                <div class="search-box">
-                    <i data-lucide="search" class="search-icon"></i>
-                    <input type="text" id="search-input" placeholder="Tìm theo ghi chú...">
-                </div>
-
-                <select id="filter-type" class="filter-select">
-                    <option value="all">Tất cả thu/chi</option>
-                    <option value="expense">Chỉ chi tiêu</option>
-                    <option value="income">Chỉ thu nhập</option>
-                </select>
-
-                <select id="filter-category" class="filter-select">
-                    <option value="all">Tất cả danh mục</option>
-                    <!-- Dynamic categories -->
-                </select>
-            </div>
-
-            <!-- Calendar Layout Wrapper (2 Columns on Desktop) -->
-            <div class="calendar-layout-wrapper">
-                <!-- Left Column: Calendar Grid -->
-                <div class="calendar-left-col">
-                    <!-- Calendar Container -->
-                    <div class="calendar-container">
-                        <!-- Month Selection Bar -->
-                        <div class="month-selector-bar">
-                            <button id="btn-prev-month" class="btn-month-nav" type="button"><i data-lucide="chevron-left"></i></button>
-                            <div class="month-display" id="month-year-display">Tháng 10/2026</div>
-                            <button id="btn-next-month" class="btn-month-nav" type="button"><i data-lucide="chevron-right"></i></button>
-                        </div>
-
-                        <!-- Day Headers (T2 -> CN) -->
-                        <div class="calendar-days-header">
-                            <div>T2</div>
-                            <div>T3</div>
-                            <div>T4</div>
-                            <div>T5</div>
-                            <div>T6</div>
-                            <div>T7</div>
-                            <div>CN</div>
-                        </div>
-
-                        <!-- Calendar Grid Cells -->
-                        <div class="calendar-grid" id="calendar-grid-cells">
-                            <!-- Dynamic calendar cells -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column: Daily Summary & Transactions List -->
-                <div class="calendar-right-col">
-                    <div class="daily-header">
-                        <button type="button" id="btn-prev-day" class="btn-month-nav" title="Ngày trước" aria-label="Ngày trước"><i data-lucide="chevron-left"></i></button>
-                        <span id="selected-date-label"><span class="skeleton-bone" style="display: inline-block; width: 140px; height: 16px; border-radius: 4px;"></span></span>
-                        <button type="button" id="btn-next-day" class="btn-month-nav" title="Ngày sau" aria-label="Ngày sau"><i data-lucide="chevron-right"></i></button>
-                    </div>
-
-                    <!-- Daily Summary Cards -->
-                    <div class="daily-summary-bar">
-                        <div class="summary-col">
-                            <span class="lbl">Thu nhập</span>
-                            <strong id="daily-income-val" class="val-income"><span class="skeleton-bone skeleton-summary-val"></span></strong>
-                        </div>
-                        <div class="summary-col">
-                            <span class="lbl">Chi tiêu</span>
-                            <strong id="daily-expense-val" class="val-expense"><span class="skeleton-bone skeleton-summary-val"></span></strong>
-                        </div>
-                        <div class="summary-col">
-                            <span class="lbl">Tổng</span>
-                            <strong id="daily-net-val"><span class="skeleton-bone skeleton-summary-val"></span></strong>
-                        </div>
-                    </div>
-
-                    <!-- Daily Transactions Title & List -->
-                    <div class="daily-transactions-section">
-                        <div class="daily-list" id="daily-transactions-list">
-                            <div class="skeleton-daily-item" aria-hidden="true">
-                                <div class="skeleton-daily-left">
-                                    <div class="skeleton-bone skeleton-avatar"></div>
-                                    <div class="skeleton-daily-info">
-                                        <div class="skeleton-bone skeleton-daily-title"></div>
-                                        <div class="skeleton-bone skeleton-daily-desc"></div>
-                                    </div>
-                                </div>
-                                <div class="skeleton-daily-right">
-                                    <div class="skeleton-bone skeleton-daily-amount"></div>
-                                </div>
-                            </div>
-                            <div class="skeleton-daily-item" aria-hidden="true">
-                                <div class="skeleton-daily-left">
-                                    <div class="skeleton-bone skeleton-avatar"></div>
-                                    <div class="skeleton-daily-info">
-                                        <div class="skeleton-bone skeleton-daily-title"></div>
-                                        <div class="skeleton-bone skeleton-daily-desc"></div>
-                                    </div>
-                                </div>
-                                <div class="skeleton-daily-right">
-                                    <div class="skeleton-bone skeleton-daily-amount"></div>
-                                </div>
-                            </div>
-                            <div class="skeleton-daily-item" aria-hidden="true">
-                                <div class="skeleton-daily-left">
-                                    <div class="skeleton-bone skeleton-avatar"></div>
-                                    <div class="skeleton-daily-info">
-                                        <div class="skeleton-bone skeleton-daily-title"></div>
-                                        <div class="skeleton-bone skeleton-daily-desc"></div>
-                                    </div>
-                                </div>
-                                <div class="skeleton-daily-right">
-                                    <div class="skeleton-bone skeleton-daily-amount"></div>
-                                </div>
-                            </div>
-                            <div class="skeleton-daily-item" aria-hidden="true">
-                                <div class="skeleton-daily-left">
-                                    <div class="skeleton-bone skeleton-avatar"></div>
-                                    <div class="skeleton-daily-info">
-                                        <div class="skeleton-bone skeleton-daily-title"></div>
-                                        <div class="skeleton-bone skeleton-daily-desc"></div>
-                                    </div>
-                                </div>
-                                <div class="skeleton-daily-right">
-                                    <div class="skeleton-bone skeleton-daily-amount"></div>
-                                </div>
-                            </div>
-                            <div class="skeleton-daily-item" aria-hidden="true">
-                                <div class="skeleton-daily-left">
-                                    <div class="skeleton-bone skeleton-avatar"></div>
-                                    <div class="skeleton-daily-info">
-                                        <div class="skeleton-bone skeleton-daily-title"></div>
-                                        <div class="skeleton-bone skeleton-daily-desc"></div>
-                                    </div>
-                                </div>
-                                <div class="skeleton-daily-right">
-                                    <div class="skeleton-bone skeleton-daily-amount"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="empty-state" id="daily-transactions-empty" style="display: none;">
-                            <div class="empty-icon"><i data-lucide="receipt"></i></div>
-                            <p>Không có giao dịch nào trong ngày này.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
         </main>
         <footer class="app-footer">
             <p>&copy; 2026 SpendMindAI. Thuộc quyền sở hữu của Huỳnh Bá Thành.</p>
@@ -728,12 +663,104 @@
                             <i data-lucide="save" style="width: 14px; height: 14px;"></i> Lưu cài đặt thông báo
                         </button>
                         <button type="button" id="btn-test-app-notification" class="btn btn-sm w-full btn-outline-accent" 
-                            style="padding: 7px 12px; font-size: 0.78rem; border: none; color: var(--accent-color); background: rgba(16, 185, 129, 0.12); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+                            style="padding: 7px 12px; font-size: 0.78rem; border: none; color: var(--accent-color); background: rgba(14, 165, 233, 0.12); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
                             <i data-lucide="bell-ring" style="width: 13px; height: 13px;"></i> Gửi thông báo đẩy thử nghiệm (Web Push)
                         </button>
                     </div>
 
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- BALANCE POPOVER: balance + income/expense (same open/close animation as the settings menu) -->
+    <div id="balance-backdrop" class="settings-backdrop"></div>
+    <div id="balance-popover" class="settings-dropdown-menu center-popover balance-popover" role="dialog" aria-label="Số dư và thu chi">
+        <div class="settings-panel">
+            <div class="dropdown-header">
+                <h3>Số dư &amp; thu chi</h3>
+                <button type="button" class="btn-close-dropdown" id="btn-close-balance-popover" title="Đóng" aria-label="Đóng">
+                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                </button>
+            </div>
+            <div class="dropdown-body">
+                <div class="balance-label">Tổng số dư khả dụng</div>
+                <div class="balance-amount" id="total-balance"><span class="skeleton-bone skeleton-balance-amount" style="display: block; width: 180px; height: 38px; margin: 4px 0;"></span></div>
+                <div class="balance-indicators">
+                    <div class="indicator income">
+                        <i data-lucide="arrow-down-left"></i>
+                        <div>
+                            <span>Thu nhập</span>
+                            <strong id="summary-income"><span class="skeleton-bone" style="display: block; width: 75px; height: 16px;"></span></strong>
+                        </div>
+                    </div>
+                    <div class="indicator expense">
+                        <i data-lucide="arrow-up-right"></i>
+                        <div>
+                            <span>Chi tiêu</span>
+                            <strong id="summary-expense"><span class="skeleton-bone" style="display: block; width: 75px; height: 16px;"></span></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MONTH CALENDAR POPOVER (same open/close animation as the settings menu) -->
+    <div id="month-backdrop" class="settings-backdrop"></div>
+    <div id="month-popover" class="settings-dropdown-menu center-popover month-popover" role="dialog" aria-label="Lịch tháng">
+        <div class="settings-panel">
+            <div class="dropdown-header">
+                <h3>Lịch tháng</h3>
+                <button type="button" class="btn-close-dropdown" id="btn-close-month-popover" title="Đóng" aria-label="Đóng">
+                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                </button>
+            </div>
+            <div class="dropdown-body">
+                <div id="calendar-filter-panel" class="filter-controls">
+                    <div class="search-box">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="search-input" placeholder="Tìm theo ghi chú...">
+                    </div>
+
+                    <select id="filter-type" class="filter-select">
+                        <option value="all">Tất cả thu/chi</option>
+                        <option value="expense">Chỉ chi tiêu</option>
+                        <option value="income">Chỉ thu nhập</option>
+                    </select>
+
+                    <select id="filter-category" class="filter-select">
+                        <option value="all">Tất cả danh mục</option>
+                        <!-- Dynamic categories -->
+                    </select>
+                </div>
+                <div class="calendar-left-col">
+                    <!-- Calendar Container -->
+                    <div class="calendar-container">
+                        <!-- Month Selection Bar -->
+                        <div class="month-selector-bar">
+                            <button id="btn-prev-month" class="btn-month-nav" type="button"><i data-lucide="chevron-left"></i></button>
+                            <div class="month-display" id="month-year-display">Tháng 10/2026</div>
+                            <button id="btn-next-month" class="btn-month-nav" type="button"><i data-lucide="chevron-right"></i></button>
+                        </div>
+
+                        <!-- Day Headers (T2 -> CN) -->
+                        <div class="calendar-days-header">
+                            <div>T2</div>
+                            <div>T3</div>
+                            <div>T4</div>
+                            <div>T5</div>
+                            <div>T6</div>
+                            <div>T7</div>
+                            <div>CN</div>
+                        </div>
+
+                        <!-- Calendar Grid Cells -->
+                        <div class="calendar-grid" id="calendar-grid-cells">
+                            <!-- Dynamic calendar cells -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -828,14 +855,14 @@
     <!-- Network Status & Offline Resilience -->
     <script src="js/network-status.js?v=20261025_v1"></script>
     <!-- Native Pull-To-Refresh & Desktop Logo Reload -->
-    <script src="js/pull-to-refresh.js?v=20261025_v1"></script>
+    <script src="js/pull-to-refresh.js?v=20261025_v2"></script>
     <!-- Main Dashboard script -->
     <script src="js/chatbot.js?v=20261025_v28"></script>
-    <script src="js/dashboard.js?v=20261025_v32"></script>
+    <script src="js/dashboard.js?v=20261025_v41"></script>
     <!-- Cookie Consent & Preferences System -->
     <script src="js/cookie-consent.js?v=20261024_v24"></script>
     <!-- PWA Install Manager (Android & iOS) -->
-    <script src="js/pwa-install.js?v=20261024_v25"></script>
+    <script src="js/pwa-install.js?v=20261024_v26"></script>
     <!-- In-App Device Notifications & Scheduled Reminders -->
     <script src="js/app-notification.js?v=20261025_v26"></script>
 

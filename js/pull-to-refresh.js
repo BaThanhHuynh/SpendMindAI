@@ -40,6 +40,7 @@
             document.body.classList.contains('modal-open') ||
             document.body.classList.contains('chatbot-open') ||
             document.body.classList.contains('settings-open') ||
+            document.body.classList.contains('popover-open') ||
             document.querySelector('.modal-overlay:not(.hidden)') !== null
         );
     }

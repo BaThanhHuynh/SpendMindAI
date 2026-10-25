@@ -181,22 +181,13 @@
         box-sizing: border-box !important;
     }
 
-    .charts-grid {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 16px !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
 
     /* Unified equal scaling and styling across all cards */
     .card,
     .glass-card,
     .balance-card,
     .chart-card,
-    .budget-card,
-    .calendar-section {
+    .budget-card {
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
@@ -339,7 +330,8 @@
 
     /* Prevent background body scroll when modal or settings is open */
     body.modal-open,
-    body.settings-open {
+    body.settings-open,
+    body.popover-open {
         overflow: hidden !important;
     }
 
@@ -503,8 +495,8 @@
         width: 8px !important;
         height: 8px !important;
         border-radius: 50% !important;
-        background: #10b981 !important;
-        box-shadow: 0 0 8px rgba(16, 185, 129, 0.6) !important;
+        background: #0ea5e9 !important;
+        box-shadow: 0 0 8px rgba(14, 165, 233, 0.6) !important;
         flex-shrink: 0 !important;
     }
 

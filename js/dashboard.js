@@ -49,7 +49,6 @@ window.state = state;
 window.userSettingsState = userSettingsState;
 
 // Chart.js Instances
-let categoryChartInstance = null;
 let trendChartInstance = null;
 
 // Utility function to escape HTML
@@ -617,6 +616,7 @@ function initCalendarLongPress(calendarGrid) {
         const time = Number(cell.dataset.time);
         if (time) {
             selectCalendarDay(time);
+            togglePopover("month-popover", false);
             openDayEditModal(time);
         }
     }
@@ -782,6 +782,16 @@ function initEventListeners() {
     const budgetForm = document.getElementById("budget-form");
     if (budgetForm) budgetForm.addEventListener("submit", handleBudgetSubmit);
 
+    // Phần trăm hạn mức: máy tính rê chuột (CSS :hover), điện thoại chạm vào thanh để bật/tắt
+    const budgetProgress = document.getElementById("budget-progress-container");
+    if (budgetProgress) {
+        budgetProgress.addEventListener("click", (e) => {
+            const bar = e.target.closest(".progress-bar-bg[data-pct]");
+            budgetProgress.querySelectorAll(".show-pct").forEach(el => { if (el !== bar) el.classList.remove("show-pct"); });
+            if (bar) bar.classList.toggle("show-pct");
+        });
+    }
+
     let searchDebounceTimer = null;
     const searchInput = document.getElementById("search-input");
     if (searchInput) {
@@ -824,6 +834,7 @@ function initEventListeners() {
             const cell = e.target.closest(".calendar-cell");
             if (cell && cell.dataset.time) {
                 selectCalendarDay(Number(cell.dataset.time));
+                togglePopover("month-popover", false);
             }
         });
     }
@@ -1252,13 +1263,6 @@ function initEventListeners() {
         if (dailyNetVal) dailyNetVal.innerHTML = '<span class="skeleton-bone skeleton-summary-val"></span>';
 
         // Charts Skeletons (Photo 2)
-        const donutSkeleton = document.getElementById("category-chart-skeleton");
-        const donutCanvas = document.getElementById("categoryChart");
-        const chartNoData = document.getElementById("chart-no-data");
-        if (donutSkeleton) donutSkeleton.style.display = "flex";
-        if (donutCanvas) donutCanvas.style.display = "none";
-        if (chartNoData) chartNoData.style.display = "none";
-
         const trendSkeleton = document.getElementById("trend-chart-skeleton");
         const trendCanvas = document.getElementById("trendChart");
         const trendNoData = document.getElementById("trend-no-data");
@@ -1293,6 +1297,7 @@ function initEventListeners() {
         const btn = document.getElementById(id);
         if (!btn) return;
         btn.addEventListener("click", () => {
+            turnTearoffPage(delta);
             const d = new Date(selectedCalendarDay);
             d.setDate(d.getDate() + delta);
             const monthChanged = d.getMonth() !== currentCalendarDate.getMonth() || d.getFullYear() !== currentCalendarDate.getFullYear();
@@ -1304,31 +1309,19 @@ function initEventListeners() {
         });
     });
 
-    const btnToggleMonth = document.getElementById("btn-toggle-month");
-    if (btnToggleMonth) btnToggleMonth.addEventListener("click", () => setMonthView());
-
-    const btnToggleSearch = document.getElementById("btn-toggle-search");
-    if (btnToggleSearch) {
-        btnToggleSearch.addEventListener("click", () => {
-            const panel = document.getElementById("calendar-filter-panel");
-            if (!panel) return;
-            const isCollapsed = panel.classList.contains("collapsed");
-            if (isCollapsed) {
-                panel.classList.remove("collapsed");
-                setMonthView(true); // kết quả lọc hiện trên lưới tháng
-                panel.style.maxHeight = "120px";
-                panel.style.opacity = "1";
-                panel.style.marginBottom = "16px";
-            } else {
-                panel.classList.add("collapsed");
-                panel.style.maxHeight = "0";
-                panel.style.opacity = "0";
-                panel.style.marginBottom = "0";
-            }
+    // Cửa sổ nổi: nút mở (aria-controls); nền mờ và nút ✕ để đóng
+    ["month-popover", "balance-popover"].forEach(popId => {
+        const btn = document.querySelector(`[aria-controls="${popId}"]`);
+        if (btn) btn.addEventListener("click", () => togglePopover(popId));
+        [popId.replace("-popover", "-backdrop"), "btn-close-" + popId].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener("click", () => togglePopover(popId, false));
         });
-    }
+    });
+
 
     setTodayInDateInput();
+    renderTearoffPage(selectedCalendarDay);
 }
 
 // Logout Action
@@ -1353,13 +1346,33 @@ function handleLogout() {
 
 // --- 3. CRUD LOGIC HANDLERS (AJAX OPERATIONS) ---
 
-// Bật/tắt lưới lịch cả tháng (mặc định chỉ hiện ngày đang chọn)
-function setMonthView(open) {
-    const section = document.querySelector(".calendar-section");
-    if (!section) return;
-    const isOpen = section.classList.toggle("month-open", open);
-    const btn = document.getElementById("btn-toggle-month");
-    if (btn) btn.setAttribute("aria-expanded", String(isOpen));
+// Mở/đóng cửa sổ nổi (lịch tháng, số dư) ở giữa màn hình, cùng hiệu ứng với menu Cài đặt
+function togglePopover(popId, open) {
+    const pop = document.getElementById(popId);
+    const backdrop = document.getElementById(popId.replace("-popover", "-backdrop"));
+    const btn = document.querySelector(`[aria-controls="${popId}"]`);
+    if (!pop || pop.classList.contains("closing")) return;
+    const isOpen = pop.classList.contains("active");
+    const shouldOpen = open === undefined ? !isOpen : open;
+    if (shouldOpen === isOpen) return;
+    if (btn) btn.setAttribute("aria-expanded", String(shouldOpen));
+    if (navigator.vibrate) {
+        try { navigator.vibrate(shouldOpen ? 8 : 6); } catch (e) {}
+    }
+    if (shouldOpen) {
+        pop.classList.add("active", "is-opening");
+        setTimeout(() => pop.classList.remove("is-opening"), 700); // hết nhịp hiện lần lượt; vẽ lại lưới sau đó không chạy lại
+        if (backdrop) backdrop.classList.add("active");
+        document.body.classList.add("popover-open");
+        return;
+    }
+    pop.classList.add("closing");
+    if (backdrop) backdrop.classList.add("closing");
+    setTimeout(() => {
+        pop.classList.remove("active", "closing");
+        if (backdrop) backdrop.classList.remove("active", "closing");
+        if (!document.querySelector(".center-popover.active")) document.body.classList.remove("popover-open");
+    }, 220); // bằng thời lượng hiệu ứng đóng của menu Cài đặt
 }
 
 // Toggle budget settings collapsible panel
@@ -1697,7 +1710,7 @@ function updateUI(redrawCharts = true) {
     }
 
     if (redrawCharts) {
-        renderCharts(stats.categoryExpenses);
+        renderCharts();
     }
 }
 
@@ -1829,6 +1842,11 @@ function formatNumberWithCommas(n) {
     return parts.join(".");
 }
 
+// Nhãn trục tiền của biểu đồ: 1.5Mđ, 250kđ (giữ dấu âm)
+function formatAxisMoney(value) {
+    return Math.abs(value) >= 1000000 ? (value / 1000000) + 'Mđ' : (value / 1000) + 'kđ';
+}
+
 function formatCompactAmount(value) {
     if (value >= 1000000) {
         const formatted = (value / 1000000);
@@ -1837,6 +1855,81 @@ function formatCompactAmount(value) {
         return (value / 1000) + 'k';
     }
     return value;
+}
+
+// Trang lịch xé: ngày dương, thứ, ngày âm, can chi, giờ hoàng đạo.
+// ponytail: âm lịch lấy từ lịch Trung Hoa có sẵn trong trình duyệt (Intl, giờ UTC+8) nên vài tháng hiếm có thể lệch
+// 1 ngày so với âm lịch Việt Nam (UTC+7); cần chính xác tuyệt đối thì thay bằng thuật toán Hồ Ngọc Đức.
+const LUNAR_FORMAT = new Intl.DateTimeFormat("vi-VN-u-ca-chinese", { day: "numeric", month: "numeric", year: "numeric" });
+const LUNAR_CAN = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
+const LUNAR_CHI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
+// Theo chi của ngày (Tý/Ngọ, Sửu/Mùi... dùng chung dòng); ký tự thứ i = '1' nếu giờ LUNAR_CHI[i] là giờ hoàng đạo
+const GIO_HOANG_DAO = ["110100101100", "001101001011", "110011010010", "101100110100", "001011001101", "010010110011"];
+const WEEKDAYS_VI = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"];
+
+function getLunarInfo(date) {
+    const p = {};
+    LUNAR_FORMAT.formatToParts(date).forEach(part => { p[part.type] = part.value; });
+    const month = parseInt(p.month, 10);
+    const year = parseInt(p.relatedYear, 10);
+    const jd = Math.round(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000) + 2440588;
+    const dayChi = (jd + 1) % 12;
+    const hours = [];
+    for (let i = 0; i < 12; i++) {
+        if (GIO_HOANG_DAO[dayChi % 6][i] === "1") hours.push(`${LUNAR_CHI[i]}\u00a0(${(i * 2 + 23) % 24}\u2011${(i * 2 + 1) % 24})`); // không ngắt dòng giữa một khung giờ
+    }
+    return {
+        day: parseInt(p.day, 10),
+        month,
+        leap: /\D/.test(p.month),
+        dayName: `${LUNAR_CAN[(jd + 9) % 10]} ${LUNAR_CHI[dayChi]}`,
+        monthName: `${LUNAR_CAN[(year * 12 + month + 3) % 10]} ${LUNAR_CHI[(month + 1) % 12]}`,
+        yearName: `${LUNAR_CAN[(year + 6) % 10]} ${LUNAR_CHI[(year + 8) % 12]}`,
+        hours
+    };
+}
+
+function renderTearoffPage(date) {
+    const page = document.getElementById("tearoff-page");
+    if (!page) return;
+    const lunar = getLunarInfo(date);
+    const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    const lunarMonth = lunar.month === 1 ? "Giêng" : lunar.month === 12 ? "Chạp" : lunar.month;
+    set("tearoff-month", `Tháng ${date.getMonth() + 1} · ${date.getFullYear()}`);
+    set("tearoff-month-en", date.toLocaleString("en-US", { month: "long" }));
+    set("tearoff-day", date.getDate());
+    set("tearoff-weekday", WEEKDAYS_VI[date.getDay()]);
+    set("tearoff-weekday-en", date.toLocaleString("en-US", { weekday: "long" }));
+    set("tearoff-lunar-day", lunar.day);
+    set("tearoff-lunar-month", `Tháng ${lunarMonth}${lunar.leap ? " nhuận" : ""}`);
+    set("tearoff-canchi-day", `Ngày ${lunar.dayName}`);
+    set("tearoff-canchi-month", `Tháng ${lunar.monthName}`);
+    set("tearoff-canchi-year", `Năm ${lunar.yearName}`);
+    set("tearoff-hours", lunar.hours.join(", "));
+    page.classList.toggle("is-sunday", date.getDay() === 0);
+    page.classList.toggle("is-today", date.toDateString() === new Date().toDateString());
+}
+
+// Hiệu ứng xé lịch: sang ngày sau thì tờ cũ bay lên, về ngày trước thì tờ mới rơi xuống
+function turnTearoffPage(delta) {
+    const page = document.getElementById("tearoff-page");
+    if (!page || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (delta > 0) {
+        const ghost = page.cloneNode(true);
+        ghost.querySelectorAll(".tearoff-ghost").forEach(el => el.remove());
+        ghost.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
+        ghost.removeAttribute("id");
+        ghost.classList.remove("drop-in");
+        ghost.classList.add("tearoff-ghost");
+        ghost.setAttribute("aria-hidden", "true");
+        ghost.inert = true;
+        ghost.addEventListener("animationend", () => ghost.remove());
+        page.appendChild(ghost);
+    } else {
+        page.classList.remove("drop-in");
+        void page.offsetWidth; // restart animation
+        page.classList.add("drop-in");
+    }
 }
 
 function formatSelectedDateLabel(date) {
@@ -1887,7 +1980,6 @@ function renderCalendarView(filteredTransactions = null) {
     const dailyIncomeVal = document.getElementById("daily-income-val");
     const dailyExpenseVal = document.getElementById("daily-expense-val");
     const dailyNetVal = document.getElementById("daily-net-val");
-    const selectedDateLabel = document.getElementById("selected-date-label");
     const dailyTransactionsList = document.getElementById("daily-transactions-list");
     const dailyEmptyState = document.getElementById("daily-transactions-empty");
 
@@ -1957,6 +2049,7 @@ function renderCalendarView(filteredTransactions = null) {
         const cellEl = document.createElement("div");
         cellEl.className = `calendar-cell ${isCurrentMonth ? 'current-month' : 'other-month'} ${isSelected ? 'selected' : ''}`;
         cellEl.dataset.time = cellDate.getTime();
+        cellEl.style.setProperty("--r", Math.floor((i - 1) / 7)); // hàng tuần, cho hiệu ứng hiện lần lượt
 
         let amountHTML = "";
         if (cellIncome > 0 || cellExpense > 0) {
@@ -2119,7 +2212,6 @@ function updateDailyTransactionsView(cachedStats = null) {
     const dailyIncomeVal = document.getElementById("daily-income-val");
     const dailyExpenseVal = document.getElementById("daily-expense-val");
     const dailyNetVal = document.getElementById("daily-net-val");
-    const selectedDateLabel = document.getElementById("selected-date-label");
     const dailyTransactionsList = document.getElementById("daily-transactions-list");
     const dailyEmptyState = document.getElementById("daily-transactions-empty");
 
@@ -2136,8 +2228,7 @@ function updateDailyTransactionsView(cachedStats = null) {
     dailyNetVal.textContent = (dailyNet < 0 ? '-' : '') + formatNumberWithCommas(Math.abs(dailyNet)) + 'đ';
     dailyNetVal.className = dailyNet >= 0 ? 'val-net-income' : 'val-net-expense';
 
-    const isToday = selectedCalendarDay.toDateString() === new Date().toDateString();
-    selectedDateLabel.textContent = (isToday ? "Hôm nay · " : "") + formatSelectedDateLabel(selectedCalendarDay);
+    renderTearoffPage(selectedCalendarDay);
 
     dailyTransactionsList.innerHTML = "";
     dailyTransactionsList.scrollTop = 0;
@@ -2217,26 +2308,9 @@ function renderBudgetsProgress(categoryExpenses) {
 
             // 4 Mức độ màu ngân sách: Xanh (<70%), Vàng (70-85%), Cam (85-100%), Đỏ (>=100%)
             let progressClass = "progress-level-green";
-            let statusBadgeClass = "budget-badge-green";
-            let statusText = "An toàn";
-            let levelColor = "#10b981";
-
-            if (percentage >= 100) {
-                progressClass = "progress-level-red";
-                statusBadgeClass = "budget-badge-red";
-                statusText = "Vượt hạn mức";
-                levelColor = "#ef4444";
-            } else if (percentage >= 85) {
-                progressClass = "progress-level-orange";
-                statusBadgeClass = "budget-badge-orange";
-                statusText = "Gần chạm ngưỡng";
-                levelColor = "#f97316";
-            } else if (percentage >= 70) {
-                progressClass = "progress-level-yellow";
-                statusBadgeClass = "budget-badge-yellow";
-                statusText = "Cần chú ý";
-                levelColor = "#eab308";
-            }
+            if (percentage >= 100) progressClass = "progress-level-red";
+            else if (percentage >= 85) progressClass = "progress-level-orange";
+            else if (percentage >= 70) progressClass = "progress-level-yellow";
 
             budgetItemsHtml.push(`
                 <div class="budget-item">
@@ -2246,16 +2320,12 @@ function renderBudgetsProgress(categoryExpenses) {
                             ${cat.label}
                         </span>
                         <div class="budget-meta-right">
-                            <span class="budget-status-pill ${statusBadgeClass}">
-                                <span class="status-dot" style="background: ${levelColor};"></span>
-                                <span>${statusText}</span>
-                            </span>
                             <span class="budget-values">
-                                <strong>${formatVND(spent)}</strong> / ${formatVND(limit)} (${Math.round(percentage)}%)
+                                <strong>${formatVND(spent)}</strong> / ${formatVND(limit)}
                             </span>
                         </div>
                     </div>
-                    <div class="progress-bar-bg">
+                    <div class="progress-bar-bg" data-pct="${Math.round(percentage)}%" style="--pct: ${percentage}%" role="progressbar" aria-valuenow="${Math.round(percentage)}" aria-valuemin="0" aria-valuemax="100">
                         <div class="progress-bar-fill ${progressClass}" style="width: ${percentage}%"></div>
                     </div>
                 </div>
@@ -2267,24 +2337,15 @@ function renderBudgetsProgress(categoryExpenses) {
         // Thẻ tổng quan ngân sách chi tiêu tháng
         const totalPct = totalBudgetLimit > 0 ? Math.min((totalBudgetSpent / totalBudgetLimit) * 100, 100) : 0;
         let totalProgClass = "progress-level-green";
-        let totalBadgeClass = "budget-badge-green";
-        let totalStatusText = "An toàn";
-        let totalColor = "#10b981";
-
+        let totalColor = "#0ea5e9";
         if (totalPct >= 100) {
             totalProgClass = "progress-level-red";
-            totalBadgeClass = "budget-badge-red";
-            totalStatusText = "Vượt hạn mức";
             totalColor = "#ef4444";
         } else if (totalPct >= 85) {
             totalProgClass = "progress-level-orange";
-            totalBadgeClass = "budget-badge-orange";
-            totalStatusText = "Gần chạm ngưỡng";
             totalColor = "#f97316";
         } else if (totalPct >= 70) {
             totalProgClass = "progress-level-yellow";
-            totalBadgeClass = "budget-badge-yellow";
-            totalStatusText = "Cần chú ý";
             totalColor = "#eab308";
         }
 
@@ -2295,16 +2356,12 @@ function renderBudgetsProgress(categoryExpenses) {
                         <i data-lucide="pie-chart" style="width: 15px; height: 15px; color: ${totalColor};"></i>
                         <span>Tổng ngân sách tháng</span>
                     </div>
-                    <span class="budget-status-pill ${totalBadgeClass}">
-                        <span class="status-dot" style="background: ${totalColor};"></span>
-                        <span>${totalStatusText} (${Math.round(totalPct)}%)</span>
-                    </span>
                 </div>
                 <div class="budget-total-values">
                     <strong>${formatVND(totalBudgetSpent)}</strong>
                     <span class="budget-total-limit"> / ${formatVND(totalBudgetLimit)}</span>
                 </div>
-                <div class="progress-bar-bg">
+                <div class="progress-bar-bg" data-pct="${Math.round(totalPct)}%" style="--pct: ${totalPct}%" role="progressbar" aria-valuenow="${Math.round(totalPct)}" aria-valuemin="0" aria-valuemax="100">
                     <div class="progress-bar-fill ${totalProgClass}" style="width: ${totalPct}%"></div>
                 </div>
             </div>
@@ -2324,147 +2381,14 @@ function renderBudgetsProgress(categoryExpenses) {
 }
 
 // --- 5. RENDER CHART JS VISUALIZATIONS ---
-function renderCharts(categoryExpenses = null) {
-    if (!categoryExpenses) {
-        const stats = calculateFinanceStats();
-        categoryExpenses = stats.categoryExpenses;
-    }
+function renderCharts() {
 
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
     const textThemeColor = isDark ? "#86868b" : "#6e6e73";
     const gridThemeColor = isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.05)";
     const appleFontStack = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro', 'Inter', sans-serif";
 
-    // -- CHART 1: DONUT CATEGORY EXPENSES (RESTORE ORIGINAL VIVID PALETTE) --
-    const donutCanvas = document.getElementById("categoryChart");
-    const chartNoData = document.getElementById("chart-no-data");
-    const donutSkeleton = document.getElementById("category-chart-skeleton");
-    if (donutSkeleton) donutSkeleton.style.display = "none";
-    
-    const expenseLabels = [];
-    const expenseAmounts = [];
-    const bgColors = [];
-    const borderColors = [];
-
-    // Bảng màu đa dạng hài hòa chuẩn Apple cho các danh mục
-    const donutScale = [
-        { bg: '#10b981', border: isDark ? '#1c1c1e' : '#ffffff' }, // Emerald
-        { bg: '#3b82f6', border: isDark ? '#1c1c1e' : '#ffffff' }, // Blue
-        { bg: '#f59e0b', border: isDark ? '#1c1c1e' : '#ffffff' }, // Amber
-        { bg: '#ec4899', border: isDark ? '#1c1c1e' : '#ffffff' }, // Pink
-        { bg: '#8b5cf6', border: isDark ? '#1c1c1e' : '#ffffff' }, // Purple
-        { bg: '#06b6d4', border: isDark ? '#1c1c1e' : '#ffffff' }, // Cyan
-        { bg: '#f97316', border: isDark ? '#1c1c1e' : '#ffffff' }, // Orange
-        { bg: '#84cc16', border: isDark ? '#1c1c1e' : '#ffffff' }  // Lime
-    ];
-
-    Object.keys(categoryExpenses)
-        .filter(key => categoryExpenses[key] > 0)
-        .sort((a, b) => categoryExpenses[b] - categoryExpenses[a])
-        .forEach((key, i) => {
-            const cat = CATEGORIES[key];
-            const colors = donutScale[i % donutScale.length];
-            expenseLabels.push(cat ? cat.label : key);
-            expenseAmounts.push(categoryExpenses[key]);
-            bgColors.push(colors.bg);
-            borderColors.push(colors.border);
-        });
-
-    if (expenseAmounts.length === 0) {
-        donutCanvas.style.display = "none";
-        chartNoData.style.display = "block";
-        if (categoryChartInstance) {
-            categoryChartInstance.destroy();
-            categoryChartInstance = null;
-        }
-    } else {
-        donutCanvas.style.display = "block";
-        chartNoData.style.display = "none";
-
-        const isMobileScreen = window.innerWidth <= 640;
-
-        // In-place update if instance exists and valid (0ms re-render)
-        if (categoryChartInstance && categoryChartInstance.ctx) {
-            categoryChartInstance.data.labels = expenseLabels;
-            categoryChartInstance.data.datasets[0].data = expenseAmounts;
-            categoryChartInstance.data.datasets[0].backgroundColor = bgColors;
-            categoryChartInstance.data.datasets[0].borderColor = borderColors;
-            categoryChartInstance.options.plugins.legend.labels.color = textThemeColor;
-            categoryChartInstance.options.plugins.legend.position = isMobileScreen ? 'bottom' : 'right';
-            categoryChartInstance.options.plugins.legend.labels.padding = isMobileScreen ? 8 : 14;
-            categoryChartInstance.options.plugins.legend.labels.font.size = isMobileScreen ? 11 : 12;
-            categoryChartInstance.options.cutout = isMobileScreen ? '68%' : '74%';
-            categoryChartInstance.update('none');
-        } else {
-            if (categoryChartInstance) categoryChartInstance.destroy();
-            categoryChartInstance = new Chart(donutCanvas, {
-                type: 'doughnut',
-                data: {
-                    labels: expenseLabels,
-                    datasets: [{
-                        data: expenseAmounts,
-                        backgroundColor: bgColors,
-                        borderColor: borderColors,
-                        borderWidth: 2,
-                        hoverOffset: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 250 },
-                    plugins: {
-                        legend: {
-                            position: isMobileScreen ? 'bottom' : 'right',
-                            labels: {
-                                color: textThemeColor,
-                                usePointStyle: true,
-                                pointStyle: 'circle',
-                                boxWidth: 7,
-                                boxHeight: 7,
-                                padding: isMobileScreen ? 8 : 14,
-                                font: { family: appleFontStack, size: isMobileScreen ? 11 : 12 },
-                                generateLabels: function(chart) {
-                                    const ds = chart.data.datasets[0];
-                                    const total = ds.data.reduce((a, b) => a + b, 0);
-                                    return chart.data.labels.map((label, i) => {
-                                        const pct = total > 0 ? Math.round((ds.data[i] / total) * 100) : 0;
-                                        return {
-                                            text: `${label}  ${pct}%`,
-                                            fillStyle: ds.backgroundColor[i],
-                                            strokeStyle: ds.backgroundColor[i],
-                                            lineWidth: 0,
-                                            index: i,
-                                            fontColor: textThemeColor
-                                        };
-                                    });
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: isDark ? 'rgba(28, 28, 30, 0.94)' : 'rgba(255, 255, 255, 0.96)',
-                            titleColor: isDark ? '#f5f5f7' : '#1d1d1f',
-                            bodyColor: isDark ? '#a1a1a6' : '#6e6e73',
-                            borderColor: 'transparent',
-                            borderWidth: 0,
-                            cornerRadius: 10,
-                            padding: 10,
-                            titleFont: { family: appleFontStack, weight: '600' },
-                            bodyFont: { family: appleFontStack },
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.label}: ${formatVND(context.raw)}`;
-                                }
-                            }
-                        }
-                    },
-                    cutout: isMobileScreen ? '68%' : '74%'
-                }
-            });
-        }
-    }
-
-    // -- CHART 2: DAILY/WEEKLY TRENDS (RESTORE GREEN/RED) --
+    // -- TREND CHART: thu/chi theo ngày (cột) + số dư lũy kế trong tháng (đường) --
     const trendCanvas = document.getElementById("trendChart");
     const trendNoData = document.getElementById("trend-no-data");
 
@@ -2490,10 +2414,18 @@ function renderCharts(categoryExpenses = null) {
         }
     });
 
-    const datesArray = Object.keys(datesWithEntries);
+    const datesArray = Object.keys(datesWithEntries).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+    // Số dư lũy kế từ đầu tháng đến hết mỗi ngày có giao dịch
+    let runningBalance = 0;
+    const balanceByDate = {};
+    datesArray.forEach(d => {
+        runningBalance += datesWithEntries[d].income - datesWithEntries[d].expense;
+        balanceByDate[d] = runningBalance;
+    });
     const displayDates = datesArray.slice(-7);
     const trendIncome = displayDates.map(d => datesWithEntries[d].income);
     const trendExpense = displayDates.map(d => datesWithEntries[d].expense);
+    const trendBalance = displayDates.map(d => balanceByDate[d]);
 
     const trendSkeleton = document.getElementById("trend-chart-skeleton");
     if (trendSkeleton) trendSkeleton.style.display = "none";
@@ -2516,13 +2448,16 @@ function renderCharts(categoryExpenses = null) {
             trendChartInstance.data.labels = displayDates;
             trendChartInstance.data.datasets[0].data = trendIncome;
             trendChartInstance.data.datasets[1].data = trendExpense;
+            trendChartInstance.data.datasets[2].data = trendBalance;
             trendChartInstance.data.datasets[0].maxBarThickness = isMobileScreen ? 18 : 28;
             trendChartInstance.data.datasets[1].maxBarThickness = isMobileScreen ? 18 : 28;
             trendChartInstance.options.scales.x.ticks.color = textThemeColor;
             trendChartInstance.options.scales.x.ticks.font.size = isMobileScreen ? 9.5 : 11;
             trendChartInstance.options.scales.y.ticks.color = textThemeColor;
             trendChartInstance.options.scales.y.ticks.font.size = isMobileScreen ? 9.5 : 10;
+            trendChartInstance.options.scales.y1.ticks.font.size = isMobileScreen ? 9.5 : 10;
             trendChartInstance.options.scales.y.grid.color = gridThemeColor;
+            trendChartInstance.options.scales.y1.ticks.color = textThemeColor;
             trendChartInstance.options.plugins.legend.labels.color = textThemeColor;
             trendChartInstance.options.plugins.legend.labels.padding = isMobileScreen ? 8 : 14;
             trendChartInstance.options.plugins.legend.labels.font.size = isMobileScreen ? 10.5 : 11;
@@ -2537,7 +2472,7 @@ function renderCharts(categoryExpenses = null) {
                         {
                             label: 'Thu nhập',
                             data: trendIncome,
-                            backgroundColor: '#10b981',
+                            backgroundColor: '#0ea5e9',
                             borderRadius: 6,
                             maxBarThickness: isMobileScreen ? 18 : 28
                         },
@@ -2547,6 +2482,19 @@ function renderCharts(categoryExpenses = null) {
                             backgroundColor: '#ef4444',
                             borderRadius: 6,
                             maxBarThickness: isMobileScreen ? 18 : 28
+                        },
+                        {
+                            type: 'line',
+                            label: 'Số dư lũy kế',
+                            data: trendBalance,
+                            yAxisID: 'y1',
+                            order: -1,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: '#8b5cf6',
+                            borderWidth: 2.5,
+                            tension: 0.35,
+                            pointRadius: 3.5,
+                            pointHoverRadius: 5
                         }
                     ]
                 },
@@ -2564,9 +2512,16 @@ function renderCharts(categoryExpenses = null) {
                             ticks: {
                                 color: textThemeColor,
                                 font: { family: appleFontStack, size: isMobileScreen ? 9.5 : 10 },
-                                callback: function(value) {
-                                    return value >= 1000000 ? (value / 1000000) + 'Mđ' : (value / 1000) + 'kđ';
-                                }
+                                callback: formatAxisMoney
+                            }
+                        },
+                        y1: {
+                            position: 'right',
+                            grid: { display: false },
+                            ticks: {
+                                color: textThemeColor,
+                                font: { family: appleFontStack, size: isMobileScreen ? 9.5 : 10 },
+                                callback: formatAxisMoney
                             }
                         }
                     },
@@ -3141,19 +3096,12 @@ window.addEventListener("resize", () => {
     clearTimeout(resizeDebounceTimer);
     resizeDebounceTimer = setTimeout(() => {
         const isMobileScreen = window.innerWidth <= 640;
-        if (categoryChartInstance && categoryChartInstance.ctx) {
-            categoryChartInstance.options.plugins.legend.position = isMobileScreen ? 'bottom' : 'right';
-            categoryChartInstance.options.plugins.legend.labels.padding = isMobileScreen ? 8 : 14;
-            categoryChartInstance.options.plugins.legend.labels.font.size = isMobileScreen ? 11 : 12;
-            categoryChartInstance.options.cutout = isMobileScreen ? '68%' : '74%';
-            categoryChartInstance.resize();
-            categoryChartInstance.update('none');
-        }
         if (trendChartInstance && trendChartInstance.ctx) {
             trendChartInstance.data.datasets[0].maxBarThickness = isMobileScreen ? 18 : 28;
             trendChartInstance.data.datasets[1].maxBarThickness = isMobileScreen ? 18 : 28;
             trendChartInstance.options.scales.x.ticks.font.size = isMobileScreen ? 9.5 : 11;
             trendChartInstance.options.scales.y.ticks.font.size = isMobileScreen ? 9.5 : 10;
+            trendChartInstance.options.scales.y1.ticks.font.size = isMobileScreen ? 9.5 : 10;
             trendChartInstance.options.plugins.legend.labels.padding = isMobileScreen ? 8 : 14;
             trendChartInstance.options.plugins.legend.labels.font.size = isMobileScreen ? 10.5 : 11;
             trendChartInstance.resize();
