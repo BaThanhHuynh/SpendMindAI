@@ -4,6 +4,7 @@ PHP (api/controllers/ChatbotController.php::forwardToRag) là cửa duy nhất: 
 suất, rồi gọi vào đây kèm chữ ký HMAC-SHA256 trên "<timestamp>.<body>". Hợp đồng vào/ra: tests/chatbot_eval/run_eval.py.
 
 Bước 3: regex xã giao (§3.2) → một lần gọi LLM viết lại câu hỏi + phân loại ý định (§3.3) → code kiểm lại bộ lọc.
+Bước 4: Đường A (§3.4) — code lọc theo bộ lọc đã kiểm, tự đếm / cộng / liệt kê, dựng khối SỰ KIỆN + bảng giao dịch.
 """
 import difflib
 import hashlib
@@ -59,6 +60,11 @@ SMALLTALK = [
 ]
 
 
+# «Làm lại» = chạy lại yêu cầu tài chính lượt trước (§8 ca 8). Nghĩa đã cố định nên code quyết, không hỏi LLM: sau lời
+# phàn nàn, model đôi khi hiểu thành modify_data.
+REDO = re.compile(rf"lam lai{_TAIL}")
+
+
 def smalltalk(message):
     """Câu trả lời mẫu nếu CẢ câu (≤ 6 từ) là xã giao; câu có thêm nội dung khác thì để LLM xử lý."""
     words = re.sub(r"[^\w ]+", " ", fold(message)).split()
@@ -67,23 +73,29 @@ def smalltalk(message):
     return next((reply for rx, reply in SMALLTALK if rx.fullmatch(" ".join(words))), None)
 
 
-# ---------- Dữ liệu danh mục của người dùng ----------
+# ---------- Dữ liệu giao dịch của người dùng ----------
 
-def user_categories(user_id):
-    """{mã/tên danh mục: "expense"|"income"} — danh mục chuẩn + danh mục tự đặt của chính người dùng."""
+def load_transactions(user_id):
+    """Mọi giao dịch của người dùng, tải một lần mỗi yêu cầu (chỉ mục idx_user_date, database.sql:38).
+    Có DATABASE_URL → MySQL/TiDB; không có → local_dev_data.json."""
     url = os.environ.get("DATABASE_URL")
-    if url:
-        u = urlsplit(url)
-        conn = pymysql.connect(host=u.hostname, port=u.port or 3306, user=unquote(u.username or ""),
-                               password=unquote(u.password or ""), database=u.path.lstrip("/"), connect_timeout=5,
-                               ssl=None if u.hostname in ("127.0.0.1", "localhost", "::1") else ssl.create_default_context())
-        with conn, conn.cursor() as cur:
-            cur.execute("SELECT DISTINCT category, type FROM transactions WHERE user_id = %s", (user_id,))
-            rows = cur.fetchall()
-    else:
+    if not url:
         # ponytail: tệp chạy thử trên máy chỉ có một người dùng nên bỏ qua user_id
-        rows = {(t["category"], t["type"]) for t in json.loads(LOCAL_DATA.read_text(encoding="utf-8"))["transactions"]}
-    return {k: v[1] for k, v in CATEGORIES.items()} | {c: t for c, t in rows if c not in CATEGORIES}
+        return json.loads(LOCAL_DATA.read_text(encoding="utf-8"))["transactions"]
+    u = urlsplit(url)
+    conn = pymysql.connect(host=u.hostname, port=u.port or 3306, user=unquote(u.username or ""),
+                           password=unquote(u.password or ""), database=u.path.lstrip("/"), connect_timeout=5,
+                           ssl=None if u.hostname in ("127.0.0.1", "localhost", "::1") else ssl.create_default_context(),
+                           cursorclass=pymysql.cursors.DictCursor)
+    with conn, conn.cursor() as cur:
+        cur.execute("SELECT id, type, amount, category, date, description FROM transactions WHERE user_id = %s", (user_id,))
+        # pymysql trả DECIMAL → Decimal, DATE → date: đưa về cùng dạng với local_dev_data.json
+        return [r | {"amount": float(r["amount"]), "date": r["date"].isoformat()} for r in cur.fetchall()]
+
+
+def user_categories(tx):
+    """{mã/tên danh mục: "expense"|"income"} — danh mục chuẩn + danh mục tự đặt của chính người dùng."""
+    return {k: v[1] for k, v in CATEGORIES.items()} | {t["category"]: t["type"] for t in tx if t["category"] not in CATEGORIES}
 
 
 # ---------- Lớp 1: viết lại câu hỏi + phân loại ý định, một lần gọi LLM (§3.3) ----------
@@ -126,7 +138,8 @@ filters:
 - category: chỉ chọn trong «Danh mục của người dùng», ghi đúng mã ở đầu dòng; không nhắc danh mục → null.
   Món / nơi / việc không phải danh mục → đưa vào keyword, không đưa vào category.
 - type: "income" khi hỏi về thu nhập, còn lại "expense".
-- keyword: từ cần tìm trong ghi chú giao dịch, chữ thường, giữ cách viết của người dùng; không có → null.
+- keyword: tên món / nơi / việc cần tìm trong ghi chú giao dịch, chữ thường, giữ cách viết của người dùng, bỏ động từ
+  đi kèm («tiền đi net» → «net», «uống monster» → «monster»); không có → null.
 clarify: null, trừ khi intent là unclear."""
 
 
@@ -213,8 +226,51 @@ def resolve(out, prev, cats, today):
             clarify = clarify or f"Mình không thấy danh mục «{f['category']}» trong dữ liệu của bạn. Bạn muốn xem danh mục nào?"
         f["category"] = cat
     f["month"] = fix_month(f["month"], today)
+    if intent == "finance_compare" and not f["month"]:
+        f["month"] = f"{today:%Y-%m}"  # so sánh cần một kỳ: LLM bỏ trống → tháng này so với tháng trước
     f["type"] = cats[f["category"]] if f["category"] else (f["type"] if f["type"] in ("expense", "income") else "expense")
     return intent, f, clarify, ({"intent": intent, "filters": f} if intent in FINANCE else prev)
+
+
+# ---------- Lớp 2 — Đường A: code lọc, đếm, cộng, liệt kê (§3.4) ----------
+
+def vnd(x):
+    return f"{round(x):,}".replace(",", ".") + "đ"
+
+
+def select(tx, month, f):
+    """Giao dịch khớp bộ lọc, cũ → mới. month=None: mọi thời gian. keyword: nguyên từ trong ghi chú, bỏ dấu."""
+    kw = fold(f["keyword"])
+    return sorted((t for t in tx if t["type"] == f["type"] and t["date"].startswith(month or "")
+                   and f["category"] in (None, t["category"])
+                   and (not kw or re.search(rf"\b{re.escape(kw)}\b", fold(t.get("description"))))),
+                  key=lambda t: (t["date"], t["id"]))
+
+
+def path_a(tx, intent, f):
+    """(khối SỰ KIỆN, bảng giao dịch). Mọi con số do code tính; Bước 7 cho LLM diễn đạt lại SỰ KIỆN, bảng gắn nguyên."""
+    rows, label = select(tx, f["month"], f), lambda c: CATEGORIES[c][0] if c in CATEGORIES else c
+    mmyyyy = lambda ym: f"{ym[5:]}/{ym[:4]}"  # «10/2026» — không ghi dạng ngày/tháng để bộ chấm không tưởng là dòng giao dịch
+    total = sum(t["amount"] for t in rows)
+    facts = [" · ".join([f"KỲ: {mmyyyy(f['month']) if f['month'] else 'mọi thời gian'}",
+                         f"DANH MỤC: {label(f['category']) if f['category'] else 'tất cả'}",
+                         f"LOẠI: {'thu' if f['type'] == 'income' else 'chi'}"] + ([f"GHI CHÚ CÓ: «{f['keyword']}»"] if f["keyword"] else [])),
+             f"SỐ GIAO DỊCH: {len(rows)} · TỔNG: {vnd(total)}" + (f" · TB/GD: {vnd(total / len(rows))}" if rows else "")]
+    if f["month"]:
+        # ponytail: chỉ so với tháng liền trước — thêm tháng thứ hai vào lược đồ §3.3 khi gặp «tháng 10 so với tháng 8»
+        pm = (date.fromisoformat(f["month"] + "-01") - timedelta(days=1)).strftime("%Y-%m")
+        prev = select(tx, pm, f)
+        p = sum(t["amount"] for t in prev)
+        facts.append(f"SO VỚI {mmyyyy(pm)}: {len(prev)} giao dịch · TỔNG: {vnd(p)} · {'tăng' if total >= p else 'giảm'} {vnd(abs(total - p))}")
+    if not rows:
+        return "\n".join(facts), "Không tìm thấy giao dịch nào khớp" + (f" «{f['keyword']}»" if f["keyword"] else "") + "."
+    if intent in ("finance_aggregate", "finance_compare"):
+        return "\n".join(facts), ""
+    cat = not f["category"]  # không lọc danh mục → thêm cột danh mục
+    table = ["| Ngày | Số tiền |" + (" Danh mục |" if cat else "") + " Ghi chú |", "|---|---|" + ("---|" if cat else "") + "---|"]
+    table += [f"| {t['date'][8:]}/{t['date'][5:7]}/{t['date'][:4]} | {vnd(t['amount'])} |" + (f" {label(t['category'])} |" if cat else "")
+              + f" {' '.join((t.get('description') or '').replace('|', '/').split())} |" for t in rows]
+    return "\n".join(facts), "\n".join(table)
 
 
 # ---------- HTTP ----------
@@ -240,13 +296,21 @@ def answer(data):
         return {"reply": reply, "state": prev, "proposal": None,
                 "meta": {"intent": "smalltalk", "rewritten": message, "llm_calls": 0, "finish_reason": "STOP"}}
     today = date.fromisoformat(data.get("today") or date.today().isoformat())
-    cats = user_categories(data["user_id"])  # user_id chỉ lấy từ body đã ký, không bao giờ từ LLM
+    tx = load_transactions(data["user_id"])  # user_id chỉ lấy từ body đã ký, không bao giờ từ LLM
+    cats = user_categories(tx)
     raw = data.get("history")
     history = [h for h in (raw if isinstance(raw, list) else []) if isinstance(h, dict) and isinstance(h.get("text"), str)][-6:]
-    out, calls = understand(build_prompt(message, history, prev, cats, today))
+    redo = REDO.fullmatch(" ".join(re.sub(r"[^\w ]+", " ", fold(message)).split()))
+    if redo and isinstance(prev, dict) and prev.get("intent") in FINANCE:
+        out, calls = {"intent": prev["intent"]}, 0  # resolve() thừa kế đủ bộ lọc từ state và kiểm lại như mọi lượt
+    else:
+        out, calls = understand(build_prompt(message, history, prev, cats, today))
     intent, filters, clarify, state = resolve(out, prev, cats, today)
-    # Bước 4+ thay câu tạm bằng truy xuất theo `filters` + sinh câu trả lời
-    return {"reply": clarify or "Trợ lý RAG đang được xây dựng.", "state": state, "proposal": None,
+    if clarify or intent not in FINANCE:
+        reply = clarify or "Trợ lý RAG đang được xây dựng."  # Bước 5+: complaint, modify_data, advice…
+    else:
+        reply = "\n\n".join(p for p in path_a(tx, intent, filters) if p)  # Bước 7: LLM diễn đạt lại khối SỰ KIỆN
+    return {"reply": reply, "state": state, "proposal": None,
             "meta": {"intent": intent, "rewritten": _text(out, "rewritten") or message, "llm_calls": calls,
                      "finish_reason": "STOP"}}
 
