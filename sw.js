@@ -2,7 +2,7 @@
    SPENDMINDAI - SERVICE WORKER (PWA & Offline Resilience)
    ========================================================================== */
 
-const CACHE_NAME = 'spendmind-v7.30';
+const CACHE_NAME = 'spendmind-v7.31';
 const STATIC_ASSETS = [
     '/',
     '/index.html',

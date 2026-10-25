@@ -152,8 +152,7 @@ function initChatbot() {
             }
 
             // Update mobile bottom nav active state if needed
-            const navChat = document.getElementById("nav-btn-chatbot");
-            if (navChat) navChat.classList.remove("active");
+            document.querySelectorAll(".mobile-nav-item").forEach(b => b.classList.remove("active"));
             const navOverview = document.getElementById("nav-btn-overview") || document.getElementById("nav-btn-home");
             if (navOverview) navOverview.classList.add("active");
 
