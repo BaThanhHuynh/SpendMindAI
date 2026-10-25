@@ -3320,24 +3320,37 @@ html[data-theme="light"] .chat-message.bot {
 .claude-sunburst-badge,
 .welcome-logo-badge,
 .gemini-star-badge {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
+}
+
+.chatbot-welcome-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-md, 14px);
+    object-fit: cover;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    display: block;
+}
+
+[data-theme="light"] .chatbot-welcome-logo {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 
 .claude-welcome-heading,
 .welcome-hero-heading,
 .gemini-welcome-heading {
-    font-family: -apple-system, BlinkMacSystemFont, "Newsreader", "Charter", "Georgia", "Merriweather", serif;
+    font-family: var(--font-sans) !important;
     font-size: 1.45rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-primary);
     margin: 0;
-    line-height: 1.3;
-    letter-spacing: -0.01em;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
 }
 
 /* 2x2 Grid: 2 cards on top, 2 cards below */

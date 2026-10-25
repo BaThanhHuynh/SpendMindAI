@@ -451,12 +451,8 @@ function initChatbot() {
 
         const welcomeHtml = `
             <div class="claude-welcome-hero">
-                <div class="claude-sunburst-badge">
-                    <svg class="claude-sunburst-icon" viewBox="0 0 48 48" width="46" height="46" fill="none">
-                        <circle cx="24" cy="24" r="3.5" fill="#d97757"/>
-                        <path d="M24 6v8M24 34v8M6 24h8M34 24h8M11.27 11.27l5.66 5.66M31.07 31.07l5.66 5.66M11.27 36.73l5.66-5.66M31.07 16.93l5.66-5.66M8.6 17.6l7.4 2.7M32 27.7l7.4 2.7M17.6 8.6l2.7 7.4M27.7 32l2.7 7.4M39.4 17.6l-7.4 2.7M16 27.7l-7.4 2.7M39.4 30.4l-7.4-2.7M16 20.3l-7.4-2.7" 
-                              stroke="#d97757" stroke-width="3" stroke-linecap="round"/>
-                    </svg>
+                <div class="welcome-logo-badge">
+                    <img src="images/logoapp.webp?v=20260911_v8" alt="SpendMindAI Logo" class="chatbot-welcome-logo" width="52" height="52">
                 </div>
                 <h1 class="claude-welcome-heading">${timeGreeting}, ${cleanName}</h1>
                 <div class="chatbot-quick-grid">
