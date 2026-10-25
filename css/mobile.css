@@ -1036,16 +1036,6 @@
         letter-spacing: -0.015em !important;
     }
 
-    .logo-area .tagline {
-        font-size: 0.70rem !important;
-        color: var(--text-secondary) !important;
-        margin: 2px 0 0 0 !important;
-        padding: 0 !important;
-        line-height: 1.2 !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-    }
 
     .header-actions {
         display: flex !important;
@@ -1059,49 +1049,11 @@
         padding-top: 0 !important;
     }
 
-    .backup-actions {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 6px !important;
-    }
 
-    .btn-icon-label {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        min-height: 36px !important;
-        padding: 0 !important;
-        border-radius: 50% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background: var(--surface-secondary, rgba(255, 255, 255, 0.06)) !important;
-        color: var(--text-secondary) !important;
-        border: none !important;
-        transition: transform 0.15s var(--ease-sheet), background 0.15s var(--ease-out) !important;
-    }
 
-    [data-theme="light"] .btn-icon-label {
-        background: rgba(0, 0, 0, 0.05) !important;
-        color: var(--text-secondary) !important;
-    }
 
-    .btn-icon-label:active {
-        transform: scale(0.90) !important;
-        background: rgba(255, 255, 255, 0.12) !important;
-    }
 
-    .btn-icon-label span {
-        display: none !important;
-    }
 
-    .btn-icon-label i,
-    .btn-icon-label svg {
-        width: 17px !important;
-        height: 17px !important;
-        stroke-width: 1.8 !important;
-    }
 
     .settings-menu-container {
         position: relative !important;
@@ -1144,7 +1096,6 @@
 
     /* Touch target sizes (minimum 44px) */
     .btn, 
-    .btn-icon-label, 
     .theme-toggle-btn, 
     .btn-month-nav,
     .toggle-label {
@@ -1217,10 +1168,6 @@
         gap: 0 !important;
     }
 
-    /* Ẩn cây bút ở lịch trên mobile */
-    .btn-quick-add {
-        display: none !important;
-    }
 
     /* Mobile Bottom Sheet Style cho Hộp cửa sổ Chỉnh sửa */
     .day-edit-modal-overlay {
@@ -1284,3 +1231,10 @@
     }
 }
 
+/* Điện thoại: thanh dưới đã có nút + và Cài đặt */
+@media (max-width: 768px) {
+    .btn-header-add,
+    .theme-toggle-btn#btn-settings {
+        display: none !important;
+    }
+}

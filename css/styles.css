@@ -306,10 +306,6 @@ body {
     -webkit-text-fill-color: var(--text-primary);
 }
 
-.tagline {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-}
 
 .header-actions {
     display: flex;
@@ -317,41 +313,7 @@ body {
     gap: 16px;
 }
 
-/* Backup Actions */
-.backup-actions {
-    display: flex;
-    gap: 8px;
-}
 
-/* Button Icon Label (Apple Pill Utility) */
-.btn-icon-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: var(--radius-pill);
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--card-border);
-    color: var(--text-primary);
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: transform var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
-}
-.btn-icon-label i {
-    width: 16px;
-    height: 16px;
-}
-.btn-icon-label:hover {
-    background: rgba(255, 255, 255, 0.12);
-    box-shadow: var(--shadow-sm);
-}
-html[data-theme="light"] .btn-icon-label:hover {
-    background: rgba(0, 0, 0, 0.05);
-}
-.btn-icon-label:active {
-    transform: scale(0.95);
-}
 
 /* Theme Toggle Button & Settings Control (Apple Rounded Glass Button) */
 .theme-toggle-btn {
@@ -880,11 +842,6 @@ html[data-theme="light"] .btn-secondary:hover {
     margin-top: 24px;
 }
 
-.budget-settings-trigger {
-    margin-bottom: 16px;
-    border-bottom: 1px solid var(--card-border);
-    padding-bottom: 12px;
-}
 
 .budget-settings-panel {
     transition: max-height 0.4s var(--ease-sheet), opacity 0.3s var(--ease-out), margin-bottom 0.3s var(--ease-out);
@@ -1442,13 +1399,7 @@ html[data-theme="light"] .toast {
         gap: 8px;
     }
     
-    .btn-icon-label span {
-        display: none; /* Hide labels for import/export icons on tiny screen */
-    }
     
-    .btn-icon-label {
-        padding: 8px 12px;
-    }
     
     /* Balance Widget */
     .balance-card {
@@ -3630,7 +3581,6 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
 .btn-secondary,
 .btn-table-action,
 .btn-close-modal,
-.btn-icon-label,
 .progress-bar-bg,
 .empty-icon,
 .toast,
@@ -3652,7 +3602,6 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
 .divider,
 .auth-divider::before,
 .auth-divider::after,
-.budget-settings-trigger,
 .budget-settings-panel,
 .budget-card,
 .budget-item,
@@ -3964,13 +3913,7 @@ html[data-theme="dark"] .month-display {
     border-right: none;
 }
 
-.calendar-days-header .sat-header {
-    color: #2196f3;
-}
 
-.calendar-days-header .sun-header {
-    color: #f44336;
-}
 
 /* Grid layout with borders */
 .calendar-grid {
@@ -3997,48 +3940,10 @@ html[data-theme="dark"] .month-display {
     position: relative;
 }
 
-/* Quick Add Button in Calendar Cell */
-.btn-quick-add {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: transparent;
-    color: var(--text-muted);
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: 0.2s var(--ease-out);
-    transition-property: var(--transition-props);
-    z-index: 2;
-    padding: 0;
-}
 
-html[data-theme="light"] .btn-quick-add {
-    background-color: transparent;
-}
 
-.calendar-cell:hover .btn-quick-add {
-    opacity: 0.8;
-}
 
-.btn-quick-add:hover {
-    opacity: 1 !important;
-    background-color: var(--accent-glow) !important;
-    color: var(--accent-color) !important;
-    transform: scale(1.1) !important;
-}
 
-.btn-quick-add svg {
-    width: 14px;
-    height: 14px;
-    color: currentColor;
-}
 
 /* Touch Ergonomics & Long-Press Feedback for Calendar Cells */
 .calendar-cell {
@@ -4064,12 +3969,6 @@ html[data-theme="light"] .btn-quick-add {
     100% { transform: scale(1); }
 }
 
-/* Ẩn cây bút ở lịch trên Mobile & Tablet (Desktop giữ nguyên) */
-@media (max-width: 1024px) {
-    .btn-quick-add {
-        display: none !important;
-    }
-}
 
 .calendar-cell:nth-child(7n) {
     border-right: none;
@@ -4112,13 +4011,7 @@ html[data-theme="light"] .calendar-cell:hover {
     color: var(--text-primary);
 }
 
-.calendar-cell .day-num.sat-text {
-    color: #2196f3;
-}
 
-.calendar-cell .day-num.sun-text {
-    color: #f44336;
-}
 
 .day-amounts-wrapper {
     display: flex;
@@ -5077,10 +4970,6 @@ html[data-theme="light"] .btn-back-settings:active {
 .theme-option-item.active {
     color: var(--accent-color);
     font-weight: 600;
-}
-
-.theme-option-item.active .check-icon {
-    display: block !important;
 }
 
 /* Apple Fluid Spring Keyframes */
@@ -6186,18 +6075,8 @@ body {
         gap: 8px !important;
     }
 
-    .backup-actions {
-        gap: 4px !important;
-    }
 
-    .btn-icon-label {
-        padding: 6px 10px !important;
-        font-size: 0.8rem !important;
-    }
 
-    .btn-icon-label span {
-        display: none !important;
-    }
 
     /* Balance card */
     .balance-card {
@@ -6270,9 +6149,6 @@ body {
         font-size: 0.9rem !important;
     }
 
-    .tagline {
-        font-size: 0.7rem !important;
-    }
 
     .theme-toggle-btn {
         width: 36px !important;
@@ -6532,9 +6408,6 @@ body {
         transform: none !important;
     }
 
-    .btn-icon-label:hover {
-        transform: none !important;
-    }
 
     .daily-item:hover {
         transform: none !important;
@@ -8454,4 +8327,12 @@ html[data-theme="light"] .ptr-indicator.is-ready .ptr-circle {
     }
 }
 
-
+/* Lịch gọn: mặc định chỉ hiện ngày đang chọn; bấm "Cả tháng" để mở lưới */
+.calendar-header-actions { gap: 8px; }
+.calendar-section:not(.month-open) .calendar-left-col { display: none; }
+.calendar-section:not(.month-open) .calendar-layout-wrapper { grid-template-columns: 1fr; }
+.btn-header-add { padding: 8px 16px; font-size: 0.88rem; }
+.btn-header-add svg { width: 16px; height: 16px; }
+.theme-inline { display: flex; gap: 4px; }
+.theme-inline .theme-option-item { flex: 1; justify-content: center; }
+.theme-inline .theme-option-item svg { width: 16px; height: 16px; }

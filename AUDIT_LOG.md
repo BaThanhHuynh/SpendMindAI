@@ -774,6 +774,17 @@
     - **Kiểm chứng:** Kiểm thử cú pháp Node.js `node --check` 100% không lỗi; trên mobile kéo trang xuống hiển thị mũi tên tròn xoay theo tay, rung haptic và reload trang chuẩn chỉ; trên desktop rê chuột và click logo thực hiện hiệu ứng xoay và tải lại trang ngay tức thì.
     - **Trạng thái:** [x] RESOLVED.
 
+57. **[P2] UI/UX - Tối Giản Bố Cục Dashboard: Lịch Mặc Định Theo Ngày, Gộp Điều Khiển Trùng Lặp**
+    - **Vấn đề:** Lưới lịch dày đặc số (35 nút bút trong mọi ô, bút lại mang nghĩa "Thêm"; số ngày Chủ nhật tô đỏ trùng màu chi tiêu); desktop không có nút thêm giao dịch rõ ràng; Xuất/Nhập JSON chiếm header; Cài đặt xuất hiện 2 lần trên mobile; công tắc và ô tick cùng điều khiển một cài đặt (Zalo, Web Push); tổng ngày hiển thị 2 lần; icon trang trí và chữ phụ thừa; chọn giao diện phải mở trang con.
+    - **Giải pháp:**
+      1. Lịch mặc định chỉ hiện ngày đang chọn (hôm nay) với nút ‹ › đổi ngày (tự sang tháng); nút "Cả tháng" bật/tắt lưới (`.calendar-section.month-open`, `setMonthView()`); bấm tìm kiếm tự mở lưới. Lưới bỏ `.btn-quick-add`, bỏ màu T7/CN, tiêu đề "Tháng MM/YYYY". Bỏ `#selected-date-total` (trùng ô "Tổng").
+      2. Header desktop có nút "+ Thêm giao dịch" (`#btn-header-add`, điền sẵn ngày đang chọn); ẩn trên mobile cùng `#btn-settings` (thanh dưới đã có).
+      3. Xuất/Nhập JSON chuyển vào menu Cài đặt (giữ nguyên id). Giao diện Sáng/Tối/Tự động chọn trực tiếp trong menu (bỏ `#settings-theme-panel`).
+      4. Bỏ ô tick `#settings-zalo-notifications`, `#settings-app-notif-active`; công tắc ở danh sách là nguồn duy nhất. Bật Zalo khi chưa có SĐT → cờ `zaloEnableRequested` để lưu ở trang con thì bật luôn. Payload API không đổi.
+      5. Bỏ icon trang trí ở đầu thẻ biểu đồ/ngân sách, tagline header, 2 thẻ mẹo dài; nút thiết lập ngân sách lên góc thẻ. Xoá CSS không còn dùng; `CACHE_NAME` → `spendmind-v7.17`.
+    - **Kiểm chứng:** `node --check` 3 tệp JS đạt; Edge headless qua CDP trên `dev_server.py` (1280px và 375px): lưới ẩn mặc định, ‹ › qua ranh giới 31/10 ↔ 01/11 đúng tháng, "Cả tháng"/tìm kiếm mở lưới, nút Thêm điền đúng ngày, Xuất/Nhập và 3 nút giao diện hiển thị và đổi theme đúng, ngân sách mở/đóng, mobile ẩn nút header và không tràn ngang; console 0 lỗi.
+    - **Trạng thái:** [x] RESOLVED.
+
 
 
 

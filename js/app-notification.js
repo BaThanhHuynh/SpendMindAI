@@ -451,7 +451,6 @@
         // 2. Settings main list item badge & switch
         const mainBadge = document.getElementById('badge-app-notif-status');
         const mainToggle = document.getElementById('settings-app-notif-toggle');
-        const subToggle = document.getElementById('settings-app-notif-active');
         const timeInput = document.getElementById('settings-app-notif-time');
 
         if (mainBadge) {
@@ -460,9 +459,6 @@
         }
         if (mainToggle) {
             mainToggle.checked = state.enabled;
-        }
-        if (subToggle) {
-            subToggle.checked = state.enabled;
         }
         if (timeInput && !timeInput.matches(':focus')) {
             timeInput.value = state.time ? state.time.substring(0, 5) : '20:00';
@@ -549,18 +545,18 @@
                 }
 
                 try {
-                    const subToggle = document.getElementById('settings-app-notif-active');
+                    const mainToggle = document.getElementById('settings-app-notif-toggle');
                     const timeInput = document.getElementById('settings-app-notif-time');
                     const onlyEmptyInput = document.getElementById('settings-app-notif-only-empty');
 
-                    const enabled = subToggle ? subToggle.checked : state.enabled;
+                    const enabled = mainToggle ? mainToggle.checked : state.enabled;
                     const time = timeInput && timeInput.value ? timeInput.value : state.time;
                     const onlyIfNoExpenses = onlyEmptyInput ? onlyEmptyInput.checked : state.onlyIfNoExpenses;
 
                     if (enabled && getPermissionStatus() !== 'granted') {
                         const res = await requestPermission();
                         if (res !== 'granted') {
-                            if (subToggle) subToggle.checked = false;
+                            if (mainToggle) mainToggle.checked = false;
                             return;
                         }
                     }

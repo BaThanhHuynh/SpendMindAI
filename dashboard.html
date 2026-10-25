@@ -33,8 +33,8 @@
 
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/skeleton.css?v=20261024_v2">
-    <link rel="stylesheet" href="css/styles.css?v=20261025_v41">
-    <link rel="stylesheet" href="css/mobile.css?v=20261025_v29">
+    <link rel="stylesheet" href="css/styles.css?v=20261025_v42">
+    <link rel="stylesheet" href="css/mobile.css?v=20261025_v30">
     
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -65,23 +65,13 @@
                 </div>
                 <div>
                     <h1>Xin chào, <strong id="user-display-name"><span class="skeleton-bone skeleton-title-sm" style="display: inline-block; vertical-align: middle; margin: 0; width: 80px; height: 18px;"></span></strong>!</h1>
-                    <p class="tagline">Quản lý tài chính thông minh</p>
                 </div>
             </div>
 
             <div class="header-actions">
-                <!-- Data Backup Buttons -->
-                <div class="backup-actions">
-                    <button id="btn-export" class="btn-icon-label" title="Xuất dữ liệu JSON">
-                        <i data-lucide="download"></i>
-                        <span>Xuất</span>
-                    </button>
-                    <button id="btn-import-trigger" class="btn-icon-label" title="Nhập dữ liệu JSON">
-                        <i data-lucide="upload"></i>
-                        <span>Nhập</span>
-                    </button>
-                    <input type="file" id="import-file" accept=".json" style="display: none;">
-                </div>
+                <button type="button" id="btn-header-add" class="btn btn-primary btn-header-add">
+                    <i data-lucide="plus"></i> <span>Thêm giao dịch</span>
+                </button>
 
                 <!-- Settings Container (Dropdown Popup Trigger) -->
                 <div class="settings-menu-container">
@@ -127,7 +117,6 @@
                     <div class="card glass-card chart-card">
                         <div class="card-header">
                             <h3 class="card-title">Phân bổ chi tiêu</h3>
-                            <i data-lucide="pie-chart" class="text-muted"></i>
                         </div>
                         <div class="chart-container" id="category-chart-container">
                             <div class="skeleton-chart-donut-wrapper" id="category-chart-skeleton">
@@ -147,7 +136,6 @@
                     <div class="card glass-card chart-card">
                         <div class="card-header">
                             <h3 class="card-title">Xu hướng thu chi</h3>
-                            <i data-lucide="trending-up" class="text-muted"></i>
                         </div>
                         <div class="chart-container" id="trend-chart-container">
                             <div class="skeleton-chart-trend-wrapper" id="trend-chart-skeleton">
@@ -180,11 +168,8 @@
                 <div class="card glass-card budget-card">
                     <div class="card-header">
                         <h3 class="card-title">Ngân sách chi tiêu tháng</h3>
-                        <i data-lucide="sliders" class="text-muted"></i>
-                    </div>
-                    <div class="budget-settings-trigger">
-                        <button id="btn-toggle-budget-settings" class="btn-text">
-                            <i data-lucide="settings"></i> Thiết lập hạn mức chi tiêu
+                        <button type="button" id="btn-toggle-budget-settings" class="btn-text">
+                            <i data-lucide="settings"></i> Thiết lập
                         </button>
                     </div>
 
@@ -239,13 +224,14 @@
             <div class="card-header flex-wrap gap-4" style="border-bottom: none !important;">
                 <div class="flex-grow">
                     <h3 class="card-title">Lịch</h3>
-                    <p class="card-subtitle">Theo dõi thu chi theo từng ngày</p>
                 </div>
 
-                <!-- Calendar Search Toggle -->
                 <div class="calendar-header-actions">
                     <button id="btn-toggle-search" class="theme-toggle-btn" title="Tìm kiếm giao dịch">
                         <i data-lucide="search" style="width: 20px; height: 20px; color: var(--text-primary);"></i>
+                    </button>
+                    <button type="button" id="btn-toggle-month" class="btn-text" aria-expanded="false">
+                        <i data-lucide="calendar"></i> <span>Cả tháng</span>
                     </button>
                 </div>
             </div>
@@ -278,7 +264,7 @@
                         <!-- Month Selection Bar -->
                         <div class="month-selector-bar">
                             <button id="btn-prev-month" class="btn-month-nav" type="button"><i data-lucide="chevron-left"></i></button>
-                            <div class="month-display" id="month-year-display">06/2026 (01/06-30/06)</div>
+                            <div class="month-display" id="month-year-display">Tháng 10/2026</div>
                             <button id="btn-next-month" class="btn-month-nav" type="button"><i data-lucide="chevron-right"></i></button>
                         </div>
 
@@ -289,8 +275,8 @@
                             <div>T4</div>
                             <div>T5</div>
                             <div>T6</div>
-                            <div class="sat-header">T7</div>
-                            <div class="sun-header">CN</div>
+                            <div>T7</div>
+                            <div>CN</div>
                         </div>
 
                         <!-- Calendar Grid Cells -->
@@ -302,6 +288,12 @@
 
                 <!-- Right Column: Daily Summary & Transactions List -->
                 <div class="calendar-right-col">
+                    <div class="daily-header">
+                        <button type="button" id="btn-prev-day" class="btn-month-nav" title="Ngày trước" aria-label="Ngày trước"><i data-lucide="chevron-left"></i></button>
+                        <span id="selected-date-label"><span class="skeleton-bone" style="display: inline-block; width: 140px; height: 16px; border-radius: 4px;"></span></span>
+                        <button type="button" id="btn-next-day" class="btn-month-nav" title="Ngày sau" aria-label="Ngày sau"><i data-lucide="chevron-right"></i></button>
+                    </div>
+
                     <!-- Daily Summary Cards -->
                     <div class="daily-summary-bar">
                         <div class="summary-col">
@@ -320,10 +312,6 @@
 
                     <!-- Daily Transactions Title & List -->
                     <div class="daily-transactions-section">
-                        <div class="daily-header">
-                            <span id="selected-date-label"><span class="skeleton-bone" style="display: inline-block; width: 140px; height: 16px; border-radius: 4px;"></span></span>
-                            <strong id="selected-date-total"><span class="skeleton-bone" style="display: inline-block; width: 85px; height: 18px; border-radius: 4px;"></span></strong>
-                        </div>
                         <div class="daily-list" id="daily-transactions-list">
                             <div class="skeleton-daily-item" aria-hidden="true">
                                 <div class="skeleton-daily-left">
@@ -574,17 +562,11 @@
                     </div>
                 </div>
 
-                <!-- Theme settings row -->
-                <button type="button" class="settings-list-item" id="menu-item-theme" style="--i: 2;">
-                    <div class="item-left">
-                        <i data-lucide="palette"></i>
-                        <span>Giao diện</span>
-                    </div>
-                    <div class="item-right">
-                        <span id="badge-theme-status">Tối</span>
-                        <i data-lucide="chevron-right" class="arrow-indicator"></i>
-                    </div>
-                </button>
+                <div class="theme-option-list theme-inline" role="group" aria-label="Giao diện">
+                    <button type="button" class="theme-option-item" id="opt-theme-light" style="--i: 2;"><i data-lucide="sun"></i><span>Sáng</span></button>
+                    <button type="button" class="theme-option-item" id="opt-theme-dark" style="--i: 2;"><i data-lucide="moon"></i><span>Tối</span></button>
+                    <button type="button" class="theme-option-item" id="opt-theme-system" style="--i: 2;"><i data-lucide="monitor"></i><span>Tự động</span></button>
+                </div>
 
                 <!-- Cookie preferences row -->
                 <button type="button" class="settings-list-item" id="menu-item-cookies" style="--i: 3;">
@@ -609,6 +591,21 @@
                         <i data-lucide="chevron-right" class="arrow-indicator"></i>
                     </div>
                 </button>
+
+                <!-- Backup rows -->
+                <button type="button" class="settings-list-item" id="btn-export" style="--i: 5;">
+                    <div class="item-left">
+                        <i data-lucide="download"></i>
+                        <span>Xuất dữ liệu (JSON)</span>
+                    </div>
+                </button>
+                <button type="button" class="settings-list-item" id="btn-import-trigger" style="--i: 5;">
+                    <div class="item-left">
+                        <i data-lucide="upload"></i>
+                        <span>Nhập dữ liệu (JSON)</span>
+                    </div>
+                </button>
+                <input type="file" id="import-file" accept=".json" style="display: none;">
 
                 <hr class="settings-divider">
 
@@ -659,10 +656,6 @@
                                 style="width: 100%; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: none;">
                         </div>
                     </div>
-                    <div class="form-checkbox-group" style="display: flex; align-items: center; gap: 6px;">
-                        <input type="checkbox" id="settings-zalo-notifications" value="1" style="accent-color: #0068ff; cursor: pointer;">
-                        <label for="settings-zalo-notifications" style="font-size: 0.75rem; color: var(--text-primary); font-weight: 500; user-select: none; cursor: pointer;">Kích hoạt nhắc nhở qua Zalo</label>
-                    </div>
 
                     <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
                         <button type="submit" class="btn btn-sm btn-primary w-full" style="padding: 8px 12px; font-size: 0.8rem; background: #0068ff; border: none;">
@@ -678,12 +671,7 @@
                         </a>
                     </div>
 
-                    <div class="zalo-tip-card" style="margin-top: 6px; padding: 10px; border-radius: 8px; background: rgba(0, 104, 255, 0.08); border: none; font-size: 0.72rem; line-height: 1.45; color: var(--text-secondary);">
-                        <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 4px; color: #0068ff; font-weight: 600;">
-                            <i data-lucide="info" style="width: 12px; height: 12px;"></i> Hỗ trợ Zalo Thường (Cá Nhân)
-                        </div>
-                        Hỗ trợ số điện thoại Zalo cá nhân, không cần tài khoản doanh nghiệp. Bạn có thể mở trực tiếp Zalo để nhận lời nhắc hoặc kết nối Webhook cá nhân để tự động gửi tin!
-                    </div>
+                    <p class="zalo-tip-card" style="margin: 2px 0 0; font-size: 0.75rem; line-height: 1.45; color: var(--text-secondary);">Dùng được với Zalo cá nhân, không cần tài khoản doanh nghiệp.</p>
                 </form>
             </div>
         </div>
@@ -729,10 +717,6 @@
                         <span style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 4px;">Máy chủ sẽ gửi thông báo Web Push tới điện thoại vào giờ này kể cả khi bạn đã tắt màn hình hoặc đóng ứng dụng.</span>
                     </div>
 
-                    <div class="form-checkbox-group" style="display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" id="settings-app-notif-active" value="1" checked style="accent-color: var(--accent-color); cursor: pointer; width: 16px; height: 16px;">
-                        <label for="settings-app-notif-active" style="font-size: 0.78rem; color: var(--text-primary); font-weight: 500; user-select: none; cursor: pointer;">Kích hoạt nhắc nhở tự động (Web Push)</label>
-                    </div>
 
                     <div class="form-checkbox-group" style="display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" id="settings-app-notif-only-empty" value="1" checked style="accent-color: var(--accent-color); cursor: pointer; width: 16px; height: 16px;">
@@ -749,53 +733,7 @@
                         </button>
                     </div>
 
-                    <div class="app-notif-tip-card" style="padding: 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.08); border: none; font-size: 0.72rem; line-height: 1.45; color: var(--text-secondary);">
-                        <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 4px; color: var(--accent-color); font-weight: 600;">
-                            <i data-lucide="sparkles" style="width: 12px; height: 12px;"></i> Nhắc nhở thông minh & Không làm phiền
-                        </div>
-                        Nếu trong ngày bạn đã ghi chép chi tiêu đầy đủ rồi, ứng dụng sẽ tự động không gửi thông báo làm phiền bạn nữa.
-                    </div>
                 </form>
-            </div>
-        </div>
-
-        <!-- PANEL 4: THEME SELECTION SUB-PANEL -->
-        <div class="settings-panel sub-panel hidden" id="settings-theme-panel">
-            <div class="dropdown-header">
-                <div style="display: flex; align-items: center;">
-                    <button type="button" class="btn-back-settings" data-target="theme" title="Quay lại">
-                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
-                    </button>
-                    <h3>Giao diện</h3>
-                </div>
-                <button type="button" class="btn-close-dropdown" id="btn-close-theme-sub" title="Đóng">
-                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
-                </button>
-            </div>
-            <div class="dropdown-body">
-                <div class="theme-option-list" style="display: flex; flex-direction: column; gap: 4px;">
-                    <div class="theme-option-item" id="opt-theme-light" style="--i: 0;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <i data-lucide="sun"></i>
-                            <span style="font-size: 0.8rem; font-weight: 500;">Giao diện Sáng</span>
-                        </div>
-                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
-                    </div>
-                    <div class="theme-option-item" id="opt-theme-dark" style="--i: 1;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <i data-lucide="moon"></i>
-                            <span style="font-size: 0.8rem; font-weight: 500;">Giao diện Tối</span>
-                        </div>
-                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
-                    </div>
-                    <div class="theme-option-item" id="opt-theme-system" style="--i: 2;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <i data-lucide="monitor"></i>
-                            <span style="font-size: 0.8rem; font-weight: 500;">Tự động (Hệ thống)</span>
-                        </div>
-                        <i data-lucide="check" class="check-icon hidden" style="width: 14px; height: 14px; color: var(--accent-color);"></i>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -893,13 +831,13 @@
     <script src="js/pull-to-refresh.js?v=20261025_v1"></script>
     <!-- Main Dashboard script -->
     <script src="js/chatbot.js?v=20261025_v28"></script>
-    <script src="js/dashboard.js?v=20261025_v31"></script>
+    <script src="js/dashboard.js?v=20261025_v32"></script>
     <!-- Cookie Consent & Preferences System -->
     <script src="js/cookie-consent.js?v=20261024_v24"></script>
     <!-- PWA Install Manager (Android & iOS) -->
     <script src="js/pwa-install.js?v=20261024_v25"></script>
     <!-- In-App Device Notifications & Scheduled Reminders -->
-    <script src="js/app-notification.js?v=20261025_v25"></script>
+    <script src="js/app-notification.js?v=20261025_v26"></script>
 
     <!-- Service Worker Registration for PWA & Offline Support with Auto-Sync -->
     <script>

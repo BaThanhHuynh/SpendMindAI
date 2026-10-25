@@ -80,6 +80,7 @@ function renderScopedIcons(rootElement) {
 // Calendar State
 let currentCalendarDate = new Date();
 let selectedCalendarDay = new Date();
+let zaloEnableRequested = false; // bật Zalo khi chưa có số điện thoại → chờ lưu ở trang con
 let currentDayEditTime = null;
 
 // API Endpoint configuration
@@ -820,15 +821,6 @@ function initEventListeners() {
                 e.preventDefault();
                 return;
             }
-            const quickAddBtn = e.target.closest(".btn-quick-add");
-            if (quickAddBtn) {
-                e.stopPropagation();
-                const time = Number(quickAddBtn.dataset.time);
-                if (time) {
-                    openTransactionModalForDate(time, e);
-                }
-                return;
-            }
             const cell = e.target.closest(".calendar-cell");
             if (cell && cell.dataset.time) {
                 selectCalendarDay(Number(cell.dataset.time));
@@ -993,6 +985,7 @@ function initEventListeners() {
                 showToast("Vui lòng nhập Số điện thoại Zalo của bạn trước khi kích hoạt.", "info");
                 e.target.checked = false;
                 openSubPanel("reminder");
+                zaloEnableRequested = true; // lưu xong số điện thoại thì bật luôn
                 const phoneInput = document.getElementById("settings-zalo-phone");
                 if (phoneInput) phoneInput.focus();
                 return;
@@ -1020,10 +1013,6 @@ function initEventListeners() {
                     userSettingsState.zaloNotifications = zaloNotifications;
                     userSettingsState.reminderTime = reminderTime;
 
-                    const subPanelCheckbox = document.getElementById("settings-zalo-notifications");
-                    if (subPanelCheckbox) {
-                        subPanelCheckbox.checked = isChecked;
-                    }
                     updateSettingsStatusBadges();
                     triggerLazyCronReminderCheck();
                 } else {
@@ -1060,13 +1049,6 @@ function initEventListeners() {
         });
     }
 
-    const menuItemTheme = document.getElementById("menu-item-theme");
-    if (menuItemTheme) {
-        menuItemTheme.addEventListener("click", (e) => {
-            e.stopPropagation();
-            openSubPanel("theme");
-        });
-    }
     
     // Modal Event Listeners
     const btnCloseModal = document.getElementById("btn-close-transaction-modal");
@@ -1094,7 +1076,7 @@ function initEventListeners() {
     });
 
     // Sub-panels close buttons (closes the entire dropdown menu)
-    ["btn-close-reminder-sub", "btn-close-theme-sub", "btn-close-app-notif-sub"].forEach(id => {
+    ["btn-close-reminder-sub", "btn-close-app-notif-sub"].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) btn.addEventListener("click", closeSettingsDropdown);
     });
@@ -1197,6 +1179,11 @@ function initEventListeners() {
         });
     }
 
+    const btnHeaderAdd = document.getElementById("btn-header-add");
+    if (btnHeaderAdd) {
+        btnHeaderAdd.addEventListener("click", () => openTransactionModalForDate(selectedCalendarDay.getTime()));
+    }
+
     if (navBtnAdd) {
         navBtnAdd.addEventListener("click", () => {
             openTransactionModal();
@@ -1260,11 +1247,9 @@ function initEventListeners() {
         const dailyIncomeVal = document.getElementById("daily-income-val");
         const dailyExpenseVal = document.getElementById("daily-expense-val");
         const dailyNetVal = document.getElementById("daily-net-val");
-        const selectedDateTotal = document.getElementById("selected-date-total");
         if (dailyIncomeVal) dailyIncomeVal.innerHTML = '<span class="skeleton-bone skeleton-summary-val"></span>';
         if (dailyExpenseVal) dailyExpenseVal.innerHTML = '<span class="skeleton-bone skeleton-summary-val"></span>';
         if (dailyNetVal) dailyNetVal.innerHTML = '<span class="skeleton-bone skeleton-summary-val"></span>';
-        if (selectedDateTotal) selectedDateTotal.innerHTML = '<span class="skeleton-bone" style="display: inline-block; width: 85px; height: 18px; border-radius: 4px;"></span>';
 
         // Charts Skeletons (Photo 2)
         const donutSkeleton = document.getElementById("category-chart-skeleton");
@@ -1303,6 +1288,25 @@ function initEventListeners() {
             }, 80);
         });
     }
+    // Lùi/tiến một ngày; sang tháng khác thì vẽ lại lịch tháng đó
+    [["btn-prev-day", -1], ["btn-next-day", 1]].forEach(([id, delta]) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener("click", () => {
+            const d = new Date(selectedCalendarDay);
+            d.setDate(d.getDate() + delta);
+            const monthChanged = d.getMonth() !== currentCalendarDate.getMonth() || d.getFullYear() !== currentCalendarDate.getFullYear();
+            selectCalendarDay(d.getTime());
+            if (monthChanged) {
+                currentCalendarDate = new Date(d.getFullYear(), d.getMonth(), 1);
+                updateUI();
+            }
+        });
+    });
+
+    const btnToggleMonth = document.getElementById("btn-toggle-month");
+    if (btnToggleMonth) btnToggleMonth.addEventListener("click", () => setMonthView());
+
     const btnToggleSearch = document.getElementById("btn-toggle-search");
     if (btnToggleSearch) {
         btnToggleSearch.addEventListener("click", () => {
@@ -1311,6 +1315,7 @@ function initEventListeners() {
             const isCollapsed = panel.classList.contains("collapsed");
             if (isCollapsed) {
                 panel.classList.remove("collapsed");
+                setMonthView(true); // kết quả lọc hiện trên lưới tháng
                 panel.style.maxHeight = "120px";
                 panel.style.opacity = "1";
                 panel.style.marginBottom = "16px";
@@ -1348,6 +1353,15 @@ function handleLogout() {
 
 // --- 3. CRUD LOGIC HANDLERS (AJAX OPERATIONS) ---
 
+// Bật/tắt lưới lịch cả tháng (mặc định chỉ hiện ngày đang chọn)
+function setMonthView(open) {
+    const section = document.querySelector(".calendar-section");
+    if (!section) return;
+    const isOpen = section.classList.toggle("month-open", open);
+    const btn = document.getElementById("btn-toggle-month");
+    if (btn) btn.setAttribute("aria-expanded", String(isOpen));
+}
+
 // Toggle budget settings collapsible panel
 function toggleBudgetSettings() {
     const panel = document.getElementById("budget-settings-panel");
@@ -1357,10 +1371,10 @@ function toggleBudgetSettings() {
     if (isCollapsed) {
         renderBudgetSettingsInputs();
         panel.classList.remove("collapsed");
-        triggerBtn.innerHTML = '<i data-lucide="chevron-up"></i> Đóng thiết lập hạn mức';
+        triggerBtn.innerHTML = '<i data-lucide="chevron-up"></i> Đóng';
     } else {
         panel.classList.add("collapsed");
-        triggerBtn.innerHTML = '<i data-lucide="settings"></i> Thiết lập hạn mức chi tiêu';
+        triggerBtn.innerHTML = '<i data-lucide="settings"></i> Thiết lập';
     }
     renderScopedIcons(triggerBtn);
 }
@@ -1874,7 +1888,6 @@ function renderCalendarView(filteredTransactions = null) {
     const dailyExpenseVal = document.getElementById("daily-expense-val");
     const dailyNetVal = document.getElementById("daily-net-val");
     const selectedDateLabel = document.getElementById("selected-date-label");
-    const selectedDateTotal = document.getElementById("selected-date-total");
     const dailyTransactionsList = document.getElementById("daily-transactions-list");
     const dailyEmptyState = document.getElementById("daily-transactions-empty");
 
@@ -1882,7 +1895,7 @@ function renderCalendarView(filteredTransactions = null) {
     const currentYear = currentCalendarDate.getFullYear();
     const formattedMonth = String(currentMonth + 1).padStart(2, '0');
     const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    monthYearDisplay.textContent = `${formattedMonth}/${currentYear} (01/${formattedMonth}-${lastDayOfMonth}/${formattedMonth})`;
+    monthYearDisplay.textContent = `Tháng ${formattedMonth}/${currentYear}`;
 
     gridCells.innerHTML = "";
 
@@ -1906,7 +1919,6 @@ function renderCalendarView(filteredTransactions = null) {
     });
 
     const calendarFragment = document.createDocumentFragment();
-    const quickAddSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>`;
 
     for (let i = 1; i <= totalCells; i++) {
         let cellDay, cellMonth, cellYear;
@@ -1946,11 +1958,6 @@ function renderCalendarView(filteredTransactions = null) {
         cellEl.className = `calendar-cell ${isCurrentMonth ? 'current-month' : 'other-month'} ${isSelected ? 'selected' : ''}`;
         cellEl.dataset.time = cellDate.getTime();
 
-        const cellDayOfWeek = cellDate.getDay();
-        let dayClass = "";
-        if (cellDayOfWeek === 0) dayClass = "sun-text";
-        else if (cellDayOfWeek === 6) dayClass = "sat-text";
-
         let amountHTML = "";
         if (cellIncome > 0 || cellExpense > 0) {
             amountHTML = `
@@ -1962,9 +1969,8 @@ function renderCalendarView(filteredTransactions = null) {
         }
 
         cellEl.innerHTML = `
-            <span class="day-num ${dayClass}">${cellDate.getDate()}</span>
+            <span class="day-num">${cellDate.getDate()}</span>
             ${amountHTML}
-            <button type="button" class="btn-quick-add" data-time="${cellDate.getTime()}" title="Thêm giao dịch mới">${quickAddSvg}</button>
         `;
         calendarFragment.appendChild(cellEl);
     }
@@ -2114,7 +2120,6 @@ function updateDailyTransactionsView(cachedStats = null) {
     const dailyExpenseVal = document.getElementById("daily-expense-val");
     const dailyNetVal = document.getElementById("daily-net-val");
     const selectedDateLabel = document.getElementById("selected-date-label");
-    const selectedDateTotal = document.getElementById("selected-date-total");
     const dailyTransactionsList = document.getElementById("daily-transactions-list");
     const dailyEmptyState = document.getElementById("daily-transactions-empty");
 
@@ -2131,9 +2136,8 @@ function updateDailyTransactionsView(cachedStats = null) {
     dailyNetVal.textContent = (dailyNet < 0 ? '-' : '') + formatNumberWithCommas(Math.abs(dailyNet)) + 'đ';
     dailyNetVal.className = dailyNet >= 0 ? 'val-net-income' : 'val-net-expense';
 
-    selectedDateLabel.textContent = formatSelectedDateLabel(selectedCalendarDay);
-    selectedDateTotal.textContent = (dailyNet < 0 ? '-' : '') + formatNumberWithCommas(Math.abs(dailyNet)) + 'đ';
-    selectedDateTotal.className = dailyNet >= 0 ? 'val-net-income' : 'val-net-expense';
+    const isToday = selectedCalendarDay.toDateString() === new Date().toDateString();
+    selectedDateLabel.textContent = (isToday ? "Hôm nay · " : "") + formatSelectedDateLabel(selectedCalendarDay);
 
     dailyTransactionsList.innerHTML = "";
     dailyTransactionsList.scrollTop = 0;
@@ -2766,8 +2770,6 @@ function toggleSettingsDropdown(forceOpen) {
         const timeInput = document.getElementById("settings-reminder-time");
         if (timeInput) timeInput.value = userSettingsState.reminderTime ? userSettingsState.reminderTime.substring(0, 5) : '';
         
-        const notifCheck = document.getElementById("settings-zalo-notifications");
-        if (notifCheck) notifCheck.checked = (userSettingsState.zaloNotifications === 1 || userSettingsState.emailNotifications === 1);
         
         // Populate main panel toggle switch
         const mainToggle = document.getElementById("settings-reminder-toggle");
@@ -2782,8 +2784,6 @@ function toggleSettingsDropdown(forceOpen) {
         const appNotifToggle = document.getElementById("settings-app-notif-toggle");
         if (appNotifToggle) appNotifToggle.checked = (userSettingsState.appNotifications === 1);
 
-        const appNotifActive = document.getElementById("settings-app-notif-active");
-        if (appNotifActive) appNotifActive.checked = (userSettingsState.appNotifications === 1);
         
         // Update sub UI checkmarks and main row status badges immediately
         updateThemeSubPanelUI();
@@ -2859,10 +2859,6 @@ function refreshNotificationSettingsFromServer() {
                 if (timeInput && !timeInput.matches(':focus')) {
                     timeInput.value = userSettingsState.reminderTime ? userSettingsState.reminderTime.substring(0, 5) : '';
                 }
-                const notifCheck = document.getElementById("settings-zalo-notifications");
-                if (notifCheck) {
-                    notifCheck.checked = (userSettingsState.zaloNotifications === 1 || userSettingsState.emailNotifications === 1);
-                }
                 const mainToggle = document.getElementById("settings-reminder-toggle");
                 if (mainToggle) {
                     mainToggle.checked = (userSettingsState.zaloNotifications === 1 || userSettingsState.emailNotifications === 1);
@@ -2876,10 +2872,6 @@ function refreshNotificationSettingsFromServer() {
                 const appNotifToggle = document.getElementById("settings-app-notif-toggle");
                 if (appNotifToggle) {
                     appNotifToggle.checked = (userSettingsState.appNotifications === 1);
-                }
-                const appNotifActive = document.getElementById("settings-app-notif-active");
-                if (appNotifActive) {
-                    appNotifActive.checked = (userSettingsState.appNotifications === 1);
                 }
                 if (window.SpendMindAppNotification) {
                     window.SpendMindAppNotification.updateSettings({
@@ -2915,6 +2907,7 @@ function openSubPanel(panelName) {
 
 // Close all settings sub panels
 function closeSubPanels() {
+    zaloEnableRequested = false;
     document.querySelectorAll(".settings-panel.sub-panel").forEach(panel => {
         panel.classList.add("hidden");
     });
@@ -2938,12 +2931,6 @@ function updateSettingsStatusBadges() {
         badgeAppNotif.style.color = isAppActive ? "var(--accent-color)" : "var(--text-secondary)";
     }
 
-    const badgeTheme = document.getElementById("badge-theme-status");
-    if (badgeTheme) {
-        if (state.theme === "dark") badgeTheme.textContent = "Tối";
-        else if (state.theme === "light") badgeTheme.textContent = "Sáng";
-        else if (state.theme === "system") badgeTheme.textContent = "Hệ thống";
-    }
 }
 
 // Update visual checkmarks inside theme sub-menu
@@ -2951,7 +2938,6 @@ function updateThemeSubPanelUI() {
     const optLight = document.getElementById("opt-theme-light");
     const optDark = document.getElementById("opt-theme-dark");
     const optSystem = document.getElementById("opt-theme-system");
-    const badgeTheme = document.getElementById("badge-theme-status");
     
     if (optLight && optDark && optSystem) {
         optLight.classList.remove("active");
@@ -2960,13 +2946,10 @@ function updateThemeSubPanelUI() {
         
         if (state.theme === "light") {
             optLight.classList.add("active");
-            if (badgeTheme) badgeTheme.textContent = "Sáng";
         } else if (state.theme === "dark") {
             optDark.classList.add("active");
-            if (badgeTheme) badgeTheme.textContent = "Tối";
         } else if (state.theme === "system") {
             optSystem.classList.add("active");
-            if (badgeTheme) badgeTheme.textContent = "Hệ thống";
         }
     }
 }
@@ -3029,7 +3012,8 @@ function handleSettingsSubmit(e) {
     
     const zaloPhone = document.getElementById("settings-zalo-phone") ? document.getElementById("settings-zalo-phone").value.trim() : '';
     const reminderTime = document.getElementById("settings-reminder-time") ? document.getElementById("settings-reminder-time").value : '';
-    const zaloNotifications = (document.getElementById("settings-zalo-notifications") && document.getElementById("settings-zalo-notifications").checked) ? 1 : 0;
+    const reminderToggle = document.getElementById("settings-reminder-toggle");
+    const zaloNotifications = ((reminderToggle && reminderToggle.checked) || zaloEnableRequested) ? 1 : 0;
     
     if (zaloNotifications === 1 && !zaloPhone) {
         showToast("Vui lòng nhập Số điện thoại Zalo để nhận nhắc nhở", "error");
