@@ -733,20 +733,22 @@
         border: 1px solid rgba(0, 0, 0, 0.08) !important;
     }
 
-    /* Claude-Style Floating Action Card (Images 2 & 3) */
+    /* Single-Row Compact Pill Chatbot Input Card */
     .claude-input-card,
     .chatbot-input-capsule {
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important;
+        align-items: center !important;
         width: 100% !important;
         max-width: 680px !important;
         margin: 0 auto !important;
-        padding: 12px 14px 10px 14px !important;
-        border-radius: 22px !important;
+        padding: 6px 8px 6px 14px !important;
+        border-radius: 9999px !important;
         background: rgba(28, 28, 30, 0.98) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
         box-sizing: border-box !important;
+        gap: 8px !important;
         transition: border-color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out) !important;
     }
 
@@ -769,18 +771,13 @@
         box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1) !important;
     }
 
-    .claude-input-row-top {
-        width: 100% !important;
-        display: flex !important;
-        align-items: center !important;
-    }
-
     .claude-textarea,
     .chatbot-input-capsule input {
         width: 100% !important;
         flex: 1 1 auto !important;
+        min-width: 0 !important;
         min-height: 24px !important;
-        max-height: 120px !important;
+        max-height: 96px !important;
         border: none !important;
         outline: none !important;
         background: transparent !important;
@@ -789,7 +786,7 @@
         line-height: 1.4 !important;
         color: var(--text-primary) !important;
         resize: none !important;
-        padding: 2px 2px 6px 2px !important;
+        padding: 4px 0 !important;
         box-sizing: border-box !important;
         box-shadow: none !important;
     }
@@ -801,20 +798,11 @@
         font-size: 0.95rem !important;
     }
 
-    .claude-input-row-bottom {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        gap: 8px !important;
-        width: 100% !important;
-        margin-top: 6px !important;
-    }
-
-    .claude-actions-left,
     .claude-actions-right {
         display: flex !important;
         align-items: center !important;
-        gap: 8px !important;
+        gap: 6px !important;
+        flex-shrink: 0 !important;
     }
 
     .claude-circle-btn,

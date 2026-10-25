@@ -3413,17 +3413,19 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
     box-sizing: border-box;
 }
 
-/* Claude-Style Floating Action Card */
+/* Single-Row Compact Chatbot Input Card */
 .claude-input-card,
 .chatbot-input-capsule {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     width: 100%;
-    padding: 10px 12px 8px 12px;
+    padding: 6px 8px 6px 14px;
     box-sizing: border-box;
-    border-radius: 18px;
+    border-radius: var(--radius-pill);
     background: var(--input-bg);
     border: 1px solid var(--input-border);
+    gap: 8px;
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
@@ -3433,16 +3435,12 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
     box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-.claude-input-row-top {
-    width: 100%;
-    display: flex;
-    align-items: center;
-}
-
 .claude-textarea {
+    flex: 1 1 auto;
     width: 100%;
-    min-height: 22px;
-    max-height: 100px;
+    min-width: 0;
+    min-height: 24px;
+    max-height: 96px;
     border: none;
     outline: none;
     background: transparent;
@@ -3450,30 +3448,24 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
     font-size: 0.92rem;
     color: var(--text-primary);
     resize: none;
-    padding: 2px 0 4px 0;
+    padding: 4px 0;
     box-sizing: border-box;
+    line-height: 1.4;
 }
 
-.claude-input-row-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    width: 100%;
-    margin-top: 4px;
-}
-
-.claude-actions-left,
 .claude-actions-right {
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-shrink: 0;
 }
 
 .claude-circle-btn,
 .btn-capsule-action {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.08);
     border: none;
@@ -3482,31 +3474,28 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.12s var(--ease-out), background 0.12s var(--ease-out);
+    transition: transform 0.12s var(--ease-out), background 0.12s var(--ease-out), color 0.12s var(--ease-out);
     padding: 0;
+    flex-shrink: 0;
+}
+
+.claude-circle-btn:hover,
+.btn-capsule-action:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.14);
 }
 
 .claude-circle-btn i,
 .btn-capsule-action i {
-    width: 15px;
-    height: 15px;
-}
-
-.claude-model-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    font-size: 0.72rem;
-    color: var(--text-secondary);
+    width: 16px;
+    height: 16px;
 }
 
 .claude-send-btn {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
     border-radius: 50%;
     background: #18181b;
     color: #ffffff;
@@ -3515,13 +3504,19 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.12s var(--ease-out);
+    transition: transform 0.12s var(--ease-out), background 0.12s var(--ease-out);
     padding: 0;
+    flex-shrink: 0;
+}
+
+.claude-send-btn:hover {
+    background: #27272a;
+    transform: scale(1.05);
 }
 
 .claude-send-btn i {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
 }
 
 .btn-capsule-action:hover {

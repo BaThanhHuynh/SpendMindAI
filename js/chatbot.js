@@ -15,13 +15,11 @@ function initChatbot() {
     const closeBtn = document.getElementById("chatbot-close-btn");
     const backBtn = document.getElementById("chatbot-back-btn");
     const newChatBtn = document.getElementById("chatbot-new-btn");
-    const plusBtn = document.getElementById("btn-input-plus");
     const container = document.getElementById("chatbot-container");
     const backdrop = document.getElementById("chatbot-backdrop");
     const inputForm = document.getElementById("chatbot-input-form");
     const inputField = document.getElementById("chatbot-input");
     const messagesContainer = document.getElementById("chatbot-messages");
-    const suggestionsContainer = document.getElementById("chatbot-suggestions");
 
     if (!container) return;
 
@@ -223,13 +221,6 @@ function initChatbot() {
         });
     }
 
-    // Toggle suggestions via Plus button
-    if (plusBtn && suggestionsContainer) {
-        plusBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            suggestionsContainer.classList.toggle("hidden");
-        });
-    }
 
     // Rock-solid visualViewport handler for iOS / Android virtual keyboards
     function handleVisualViewport() {
