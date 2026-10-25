@@ -36,7 +36,7 @@
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/skeleton.css?v=20261025_v3">
     <link rel="stylesheet" href="css/styles.css?v=20261025_v54">
-    <link rel="stylesheet" href="css/mobile.css?v=20261025_v33">
+    <link rel="stylesheet" href="css/mobile.css?v=20261025_v34">
     
     <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -829,19 +829,20 @@
 
     <!-- MOBILE BOTTOM NAVIGATION (Native iOS & Android App Bar - Hidden on desktop) -->
     <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Điều hướng di động">
+        <span class="nav-indicator" aria-hidden="true"></span>
         <button type="button" class="mobile-nav-item active" id="nav-btn-overview" data-target="overview" title="Tổng quan tài chính">
-            <i data-lucide="layout-dashboard"></i>
-            <span>Tổng quan</span>
+            <i data-lucide="house"></i>
+            <span>Trang chủ</span>
         </button>
         <button type="button" class="mobile-nav-item" id="nav-btn-calendar" data-target="calendar" title="Lịch thu chi">
             <i data-lucide="calendar"></i>
             <span>Lịch</span>
         </button>
         <button type="button" class="mobile-nav-item nav-add-btn" id="nav-btn-add" title="Thêm giao dịch mới">
-            <i data-lucide="plus"></i>
+            <span class="nav-add-face"><i data-lucide="plus"></i></span>
         </button>
         <button type="button" class="mobile-nav-item" id="nav-btn-chatbot" data-target="chatbot" title="Trợ lý ảo AI">
-            <i data-lucide="bot"></i>
+            <i data-lucide="message-square"></i>
             <span>Trợ lý AI</span>
         </button>
         <button type="button" class="mobile-nav-item" id="nav-btn-settings" data-target="settings" title="Cài đặt hệ thống">

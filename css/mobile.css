@@ -3,67 +3,91 @@
    Mobile Bottom Navigation, Touch Ergonomics & Responsive Enhancements
    ========================================================================== */
 
-/* 1. Mobile Bottom Navigation Bar (Apple iOS Tab Bar) */
+/* 1. Mobile Bottom Navigation Bar - thanh viên thuốc nổi (floating pill tab bar)
+   Viên nền .nav-indicator trượt sang tab đang chọn bằng :has(), cùng nhịp 0.32s ease-spring
+   với Cài đặt và popover Lịch; ẩn/hiện (modal, chatbot) cùng nhịp đóng 0.22s ease-sheet. */
 .mobile-bottom-nav,
 .mobile-nav-bar,
 #mobile-bottom-nav,
 #mobile-nav-bar {
     display: none !important;
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
+    left: 12px;
+    right: 12px;
+    bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    max-width: 480px;
+    margin: 0 auto;
+    height: 64px;
+    padding: 6px;
     box-sizing: border-box;
-    height: calc(52px + env(safe-area-inset-bottom, 0px));
-    padding-top: 4px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: rgba(22, 22, 24, 0.94);
+    border-radius: 32px;
+    background: rgba(28, 28, 30, 0.92);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     z-index: 1000;
-    justify-content: space-around;
-    align-items: flex-start;
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35);
+    align-items: stretch;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    transition: opacity 0.32s var(--ease-sheet), transform 0.32s var(--ease-spring), visibility 0.32s;
 }
 
 [data-theme="light"] .mobile-bottom-nav,
 [data-theme="light"] .mobile-nav-bar,
 [data-theme="light"] #mobile-bottom-nav,
 [data-theme="light"] #mobile-nav-bar {
-    background: rgba(255, 255, 255, 0.94);
-    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
+/* Viên nền tab đang chọn: rộng đúng 1/5 thanh, trượt theo chỉ số tab */
+.nav-indicator {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 6px;
+    width: calc((100% - 12px) / 5);
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.14);
+    pointer-events: none;
+    transition: transform 0.32s var(--ease-spring);
+}
+
+[data-theme="light"] .nav-indicator {
+    background: rgba(0, 0, 0, 0.07);
+}
+
+.mobile-bottom-nav:has(#nav-btn-calendar.active) .nav-indicator { transform: translateX(100%); }
+/* Cài đặt đang mở thì ưu tiên hơn tab cuộn (Trang chủ / Lịch vẫn giữ .active) */
+.mobile-bottom-nav:has(#nav-btn-settings.active) .nav-indicator { transform: translateX(400%); }
+
 .mobile-nav-item {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 3px;
+    padding: 0;
     background: none;
     border: none !important;
-    color: var(--text-secondary, #86868b);
-    font-size: 0.65rem;
+    border-radius: 26px;
+    color: var(--text-primary);
+    font-size: 0.72rem;
     font-weight: 500;
     letter-spacing: -0.01em;
-    gap: 2px;
-    padding: 4px 6px;
-    min-width: 52px;
-    min-height: 40px;
+    white-space: nowrap;
     cursor: pointer;
-    transition: transform 0.18s var(--ease-out), color 0.18s var(--ease-out);
-    border-radius: var(--radius-sm);
-    text-decoration: none;
+    transition: transform 0.18s var(--ease-out);
     -webkit-tap-highlight-color: transparent;
 }
 
-.mobile-nav-item i {
-    width: 20px;
-    height: 20px;
-    stroke-width: 1.8;
-    transition: transform 0.2s var(--ease-sheet);
+.mobile-nav-item :is(i, svg) {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.9;
 }
 
 .mobile-nav-item:active {
@@ -71,13 +95,7 @@
 }
 
 .mobile-nav-item.active {
-    color: var(--accent-color);
     font-weight: 600;
-}
-
-.mobile-nav-item.active i {
-    transform: scale(1.08);
-    stroke-width: 2.2;
 }
 
 /* Icon tab nảy nhẹ khi được chọn (kiểu SF Symbols bounce) */
@@ -90,43 +108,23 @@
     75% { transform: scale(1.12); }
 }
 
-/* Center Floating Add Button (+) - Apple Monochromatic */
-.mobile-nav-item.nav-add-btn,
-.mobile-nav-item.mobile-add-btn {
-    position: relative;
-    top: -10px;
-    background: var(--accent-color);
-    color: var(--accent-text) !important;
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    min-height: 48px;
-    border-radius: 50%;
-    padding: 0;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-    border: none !important;
+/* Nút + giữa: khối chữ nhật bo góc, màu nhấn của app */
+.nav-add-face {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s var(--ease-sheet), box-shadow 0.2s var(--ease-out);
+    width: 50px;
+    height: 34px;
+    border-radius: 11px;
+    background: var(--accent-color);
+    color: var(--accent-text);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
-[data-theme="light"] .mobile-nav-item.nav-add-btn,
-[data-theme="light"] .mobile-nav-item.mobile-add-btn {
-    border: none !important;
-}
-
-.mobile-nav-item.nav-add-btn:active,
-.mobile-nav-item.mobile-add-btn:active {
-    transform: scale(0.92) translateY(2px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.mobile-nav-item.nav-add-btn i,
-.mobile-nav-item.mobile-add-btn i {
-    width: 24px;
-    height: 24px;
-    stroke-width: 2.4;
+.nav-add-face :is(i, svg) {
+    width: 22px;
+    height: 22px;
+    stroke-width: 2.6;
 }
 
 /* 2. Responsive Mobile Layout Adaptations */
@@ -141,7 +139,7 @@
     /* Add safe-area padding to dashboard so content is never obscured by notch or bottom bar */
     .app-container {
         padding-top: 0 !important;
-        padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
         padding-left: max(14px, env(safe-area-inset-left, 0px)) !important;
         padding-right: max(14px, env(safe-area-inset-right, 0px)) !important;
         box-sizing: border-box !important;
@@ -313,7 +311,8 @@
         }
     }
 
-    /* Hide bottom nav and chatbot when transaction modal is open */
+    /* Hide bottom nav and chatbot when transaction modal is open (nav also slides away while chat page is open) */
+    body.chatbot-open .mobile-bottom-nav,
     body.modal-open .mobile-bottom-nav,
     body.modal-open .mobile-nav-bar,
     body.modal-open #mobile-bottom-nav,
@@ -325,7 +324,7 @@
         pointer-events: none !important;
         visibility: hidden !important;
         transform: translateY(24px) !important;
-        transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+        transition: opacity 0.22s var(--ease-sheet), transform 0.22s var(--ease-sheet), visibility 0.22s;
     }
 
     /* Prevent background body scroll when modal or settings is open */
@@ -931,12 +930,6 @@
 
     /* Hide ambient glow elements when chat is open */
     body.chatbot-open .bg-glow {
-        display: none !important;
-    }
-
-    /* Hide mobile bottom navigation bar when chat page is open */
-    body.chatbot-open #mobile-bottom-nav,
-    body.chatbot-open .mobile-bottom-nav {
         display: none !important;
     }
 
