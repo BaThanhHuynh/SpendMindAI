@@ -6,7 +6,7 @@
     "api/*.php": {
       "runtime": "vercel-php@0.9.0",
       "maxDuration": 15,
-      "excludeFiles": "{node_modules/**,now.json,.nowignore,vercel.json,.vercelignore,api/rag/**}"
+      "excludeFiles": "api/rag/**"
     },
     "api/rag/index.py": {
       "includeFiles": "api/rag/model/**"
