@@ -32,6 +32,10 @@ empty = {"month": None, "category": None, "type": None, "keyword": None}
 # «Làm lại»: LLM để trống bộ lọc → code thừa kế đủ từ state
 intent, f, clarify, state = rag.resolve({"intent": "finance_list", "filters": empty}, prev, cats, today)
 assert f == prev["filters"] | {"type": "expense"} and state == {"intent": "finance_list", "filters": f} and clarify is None
+# đổi loại câu hỏi: chỉ thừa kế tháng, không mang danh mục / từ khoá của lượt trước (demo 27/10)
+search = {"intent": "finance_search", "filters": {"month": "2026-10", "category": "entertainment", "type": "expense", "keyword": "monster"}}
+_, f, _, _ = rag.resolve({"intent": "finance_compare", "filters": empty}, search, cats, today)
+assert (f["month"], f["category"], f["keyword"]) == ("2026-10", None, None), f
 # complaint không ghi đè state → lượt sau vẫn thừa kế bộ lọc trước lời phàn nàn
 _, _, _, state = rag.resolve({"intent": "complaint", "filters": empty | {"category": "food"}}, prev, cats, today)
 assert state is prev

@@ -264,10 +264,11 @@ def resolve(out, prev, cats, today, message=None):
     prev = prev if isinstance(prev, dict) and isinstance(prev.get("filters"), dict) else None
     f = {k: _text(out.get("filters"), k) for k in FILTER_KEYS}
     if intent in FINANCE and prev:
-        # Chốt chặn cho «Làm lại», «chi tiết hơn»: thừa kế bằng code, không trông vào LLM.
-        # ponytail: thừa kế từng trường — «tổng chi tháng 9» sau một lượt có danh mục vẫn giữ danh mục; thêm giá trị
-        # «tất cả» vào lược đồ khi gặp ca thật.
-        f = {k: f[k] or _text(prev["filters"], k) for k in FILTER_KEYS}
+        # Chốt chặn cho «Làm lại», «chi tiết hơn»: thừa kế bằng code, không trông vào LLM. Tháng luôn thừa kế (§3.3); danh
+        # mục / loại / từ khoá chỉ khi cùng loại câu hỏi — demo 27/10: «tháng này so với tháng trước» sau «uống monster mấy
+        # lần» từng mang theo «monster» và ra 1 giao dịch thay vì cả tháng.
+        same = prev.get("intent") == intent
+        f = {k: f[k] or (_text(prev["filters"], k) if k == "month" or same else None) for k in FILTER_KEYS}
     clarify = _text(out, "clarify")
     if f["category"]:
         cat = match_category(f["category"], cats)
