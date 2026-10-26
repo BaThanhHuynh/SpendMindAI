@@ -4,7 +4,7 @@ Cập nhật: 2026-10-27. Thiết kế: `docs/knowledge/chatbot-rag-thiet-ke.md`
 
 Đã chốt với người dùng: **phương án B** (FastAPI trên Vercel, PHP làm cửa xác thực) · nhúng **tại chỗ
 `multilingual-e5-small`** (đổi từ Gemini Embedding API, 25/10) · LLM chính `gemini-3.1-flash-lite` (dự phòng
-`gemini-2.5-flash-lite`) · **sửa giao dịch qua chat: cho phép, luôn qua nút xác nhận** (thiết kế §3.5) ·
+`gemini-2.5-flash-lite`, rồi `gemini-flash-lite-latest` — thêm 27/10) · **sửa giao dịch qua chat: cho phép, luôn qua nút xác nhận** (thiết kế §3.5) ·
 **lịch sử hội thoại lưu ở máy chủ**.
 
 Ràng buộc của e5-small trên Vercel (gói Python tối đa 500 MB): chạy bằng ONNX Runtime + `tokenizers`, bản lượng

@@ -43,6 +43,15 @@ assert rag.phrase("m", "q", facts, [], set(), time.monotonic() + 12)[0].startswi
 assert tried == ["m", *[m for m, _ in rag.MODELS]], "lỗi → thử lần lượt model dự phòng"
 assert rag.phrase("m", "q", facts, [], set(), time.monotonic() + 1)[1] == 0, "hết giờ → không gọi LLM"
 
+# bước hiểu câu hỏi: model đầu chờ tối đa 5 s, model kế 3 s, model cuối dùng hết phần còn lại của ngân sách
+waits = []
+rag.gemini = lambda model, timeout, prompt, *a: waits.append(timeout) or (_ for _ in ()).throw(TimeoutError())
+try:
+    rag.understand("q")
+except rag.HTTPException as e:
+    assert e.status_code == 503
+assert waits[:2] == [5, 3] and 3 < waits[2] <= rag.UNDERSTAND_BUDGET and len(waits) == len(rag.MODELS), waits
+
 # answer(): LLM viết câu, code gắn bảng; advice dùng tín hiệu tháng này; out_of_scope không gọi LLM viết câu
 rag.understand = lambda p: ({"intent": "finance_list", "rewritten": "q", "clarify": None, "action": None, "new_category": None,
                              "filters": {"month": "2026-10", "category": "Giải trí", "type": None, "keyword": None}}, 1)

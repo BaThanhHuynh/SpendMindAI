@@ -32,7 +32,10 @@ from starlette.concurrency import run_in_threadpool
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 MAX_SKEW = 300  # giây: chặn việc gửi lại một yêu cầu cũ bị bắt được
-MODELS = (("gemini-3.1-flash-lite", 6), ("gemini-2.5-flash-lite", 5))  # (model, giây chờ): tổng < 13s PHP chờ
+# (model, giây chờ tối đa), thử lần lượt khi lỗi / quá giờ trong ngân sách UNDERSTAND_BUDGET; model cuối dùng hết phần còn
+# lại. flash-lite-latest: dự phòng thứ hai (27/10) vì 2.5-flash-lite chỉ 20 lần/ngày; đo 1,5 s lúc rảnh, 8,5 s lúc Google quá tải.
+MODELS = (("gemini-3.1-flash-lite", 5), ("gemini-2.5-flash-lite", 3), ("gemini-flash-lite-latest", None))
+UNDERSTAND_BUDGET = 10.5  # giây; + tải dữ liệu + viết câu (bỏ qua nếu hết giờ) < 13 s PHP chờ
 LOCAL_DATA = Path(__file__).resolve().parents[2] / "local_dev_data.json"
 
 # Danh mục chuẩn — trùng js/dashboard.js:7-17. Danh mục tự đặt là giá trị lạ trong transactions.category.
@@ -203,11 +206,15 @@ def gemini(model, timeout, prompt, system=SYSTEM, schema=SCHEMA):
 
 
 def understand(prompt):
-    """(JSON của LLM, số lần gọi). Model chính lỗi (429, quá giờ, JSON hỏng, bị cắt) → model dự phòng; cả hai lỗi → 503."""
-    errors = []
-    for calls, (model, timeout) in enumerate(MODELS, 1):
+    """(JSON của LLM, số lần gọi). Model lỗi (429, quá giờ, JSON hỏng, bị cắt) → model kế tiếp; tất cả lỗi → 503."""
+    errors, deadline = [], time.monotonic() + UNDERSTAND_BUDGET
+    for calls, (model, cap) in enumerate(MODELS, 1):
+        left = deadline - time.monotonic()
+        if left < 1:
+            errors.append(f"{model}: hết ngân sách thời gian")
+            break
         try:
-            return gemini(model, timeout, prompt), calls
+            return gemini(model, min(cap, left) if cap else left, prompt), calls
         except urllib.error.HTTPError as e:
             errors.append(f"{model} HTTP {e.code}: {' '.join(e.read()[:300].decode('utf-8', 'replace').split())}")
         except (urllib.error.URLError, TimeoutError, ValueError, KeyError) as e:
