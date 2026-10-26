@@ -22,7 +22,7 @@ tử hoá int8 (~120 MB; bản fp32 ~470 MB sẽ vượt trần), không dùng t
 | 5. Ý định sửa + thẻ xác nhận | ✅ Xong, đã push (c4bcbad) | `test_modify.py`; thẻ kiểm trên dashboard thật (Edge headless). CB.11 |
 | 6. Nhúng e5-small tại chỗ + tìm theo ghi chú | ✅ Mã xong, đã push (b77d471) · ⚠️ chưa đo khởi động nguội trên Vercel | `test_search.py`: ngưỡng 0,89 → 20 đúng / 0 sai, recall@5 0,76. CB.13 |
 | 7. LLM viết câu + gợi ý + kiểm số | ✅ Xong, đã push (7216efa, b77d471) | `test_answer.py`. HTTP với **model đã chốt** 21/21 (27/10). CB.12, CB.13 |
-| 8. Bật RAG + chạy bộ kiểm thử trên production | 🟡 **Đã bật** (27/10: `RAG_URL` + `RAG_INTERNAL_SECRET` trên Vercel production) | Gọi có chữ ký: chữ ký, TiDB, Gemini đều chạy. Chưa: thử qua app với tài khoản thật khi hạn mức Gemini hồi; lần tìm theo ghi chú đầu tiên tạo bảng `transaction_embeddings` → xem `vercel logs`; đo p95. Tắt RAG = xoá biến `RAG_URL` rồi redeploy. CB.14 |
+| 8. Bật RAG + chạy bộ kiểm thử trên production | 🟡 Đã bật, production chạy a1cafd6 (Bước 5–7 + vector) | Sự cố 500 do gói PHP gom `.git` + mô hình đã sửa (CB.15). Gọi có chữ ký: chữ ký, TiDB, Gemini chạy. Chưa: hỏi qua app với tài khoản thật; lần tìm theo ghi chú đầu tiên (tạo `transaction_embeddings`, nạp mô hình); đo p95. Tắt RAG = xoá `RAG_URL` rồi redeploy |
 
 Chạy RAG ở máy: nhật ký CB.9 (cách chạy uvicorn); hạn mức Gemini hết thì thay `index.MODELS` trong script chạy (CB.4). Kiểm lại trên máy: PHP bản zip ở scratchpad phiên trước sẽ mất — tải lại theo nhật ký CB.7 (SHA256 ở đó).
 §9 thiết kế: đã chốt hết (25/10). **Chưa làm:** lịch sử ở máy chủ → cần bảng lưu hội thoại theo `user_id`; nút «Xóa toàn bộ dữ liệu» phải xoá cả bảng này.

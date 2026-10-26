@@ -1,10 +1,10 @@
 # CHỈ MỤC `nhat_ky/` — mã mục nằm ở tệp nào
 
-> Sinh tự động bởi `python ~/.claude/harness/harness.py chi-muc nhat_ky` lúc 2026-10-27T00:53:39. **Đừng sửa tay.**
+> Sinh tự động bởi `python ~/.claude/harness/harness.py chi-muc nhat_ky` lúc 2026-10-27T01:47:33. **Đừng sửa tay.**
 > Cách tra: tìm mã ở bảng dưới rồi mở đúng tệp đó. Cần nguyên văn thì `grep -n "### <mã>" <tệp>`.
 > Bảng chỉ nói mục nào ở đâu. **Nội dung và số liệu ở tệp gốc — đừng chép sang đây.**
 
-**14 mã mục trong 2 tệp.**
+**15 mã mục trong 2 tệp.**
 
 | Mã | Tệp | Dòng | Tiêu đề |
 | --- | --- | ---: | --- |
@@ -22,3 +22,4 @@
 | `CB.12` | [`2026-10-27.md`](2026-10-27.md) | 15 | Bước 7: LLM diễn đạt SỰ KIỆN, code kiểm từng con số (commit 7216efa) |
 | `CB.13` | [`2026-10-27.md`](2026-10-27.md) | 23 | Bước 6: nhúng tại chỗ e5-small + chốt chặn cho model đã chốt (commit b77d471) |
 | `CB.14` | [`2026-10-27.md`](2026-10-27.md) | 44 | Bật RAG trên production (27/10) |
+| `CB.15` | [`2026-10-27.md`](2026-10-27.md) | 55 | Sự cố: mọi `/api` (PHP) trả 500 từ b77d471 (27/10, ~35 phút gián đoạn) |
