@@ -67,6 +67,7 @@ lite.executemany("INSERT INTO transactions VALUES (?, ?, ?, ?, ?, ?, ?)",
                  + [("khac", 2, "expense", 999000, "entertainment", "2026-10-01", "người khác")])
 lite.execute("CREATE TABLE budgets (user_id INT, category TEXT, limit_amount NUMERIC)")
 lite.executemany("INSERT INTO budgets VALUES (?, ?, ?)", [(1, c, v) for c, v in db["budgets"].items()] + [(2, "food", 1)])
+lite.execute("CREATE TABLE transaction_embeddings (tx_id TEXT PRIMARY KEY, content_hash TEXT, vector BLOB)")
 
 
 class FakeConn:  # đủ cho `with conn, conn.cursor() as cur` + DictCursor của pymysql
@@ -82,9 +83,12 @@ class FakeConn:  # đủ cho `with conn, conn.cursor() as cur` + DictCursor củ
 
     cursor = __enter__
 
-    def execute(self, sql, args):
+    def execute(self, sql, args=()):
+        if sql.startswith("CREATE TABLE IF NOT EXISTS transaction_embeddings"):  # cú pháp MySQL; SQLite đã tạo sẵn ở trên
+            FakeConn.ddl = sql
+            return
         cur = lite.execute(sql.replace("%s", "?"), args)
-        cols = [d[0] for d in cur.description]
+        cols = [d[0] for d in cur.description or []]
         self.rows = [dict(zip(cols, r)) for r in cur.fetchall()]
         for r in self.rows:
             for k in ("amount", "limit_amount"):
@@ -95,6 +99,12 @@ class FakeConn:  # đủ cho `with conn, conn.cursor() as cur` + DictCursor củ
 
     def fetchall(self):
         return self.rows
+
+    def executemany(self, sql, rows):
+        lite.executemany(sql.replace("%s", "?"), rows)
+
+    def commit(self):
+        lite.commit()
 
 
 os.environ["DATABASE_URL"] = "mysql://u:p@db.example:4000/spendmind"
@@ -119,5 +129,22 @@ assert (FakeConn.kw["port"], FakeConn.kw["user"], FakeConn.kw["password"], FakeC
 os.environ["DB_SSL"] = "false"
 rag.load_user(1)
 assert FakeConn.kw["ssl"] is None
+
+# Bước 6 — vector ở bảng transaction_embeddings: lần đầu nhúng + ghi; lần sau đọc lại, không nhúng; đổi ghi chú → chỉ
+# nhúng lại đúng dòng đó. Bảng tự tạo với khoá ngoại xoá dây chuyền theo giao dịch.
+rag._vecs.clear()
+embedded, real_embed = [], rag.embed
+rag.embed = lambda texts: embedded.append(len(texts)) or real_embed(texts)
+rows = [t for t in my if t["date"].startswith("2026-10")][:5]
+first = rag.vectors(rows)
+assert embedded == [5] and lite.execute("SELECT COUNT(*) FROM transaction_embeddings").fetchone()[0] == 5
+assert "ON DELETE CASCADE" in FakeConn.ddl
+rag._vecs.clear()
+embedded.clear()
+assert all((rag.vectors(rows)[i] == first[i]).all() for i in first) and embedded == []
+rows[0] = rows[0] | {"description": "đổi ghi chú"}
+rag.vectors(rows)
+assert embedded == [1]
+rag.embed = real_embed
 
 print(f"test_path_a: đạt ({len(graded)} ca chấm bằng run_eval.judge, nhánh MySQL khớp COUNT/SUM của SQL)")

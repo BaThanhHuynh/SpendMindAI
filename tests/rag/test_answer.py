@@ -37,8 +37,10 @@ for bad in ["Bạn có 21 giao dịch, tổng 921.000đ.",                    # 
             ""]:
     text, calls = say(bad)
     assert text.startswith(facts) and "Đáng chú ý:" in text and calls == 1, bad
-rag.gemini = lambda *a, **k: (_ for _ in ()).throw(TimeoutError())
+tried = []
+rag.gemini = lambda model, *a: tried.append(model) or (_ for _ in ()).throw(TimeoutError())
 assert rag.phrase("m", "q", facts, [], set(), time.monotonic() + 12)[0].startswith(facts)
+assert tried == ["m", *[m for m, _ in rag.MODELS]], "lỗi → thử lần lượt model dự phòng"
 assert rag.phrase("m", "q", facts, [], set(), time.monotonic() + 1)[1] == 0, "hết giờ → không gọi LLM"
 
 # answer(): LLM viết câu, code gắn bảng; advice dùng tín hiệu tháng này; out_of_scope không gọi LLM viết câu

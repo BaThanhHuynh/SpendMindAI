@@ -55,5 +55,15 @@ res = ask("Xoá giao dịch cf", "modify_data", action="delete", keyword="cf")
 assert res["proposal"] is None and res["reply"].startswith("Có ") and "| Ngày |" in res["reply"]
 assert ask("Xoá giao dịch du thuyền", "modify_data", action="delete", keyword="du thuyền")["proposal"] is None
 assert ask("Chuyển giao dịch net", "modify_data", action="update", keyword="net")["proposal"] is None
+# chốt chặn khi model đã chốt (3.1-flash-lite) không theo lời nhắc: ca 7 bị xếp modify_data, ca 10 tự gán Ăn uống,
+# ca 17 tự gán tháng này
+res = judged("7", ask("Nó là ăn uống không phải giải trí", "modify_data", goc, action="update", new_category="food",
+                      category="entertainment"))
+assert res["proposal"] is None and res["meta"]["intent"] == "complaint"
+assert ask("Chào, tháng 10 tôi chi bao nhiêu", "finance_aggregate", category="Ăn uống")["state"]["filters"]["category"] is None
+assert ask("Tiền ăn tháng 10", "finance_aggregate", category="Ăn uống")["state"]["filters"]["category"] == "food"
+assert ask("Chi tiết cho tôi", "finance_list", goc, category="entertainment")["state"]["filters"]["category"] == "entertainment"
+assert ask("Tôi chi bao nhiêu cho du thuyền", "finance_search", keyword="du thuyền")["state"]["filters"]["month"] is None
+assert ask("Tiền đi net tháng này", "finance_search", keyword="net")["state"]["filters"]["month"] == "2026-10"
 assert hashlib.sha256(run_eval.DATA.read_bytes()).digest() == before, "chatbot không được ghi dữ liệu"
 print("test_modify: đạt")
