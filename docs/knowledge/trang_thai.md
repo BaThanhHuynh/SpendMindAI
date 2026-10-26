@@ -1,6 +1,6 @@
 # Trạng thái — chatbot RAG
 
-Cập nhật: 2026-10-25. Thiết kế: `docs/knowledge/chatbot-rag-thiet-ke.md` (§7 là kế hoạch từng bước).
+Cập nhật: 2026-10-27. Thiết kế: `docs/knowledge/chatbot-rag-thiet-ke.md` (§7 là kế hoạch từng bước).
 
 Đã chốt với người dùng: **phương án B** (FastAPI trên Vercel, PHP làm cửa xác thực) · nhúng **tại chỗ
 `multilingual-e5-small`** (đổi từ Gemini Embedding API, 25/10) · LLM chính `gemini-3.1-flash-lite` (dự phòng
@@ -18,9 +18,11 @@ tử hoá int8 (~120 MB; bản fp32 ~470 MB sẽ vượt trần), không dùng t
 | 1. Chữa cháy trong PHP | ✅ Mã xong · ⚠️ chưa chấm được hành vi LLM | Khoá Gemini hết hạn mức (429) lúc làm → chạy lại `--target php --only goc` khi hạn mức hồi |
 | 2. Khung FastAPI + PHP chuyển tiếp | ✅ Xong, đã lên production (commit 4d93427) | `/api/rag/healthz` 200; POST `/api/rag/chat` không chữ ký 401. Chưa bật: cần đặt `RAG_URL` + `RAG_INTERNAL_SECRET` trên Vercel |
 | 3. Regex + viết lại câu hỏi + phân loại | ✅ Mã xong, đã lên production (commit d56885e, RAG vẫn tắt) · ⚠️ chưa chấm với model đã chốt | 21/21 đạt `--checks intent,rewritten,llm_calls,filters` nhưng bằng model thay thế (3.1/2.5-flash-lite hết hạn mức ngày) → chạy lại khi hồi; nhánh MySQL chưa chạy. Nhật ký CB.9 |
-| 4. Đường A có cấu trúc + khối SỰ KIỆN | ✅ Mã xong, đã commit, chưa push (RAG vẫn tắt) · ⚠️ chưa chấm với model đã chốt · ⚠️ MySQL thật chưa chạy | `tests/rag/test_path_a.py` đạt (nhánh MySQL qua SQLite giả + COUNT/SUM SQL). HTTP 18/21 bằng `gemini-flash-lite-latest`; trượt 7, 14, 15 = Bước 5. `reply` hiện là SỰ KIỆN + bảng nguyên văn, LLM diễn đạt ở Bước 7. Nhật ký CB.10 |
-| 5. Ý định sửa + thẻ xác nhận | ⬜ Bước tiếp theo | Ca 7 (hỏi lại khi phàn nàn), 14, 15 (`proposal`) |
-| 6–8 | ⬜ Chưa làm | |
+| 4. Đường A có cấu trúc + khối SỰ KIỆN | ✅ Xong, đã push (35fdf82, 346c44f) | `tests/rag/test_path_a.py`; RAG đọc CSDL bằng đúng biến của `database.php`. Nhật ký CB.10 |
+| 5. Ý định sửa + thẻ xác nhận | ✅ Xong, đã push (c4bcbad) | `test_modify.py`; thẻ kiểm trên dashboard thật (Edge headless). CB.11 |
+| 6. Nhúng e5-small tại chỗ + tìm theo ghi chú | ✅ Mã xong, đã push (b77d471) · ⚠️ chưa đo khởi động nguội trên Vercel | `test_search.py`: ngưỡng 0,89 → 20 đúng / 0 sai, recall@5 0,76. CB.13 |
+| 7. LLM viết câu + gợi ý + kiểm số | ✅ Xong, đã push (7216efa, b77d471) | `test_answer.py`. HTTP với **model đã chốt** 21/21 (27/10). CB.12, CB.13 |
+| 8. Bật RAG + chạy bộ kiểm thử trên production | ⬜ Bước tiếp theo | Cần: người dùng chạy `npx vercel login` → đặt `RAG_URL=https://huynhbathanh.site/api/rag/chat` + `RAG_INTERNAL_SECRET`; đo khởi động nguội; kiểm nhánh TiDB thật |
 
 Chạy RAG ở máy: nhật ký CB.9 (cách chạy uvicorn); hạn mức Gemini hết thì thay `index.MODELS` trong script chạy (CB.4). Kiểm lại trên máy: PHP bản zip ở scratchpad phiên trước sẽ mất — tải lại theo nhật ký CB.7 (SHA256 ở đó).
-§9 thiết kế: đã chốt hết (25/10). Lịch sử ở máy chủ → cần bảng lưu hội thoại theo `user_id`; nút «Xóa toàn bộ dữ liệu» phải xoá cả bảng này.
+§9 thiết kế: đã chốt hết (25/10). **Chưa làm:** lịch sử ở máy chủ → cần bảng lưu hội thoại theo `user_id`; nút «Xóa toàn bộ dữ liệu» phải xoá cả bảng này.
