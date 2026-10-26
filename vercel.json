@@ -6,7 +6,7 @@
     "api/*.php": {
       "runtime": "vercel-php@0.9.0",
       "maxDuration": 15,
-      "excludeFiles": "api/rag/**"
+      "excludeFiles": "{.git/**,api/rag/**}"
     },
     "api/rag/index.py": {
       "includeFiles": "api/rag/model/**"
