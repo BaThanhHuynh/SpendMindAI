@@ -1,10 +1,10 @@
 # CHỈ MỤC `nhat_ky/` — mã mục nằm ở tệp nào
 
-> Sinh tự động bởi `python ~/.claude/harness/harness.py chi-muc nhat_ky` lúc 2026-10-27T05:08:15. **Đừng sửa tay.**
+> Sinh tự động bởi `python ~/.claude/harness/harness.py chi-muc nhat_ky` lúc 2026-10-27T16:20:31. **Đừng sửa tay.**
 > Cách tra: tìm mã ở bảng dưới rồi mở đúng tệp đó. Cần nguyên văn thì `grep -n "### <mã>" <tệp>`.
 > Bảng chỉ nói mục nào ở đâu. **Nội dung và số liệu ở tệp gốc — đừng chép sang đây.**
 
-**17 mã mục trong 2 tệp.**
+**18 mã mục trong 2 tệp.**
 
 | Mã | Tệp | Dòng | Tiêu đề |
 | --- | --- | ---: | --- |
@@ -25,3 +25,4 @@
 | `CB.15` | [`2026-10-27.md`](2026-10-27.md) | 55 | Sự cố: mọi `/api` (PHP) trả 500 từ b77d471 (27/10, ~35 phút gián đoạn) |
 | `CB.16` | [`2026-10-27.md`](2026-10-27.md) | 73 | Thêm model dự phòng thứ hai + ngân sách thời gian chung (27/10) |
 | `CB.17` | [`2026-10-27.md`](2026-10-27.md) | 79 | Demo trên dashboard thật + lỗi thừa kế bộ lọc (27/10, commit 496354a) |
+| `UI.1` | [`2026-10-27.md`](2026-10-27.md) | 93 | Nảy lò xo kiểu Apple cho mọi phần tử bấm được (27/10) |

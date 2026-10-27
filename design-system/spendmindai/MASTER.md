@@ -79,5 +79,5 @@
 - **No `transition: all`:** use `transition-property: var(--transition-props)` (transform, opacity, colors, shadow).
 - **Chat morph:** window zooms out of the chat button (`transform-origin` = button centre), opacity + scale only.
 - **Text reveal:** `.apple-reveal` (blur → sharp, fade + 12px rise) instead of typewriter effects.
-- **Tactile Active Press:** `transform: scale(0.96);` on buttons and interactive chips.
+- **Spring Press (Apple bounce):** `js/spring-press.js` handles every pressable element on every page — press = sink ~5px along the long side (0.92–0.98), release = spring back with a small overshoot, and the first icon (`svg`/`img` ≤ 48px) does an SF Symbols-style bounce. Do **not** add `:active { transform: scale() }` rules; they would double the sink. Tune the spring constants at the top of that file.
 - **Respect Motion Preference:** under `prefers-reduced-motion: reduce` every animation/transition finishes instantly (block at the end of `css/styles.css`; add any new `animation … !important` selector there).

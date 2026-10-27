@@ -90,22 +90,8 @@
     stroke-width: 1.9;
 }
 
-.mobile-nav-item:active {
-    transform: scale(0.92);
-}
-
 .mobile-nav-item.active {
     font-weight: 600;
-}
-
-/* Icon tab nảy nhẹ khi được chọn (kiểu SF Symbols bounce) */
-.mobile-nav-item.active :is(i, svg) {
-    animation: navIconBounce 0.42s var(--ease-spring);
-}
-
-@keyframes navIconBounce {
-    40% { transform: scale(0.84); }
-    75% { transform: scale(1.12); }
 }
 
 /* Nút + giữa: khối chữ nhật bo góc, màu nhấn của app */
@@ -449,7 +435,6 @@
     }
 
     .btn-chatbot-back:active {
-        transform: scale(0.92) !important;
         background: rgba(255, 255, 255, 0.15) !important;
     }
 
@@ -534,11 +519,6 @@
     [data-theme="light"] .chatbot-close-btn {
         background: rgba(0, 0, 0, 0.05) !important;
         color: var(--text-primary) !important;
-    }
-
-    .btn-chatbot-action:active,
-    .chatbot-close-btn:active {
-        transform: scale(0.92) !important;
     }
 
     /* On mobile full page, close button can be hidden because we have the back button */
@@ -655,7 +635,6 @@
 
     .quick-prompt-card:active,
     .gemini-prompt-pill:active {
-        transform: scale(0.96) !important;
         background: rgba(0, 113, 227, 0.15) !important;
     }
 
@@ -830,11 +809,6 @@
         color: var(--text-secondary) !important;
     }
 
-    .claude-circle-btn:active,
-    .btn-capsule-action:active {
-        transform: scale(0.92) !important;
-    }
-
     .claude-circle-btn.listening {
         background: #ef4444 !important;
         color: #ffffff !important;
@@ -905,11 +879,6 @@
     [data-theme="light"] .chatbot-input-capsule button[type="submit"] {
         background: #18181b !important;
         color: #ffffff !important;
-    }
-
-    .claude-send-btn:active,
-    .chatbot-input-capsule button[type="submit"]:active {
-        transform: scale(0.92) !important;
     }
 
     .claude-send-btn i,
@@ -1064,10 +1033,6 @@
 
     [data-theme="light"] .theme-toggle-btn#btn-settings {
         background: rgba(0, 0, 0, 0.05) !important;
-    }
-
-    .theme-toggle-btn#btn-settings:active {
-        transform: scale(0.90) !important;
     }
 
     .theme-toggle-btn#btn-settings .user-avatar-img {

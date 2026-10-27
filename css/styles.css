@@ -342,9 +342,6 @@ html[data-theme="light"] .theme-toggle-btn {
 html[data-theme="light"] .theme-toggle-btn:hover {
     background: rgba(0, 0, 0, 0.08);
 }
-.theme-toggle-btn:active {
-    transform: scale(0.92);
-}
 
 /* Settings Trigger Button - Apple Glass Control with Rotation */
 #btn-settings {
@@ -613,10 +610,6 @@ html[data-theme="light"] #btn-settings.active {
     height: 16px;
 }
 
-.toggle-label:active {
-    transform: scale(0.96);
-}
-
 /* Radio button styles */
 #type-expense:checked + .toggle-label.expense {
     background: var(--expense-color);
@@ -751,10 +744,6 @@ html[data-theme="light"] #btn-settings.active {
     -webkit-tap-highlight-color: transparent;
 }
 
-.btn:active {
-    transform: scale(0.96);
-}
-
 .btn-primary {
     background: var(--accent-color);
     color: var(--accent-text);
@@ -768,7 +757,6 @@ html[data-theme="light"] #btn-settings.active {
 
 .btn-primary:active {
     background: var(--accent-color-active);
-    transform: scale(0.96);
 }
 
 .btn-secondary {
@@ -788,10 +776,6 @@ html[data-theme="light"] .btn-secondary {
 html[data-theme="light"] .btn-secondary:hover {
     background: rgba(0, 0, 0, 0.08);
     border-color: rgba(0, 0, 0, 0.16);
-}
-
-.btn-secondary:active {
-    transform: scale(0.96);
 }
 
 .w-full {
@@ -817,9 +801,6 @@ html[data-theme="light"] .btn-secondary:hover {
 }
 .btn-text:hover {
     color: var(--accent-color-hover);
-}
-.btn-text:active {
-    transform: scale(0.96);
 }
 
 /* ==========================================================================
@@ -3224,10 +3205,6 @@ html[data-theme="light"] .chat-message.bot {
     border-color: var(--accent-color);
 }
 
-.suggestion-chip:active {
-    transform: scale(0.95);
-}
-
 /* Claude-Style Welcome Hero Screen & 2x2 Quick Grid (Images 2 & 3) */
 .claude-welcome-hero,
 .welcome-hero-container,
@@ -3337,7 +3314,6 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
 
 .quick-prompt-card:active,
 .gemini-prompt-pill:active {
-    transform: scale(0.96);
     background: rgba(0, 113, 227, 0.15);
 }
 
@@ -3506,10 +3482,6 @@ html[data-theme="light"] .gemini-prompt-pill:hover {
 
 .chatbot-input-capsule button[type="submit"]:hover {
     background: var(--accent-color-hover) !important;
-}
-
-.chatbot-input-capsule button[type="submit"]:active {
-    transform: scale(0.92);
 }
 
 .chatbot-input-capsule button[type="submit"] i {
@@ -3895,7 +3867,6 @@ html[data-theme="dark"] .month-display {
 }
 
 .calendar-cell.cell-pressing {
-    transform: scale(0.95) !important;
     background: var(--accent-glow) !important;
     transition: transform 0.2s var(--ease-out), background 0.2s var(--ease-out) !important;
     box-shadow: 0 0 0 2px var(--accent-color) inset !important;
@@ -4261,9 +4232,6 @@ html[data-theme="light"] .daily-item:hover {
     background: rgba(239, 68, 68, 0.12) !important;
     transform: scale(1.08);
 }
-.btn-daily-delete:active {
-    transform: scale(0.95);
-}
 
 /* Dangerous Action Buttons (Red button for delete) */
 .btn-danger {
@@ -4483,10 +4451,6 @@ html[data-theme="light"] .dropdown-header {
     transform: scale(1.05);
 }
 
-.btn-close-dropdown:active {
-    transform: scale(0.92);
-}
-
 html[data-theme="light"] .btn-close-dropdown {
     background: rgba(0, 0, 0, 0.05);
     border-color: rgba(0, 0, 0, 0.08);
@@ -4495,10 +4459,6 @@ html[data-theme="light"] .btn-close-dropdown {
 html[data-theme="light"] .btn-close-dropdown:hover {
     background: rgba(0, 0, 0, 0.1);
     color: var(--text-primary);
-}
-
-html[data-theme="light"] .btn-close-dropdown:active {
-    transform: scale(0.92);
 }
 
 /* Settings List Item Rows (Apple Elements Staggered Cascade) */
@@ -4547,11 +4507,6 @@ html[data-theme="light"] .theme-option-item:hover,
 html[data-theme="light"] .theme-option-item.active {
     background: rgba(0, 0, 0, 0.06);
     color: var(--text-primary);
-}
-
-.settings-list-item:active,
-.theme-option-item:active {
-    transform: scale(0.98);
 }
 
 .settings-list-item i {
@@ -4663,10 +4618,6 @@ html[data-theme="light"] .google-link-status {
     background: rgba(0, 104, 255, 0.1) !important;
     border-color: #0052cc !important;
     color: #0052cc !important;
-}
-
-#btn-test-zalo:active {
-    transform: scale(0.98);
 }
 
 .zalo-tip-card {
@@ -4860,10 +4811,6 @@ html[data-theme="light"] .zalo-tip-card {
     transform: scale(1.05);
 }
 
-.btn-back-settings:active {
-    transform: scale(0.92);
-}
-
 html[data-theme="light"] .btn-back-settings {
     background: rgba(0, 0, 0, 0.05);
     border-color: rgba(0, 0, 0, 0.08);
@@ -4872,10 +4819,6 @@ html[data-theme="light"] .btn-back-settings {
 html[data-theme="light"] .btn-back-settings:hover {
     background: rgba(0, 0, 0, 0.1);
     color: var(--text-primary);
-}
-
-html[data-theme="light"] .btn-back-settings:active {
-    transform: scale(0.92);
 }
 
 /* Theme Option sub-menu list */
@@ -5199,16 +5142,8 @@ html[data-theme="light"] .hamburger-btn {
     background: rgba(255, 255, 255, 0.14);
 }
 
-.hamburger-btn:active {
-    transform: scale(0.92);
-}
-
 html[data-theme="light"] .hamburger-btn:hover {
     background: rgba(0, 0, 0, 0.08);
-}
-
-html[data-theme="light"] .hamburger-btn:active {
-    transform: scale(0.92);
 }
 
 .hamburger-btn.active {
@@ -5346,10 +5281,6 @@ html[data-theme="light"] .mobile-nav-dropdown {
     background-color: rgba(255, 255, 255, 0.08);
 }
 
-.mobile-menu-link:active {
-    transform: scale(0.97);
-}
-
 html[data-theme="light"] .mobile-menu-link:hover,
 html[data-theme="light"] .mobile-menu-link:active {
     color: var(--text-primary);
@@ -5359,7 +5290,6 @@ html[data-theme="light"] .mobile-menu-link:active {
 .mobile-menu-link:hover i,
 .mobile-menu-link:active i {
     color: var(--accent-color);
-    transform: scale(1.08);
 }
 
 @media (min-width: 881px) {
@@ -5879,7 +5809,6 @@ body {
     }
 
     .btn-chatbot-back:active {
-        transform: scale(0.92) !important;
         background: rgba(255, 255, 255, 0.15) !important;
     }
 
@@ -7529,7 +7458,6 @@ html[data-theme="light"] .landing-install-card:hover {
 }
 
 .btn-action-edit:active {
-    transform: scale(0.95);
     background: var(--accent-color);
     color: var(--accent-text);
 }
@@ -7556,7 +7484,6 @@ html[data-theme="light"] .landing-install-card:hover {
 }
 
 .btn-action-delete:active {
-    transform: scale(0.92);
     background: var(--expense-color);
     color: #fff;
 }
@@ -7640,22 +7567,7 @@ html[data-theme="light"] .landing-install-card:hover {
    APPLE MOTION GRAPHICS & TACTILE SPRING MICRO-INTERACTIONS
    ========================================================================== */
 
-/* Universal Apple spring tactile press on interactive components
-   (không áp cho .card / .glass-card / .balance-card: đó là khung chứa, chạm ô bên trong sẽ làm cả khung co) */
-.settings-list-item:active,
-.theme-option-item:active,
-.suggestion-chip:active,
-.claude-circle-btn:active,
-.claude-send-btn:active,
-.day-edit-tx-item:active {
-    transform: scale(0.96) !important;
-    transition: transform var(--spring-snappy) !important;
-}
-
-.calendar-day:active {
-    transform: scale(0.90) !important;
-    transition: transform var(--spring-snappy) !important;
-}
+/* Nhấn lún + nảy lò xo cho mọi phần tử bấm được: js/spring-press.js (thay các quy tắc :active scale cũ) */
 
 /* Staggered Apple Spring Pop for Welcome Suggestions */
 .quick-prompt-card:nth-child(1) { animation: applePromptPop 0.35s 0.04s var(--ease-spring) both; }
@@ -8102,10 +8014,6 @@ html[data-theme="light"] .btn-offline-retry {
     transform: scale(1.02);
 }
 
-.btn-offline-retry:active {
-    transform: scale(0.96);
-}
-
 .btn-offline-retry.spinning i,
 .btn-offline-retry.spinning svg {
     animation: spin 0.8s linear infinite;
@@ -8217,11 +8125,6 @@ html[data-theme="light"] .ptr-indicator.is-ready .ptr-circle {
     .landing-logo:hover .logo-icon-sm {
         transform: scale(1.06) rotate(6deg);
         box-shadow: 0 0 16px rgba(14, 165, 233, 0.35);
-    }
-
-    .logo-area:active,
-    .landing-logo:active {
-        transform: scale(0.97);
     }
 }
 
@@ -8408,7 +8311,6 @@ html[data-theme="light"] .tearoff-page {
     transition: background-color 0.15s ease, transform 0.15s ease;
 }
 .tearoff-month-btn:hover { background: rgba(255, 255, 255, 0.3); }
-.tearoff-month-btn:active { transform: scale(0.92); }
 .tearoff-month-btn svg { width: 16px; height: 16px; }
 
 /* Cửa sổ nổi (lịch tháng, số dư): luôn ở giữa màn hình (máy tính dùng hiệu ứng mở giữa như menu Cài đặt trên điện thoại) */
